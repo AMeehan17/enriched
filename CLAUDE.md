@@ -2,6 +2,19 @@
 
 Interactive, open-source nuclear energy education platform. Data does the talking.
 
+## Design System
+
+Always read `DESIGN.md` before making any visual or UI decision. All font choices, colors, spacing values, and aesthetic direction are defined there. Do not deviate without explicit user approval. In QA mode, flag any code that doesn't match `DESIGN.md`.
+
+Key principles enforced by DESIGN.md:
+- **No icons.** The visual vocabulary is words and numbers. Use literal characters (`{}`, `↗`, `//`) instead of icon components.
+- **Three fonts only:** Spline Sans Mono (display), Instrument Sans (body), JetBrains Mono (data). Never Inter, Roboto, Arial, Geist, or Satoshi.
+- **One accent color:** rust `#D04A1F`. Use sparingly, always with meaning.
+- **Hairline rules, never shadows.** Cards use `1px solid var(--rule)`, not `box-shadow`.
+- **Tabular nums on every number.** `font-variant-numeric: tabular-nums` is required for any rendered numeric value.
+- **No bubbly corners.** Border radius scale tops out at `4px` for cards. Pills are `100px` (the only exception).
+- **Persuasion through design.** Every choice passes the test: "Does this let the data talk, or are we talking?"
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill
