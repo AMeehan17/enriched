@@ -1,0 +1,235 @@
+{
+  "lastUpdated": "2026-04-10T02:15:32.505Z",
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "nuclear",
+      "label": "Nuclear",
+      "blurb": "Fission of heavy isotopes (primarily uranium-235) generates heat that drives steam turbines. The most energy-dense fuel ever harnessed.",
+      "capacityFactor": {
+        "value": 92.5,
+        "unit": "%",
+        "citation": {
+          "bibtex_key": "eia2024electricpower_nuclear",
+          "author": "U.S. Energy Information Administration",
+          "title": "Electric Power Monthly, Nuclear Capacity Factor",
+          "year": 2024,
+          "publisher": "EIA",
+          "url": "https://www.eia.gov/electricity/monthly/",
+          "accessed": "2026-04-09"
+        }
+      },
+      "landUse": {
+        "value": 0.3,
+        "unit": "km²/TWh/yr",
+        "citation": {
+          "bibtex_key": "brookings2018landuse_nuclear",
+          "author": "Brookings Institution",
+          "title": "The Land Use of Energy",
+          "year": 2018,
+          "publisher": "Brookings Institution Press",
+          "url": "https://www.brookings.edu/articles/the-land-use-of-energy/",
+          "accessed": "2026-04-09"
+        }
+      },
+      "lifecycleCO2": {
+        "value": 12,
+        "unit": "gCO2eq/kWh",
+        "citation": {
+          "bibtex_key": "ipcc2014ghg_nuclear",
+          "author": "IPCC",
+          "title": "Climate Change 2014: Mitigation of Climate Change, Annex III Technology-specific cost and performance parameters",
+          "year": 2014,
+          "publisher": "Cambridge University Press",
+          "url": "https://www.ipcc.ch/report/ar5/wg3/",
+          "accessed": "2026-04-09"
+        }
+      },
+      "deathsPerTWh": {
+        "value": 0.03,
+        "unit": "deaths/TWh",
+        "note": "OWID synthesis based on Markandya & Wilkinson 2007 and updates.",
+        "citation": {
+          "bibtex_key": "owid2024deaths_nuclear",
+          "author": "Our World in Data",
+          "title": "What are the safest and cleanest sources of energy?",
+          "year": 2024,
+          "publisher": "Our World in Data",
+          "url": "https://ourworldindata.org/safest-sources-of-energy",
+          "accessed": "2026-04-09"
+        }
+      },
+      "lcoe": {
+        "value": 141,
+        "unit": "$/MWh",
+        "citation": {
+          "bibtex_key": "lazard2024lcoe_nuclear",
+          "author": "Lazard",
+          "title": "Levelized Cost of Energy Analysis, Nuclear (midpoint)",
+          "year": 2024,
+          "version": "v17.0",
+          "publisher": "Lazard Ltd.",
+          "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-version-17/",
+          "accessed": "2026-04-09"
+        }
+      },
+      "energyDensity": {
+        "value": 3900000,
+        "unit": "MJ/kg",
+        "citation": {
+          "bibtex_key": "wna2023energydensity_nuclear",
+          "author": "World Nuclear Association",
+          "title": "Heat Values of Various Fuels — U-235 fission",
+          "year": 2023,
+          "publisher": "World Nuclear Association",
+          "url": "https://world-nuclear.org/information-library/facts-and-figures/heat-values-of-various-fuels.aspx",
+          "accessed": "2026-04-09"
+        },
+        "note": "U-235 thermal fission energy. Roughly 2 million times more energy per kg than coal."
+      },
+      "constructionTime": {
+        "value": 8.5,
+        "unit": "years",
+        "citation": {
+          "bibtex_key": "iaea2024pris_nuclear",
+          "author": "International Atomic Energy Agency",
+          "title": "Power Reactor Information System (PRIS) — median construction time",
+          "year": 2024,
+          "publisher": "IAEA",
+          "url": "https://pris.iaea.org/PRIS/",
+          "accessed": "2026-04-09"
+        }
+      },
+      "dispatchability": {
+        "category": "yes-baseload",
+        "label": "Yes (baseload)",
+        "citation": {
+          "bibtex_key": "eia2024dispatch_nuclear",
+          "author": "U.S. Energy Information Administration",
+          "title": "Electricity Reliability — Nuclear Capacity Credit",
+          "year": 2024,
+          "publisher": "EIA",
+          "url": "https://www.eia.gov/electricity/",
+          "accessed": "2026-04-09"
+        },
+        "note": "Operates near nameplate capacity continuously. Can load-follow but typically runs as baseload."
+      }
+    },
+    {
+      "id": "solar",
+      "label": "Solar",
+      "blurb": "Photovoltaic cells convert sunlight directly to electricity. Cheapest unsubsidized energy source per MWh in most regions, but intermittent and land-hungry.",
+      "capacityFactor": {
+        "value": 24.9,
+        "unit": "%",
+        "citation": {
+          "bibtex_key": "eia2024electricpower_solar",
+          "author": "U.S. Energy Information Administration",
+          "title": "Electric Power Monthly, Utility-Scale Solar Capacity Factor",
+          "year": 2024,
+          "publisher": "EIA",
+          "url": "https://www.eia.gov/electricity/monthly/",
+          "accessed": "2026-04-09"
+        }
+      },
+      "landUse": {
+        "value": 13.5,
+        "unit": "km²/TWh/yr",
+        "citation": {
+          "bibtex_key": "brookings2018landuse_solar",
+          "author": "Brookings Institution",
+          "title": "The Land Use of Energy",
+          "year": 2018,
+          "publisher": "Brookings Institution Press",
+          "url": "https://www.brookings.edu/articles/the-land-use-of-energy/",
+          "accessed": "2026-04-09"
+        }
+      },
+      "lifecycleCO2": {
+        "value": 44,
+        "unit": "gCO2eq/kWh",
+        "citation": {
+          "bibtex_key": "ipcc2014ghg_solar",
+          "author": "IPCC",
+          "title": "Climate Change 2014: Mitigation of Climate Change, Annex III — Utility-scale PV",
+          "year": 2014,
+          "publisher": "Cambridge University Press",
+          "url": "https://www.ipcc.ch/report/ar5/wg3/",
+          "accessed": "2026-04-09"
+        },
+        "note": "Includes panel manufacturing, installation, and end-of-life. Field operations are near-zero."
+      },
+      "deathsPerTWh": {
+        "value": 0.05,
+        "unit": "deaths/TWh",
+        "normalizeThreshold": 0.1,
+        "citation": {
+          "bibtex_key": "owid2024deaths_solar",
+          "author": "Our World in Data",
+          "title": "What are the safest and cleanest sources of energy?",
+          "year": 2024,
+          "publisher": "Our World in Data",
+          "url": "https://ourworldindata.org/safest-sources-of-energy",
+          "accessed": "2026-04-09"
+        },
+        "note": "Primarily rooftop installation accidents. Below-threshold values fall back to absolute when normalized."
+      },
+      "lcoe": {
+        "value": 46,
+        "unit": "$/MWh",
+        "citation": {
+          "bibtex_key": "lazard2024lcoe_solar",
+          "author": "Lazard",
+          "title": "Levelized Cost of Energy Analysis, Utility-Scale Solar (midpoint)",
+          "year": 2024,
+          "version": "v17.0",
+          "publisher": "Lazard Ltd.",
+          "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-version-17/",
+          "accessed": "2026-04-09"
+        },
+        "note": "Unsubsidized. Does not include storage or grid integration costs."
+      },
+      "energyDensity": {
+        "value": 0,
+        "unit": "MJ/kg",
+        "citation": {
+          "bibtex_key": "physicsofenergy_solar",
+          "author": "Physics Reference",
+          "title": "Solar irradiance is a flow, not a stock — energy density not directly comparable",
+          "year": 2024,
+          "publisher": "Self",
+          "url": "https://en.wikipedia.org/wiki/Solar_irradiance",
+          "accessed": "2026-04-09"
+        },
+        "note": "Solar energy is a flow resource, not a stored fuel. Energy density is not a meaningful comparison for solar."
+      },
+      "constructionTime": {
+        "value": 1.5,
+        "unit": "years",
+        "citation": {
+          "bibtex_key": "nrel2024construction_solar",
+          "author": "National Renewable Energy Laboratory",
+          "title": "Utility-Scale Solar Construction Time",
+          "year": 2024,
+          "publisher": "NREL",
+          "url": "https://www.nrel.gov/",
+          "accessed": "2026-04-09"
+        }
+      },
+      "dispatchability": {
+        "category": "intermittent",
+        "label": "Intermittent",
+        "citation": {
+          "bibtex_key": "eia2024dispatch_solar",
+          "author": "U.S. Energy Information Administration",
+          "title": "Electricity Reliability — Solar Capacity Credit",
+          "year": 2024,
+          "publisher": "EIA",
+          "url": "https://www.eia.gov/electricity/",
+          "accessed": "2026-04-09"
+        },
+        "note": "Generation depends on time of day, weather, and season. Storage required for dispatchable behavior."
+      }
+    }
+  ]
+}

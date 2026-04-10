@@ -4,3 +4,22 @@ node_modules/
 .next/
 .vercel/
 *.log
+
+# Next.js
+next-env.d.ts
+.env*.local
+*.tsbuildinfo
+
+# Bun (legacy binary lockfile — modern Bun uses bun.lock which IS committed)
+bun.lockb
+
+# Test artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+coverage/
+
+# Generated data files (compiled from data-src/ at build time)
+# Commit them for diff visibility — uncomment to ignore.
+# /public/data/sources.json
+# /public/data/presets.json

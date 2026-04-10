@@ -159,17 +159,22 @@ These are NOT the brand accent. The brand accent is rust. Reserve semantic color
 
 **There are no decorative icons.** This is a deliberate constraint.
 
-When functional iconography is needed (rare):
+### What IS allowed (functional only):
 
-- **Cite this:** the literal characters `{}` in monospace, not an icon
-- **External link indicator:** the literal character `↗` in body type
-- **Loading state:** a thin spinning ring (not an icon, a CSS-only element)
-- **Error states:** the literal characters `!` or `×` in display type
-- **Section markers:** `//` and `/` as visual punctuation in monospace eyebrow text
+- **Literal characters in type** as functional indicators: `{}` for cite-this, `↗` for external link, `×` for close, `!` for error, `?` for help, `//` and `/` as section markers in eyebrow text
+- **CSS-drawn geometric shapes** for non-iconic UI elements: the year slider handle (a circle), the brand mark dot in `Enriched.` (a literal period in rust)
+- **The brand mark itself** as an inline atom symbol if absolutely needed — single character, drawn with CSS, never as an SVG icon library asset
 
-Brand mark uses a literal period (`.`) in the rust accent color: `Enriched.`
+### What is NOT allowed:
 
-If we ever need true iconography (e.g., social media share buttons), use Lucide icons (open-source, monoline, geometric) and keep them at body text size with `currentColor`. Never use filled icons. Never use colored icons.
+- **SVG icons of any kind** — not hand-drawn, not from a library
+- **Icon fonts** — no Font Awesome, no Lucide React, no Heroicons, no Phosphor, no Lucide. Period.
+- **Filled icons or colored icons** — even if you somehow imported them, never fill them with anything but `currentColor`
+- **Decorative imagery** — no hero images, no illustration libraries, no stock photos, no vector graphics that aren't data visualizations
+
+### Functional exceptions if absolutely required (rare, future):
+
+If, in a much later module, you genuinely need an iconographic affordance (e.g., a play button on an embedded video), use a literal character or a CSS-drawn shape first. Only fall back to a single hand-coded inline SVG when the literal character would be illegible or culturally ambiguous. Document the exception in the Decisions Log with the rationale.
 
 ## Component Patterns
 
