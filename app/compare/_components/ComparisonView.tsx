@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useQueryStates } from "nuqs";
 import type { Source, Preset, SourceId, NormalizeOption } from "@/lib/data-types";
 import { sourcesParser, normalizeParser, presetParser, yearParser } from "@/lib/url-state";
@@ -51,9 +51,30 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
         const nextSources = current.includes(id)
           ? current.filter((s) => s !== id)
           : [...current, id];
+
+        // Keep the baseline in sync with the selection. The mental model is
+        // "the black / full-opacity source is the benchmark" — if that source
+        // leaves the set, the benchmark has to move. If we drop to a single
+        // source, there's nothing meaningful to compare against, so baseline
+        // collapses to "none". Going from 1 → 2+ sources auto-picks the first
+        // as the benchmark so the user gets immediate ×N multiples.
+        const prevBaseline = prev.normalize ?? "none";
+        let nextBaseline: NormalizeOption = prevBaseline;
+
+        if (nextSources.length < 2) {
+          nextBaseline = "none";
+        } else if (
+          prevBaseline !== "none" &&
+          !nextSources.includes(prevBaseline as SourceId)
+        ) {
+          nextBaseline = nextSources[0] as NormalizeOption;
+        } else if (prevBaseline === "none") {
+          nextBaseline = nextSources[0] as NormalizeOption;
+        }
+
         // Manually toggling a pill clears any active preset because the
         // state no longer matches the preset's canonical configuration.
-        return { sources: nextSources, preset: "" };
+        return { sources: nextSources, normalize: nextBaseline, preset: "" };
       });
     },
     [setUrlState],
@@ -125,10 +146,24 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Get the Source objects for the selected IDs, preserving selection order
-  const activeSources = (selectedSources ?? [])
-    .map((id) => sources.find((s) => s.id === id))
-    .filter((s): s is Source => s !== undefined);
+  // Resolve selected IDs to Source objects, then hoist the baseline to the
+  // top so the "first bar = benchmark" invariant holds visually. The URL
+  // order is preserved for non-baseline sources; we only move the baseline.
+  const activeSources = useMemo<ReadonlyArray<Source>>(() => {
+    const resolved = (selectedSources ?? [])
+      .map((id) => sources.find((s) => s.id === id))
+      .filter((s): s is Source => s !== undefined);
+
+    if (normalizeBaseline === "none" || normalizeBaseline == null) return resolved;
+
+    const baselineIdx = resolved.findIndex((s) => s.id === normalizeBaseline);
+    if (baselineIdx <= 0) return resolved;
+
+    const reordered = [...resolved];
+    const [baseline] = reordered.splice(baselineIdx, 1);
+    if (baseline) reordered.unshift(baseline);
+    return reordered;
+  }, [selectedSources, normalizeBaseline, sources]);
 
   return (
     <div>
