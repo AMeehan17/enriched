@@ -32,6 +32,38 @@ export function normalizeValue(
 }
 
 /**
+ * Format a ratio for display in a "N× more than" callout.
+ *
+ * Uses graduated precision so the number stays readable across wildly
+ * different magnitudes:
+ * - Under 10 → one decimal ("2.3×")
+ * - 10 to 99 → integer ("45×")
+ * - 100 and up → rounded to 2 significant figures with a thousands
+ *   separator and a "~" prefix to telegraph approximation ("~70,000×")
+ *
+ * The approximation matters for this product: energy density ratios
+ * between nuclear and fossil fuels land around 70,000× to 160,000×, and
+ * the exact digit is noise. "~70,000× more energy per kg" lands
+ * intuitively; "69,642.857×" just looks like false precision.
+ */
+export function formatRatio(ratio: number): string {
+  if (!Number.isFinite(ratio) || ratio <= 0) return "—";
+  // Sub-unit ratios: avoid collapsing tiny-but-meaningful values to "0.0×".
+  // Below ~1/1000 we escape to scientific notation — at that point, a decimal
+  // rendering becomes visual noise anyway. 56/3,900,000 becomes "1.4e-5×",
+  // which correctly signals "the two numbers are in different universes"
+  // without lying about precision.
+  if (ratio < 0.001) return `${ratio.toExponential(1)}×`;
+  if (ratio < 0.1) return `${ratio.toFixed(2)}×`;
+  if (ratio < 10) return `${ratio.toFixed(1)}×`;
+  if (ratio < 100) return `${Math.round(ratio)}×`;
+  const magnitude = Math.floor(Math.log10(ratio));
+  const divisor = Math.pow(10, magnitude - 1);
+  const rounded = Math.round(ratio / divisor) * divisor;
+  return `~${rounded.toLocaleString()}×`;
+}
+
+/**
  * Convert raw project construction years into "years to deliver 1 GW of
  * average continuous output" by dividing by capacity factor.
  *
