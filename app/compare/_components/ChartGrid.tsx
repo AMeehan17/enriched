@@ -14,6 +14,7 @@ import {
   TIME_VARYING_DIMENSION_IDS,
   DEFAULT_YEAR,
 } from "@/lib/data-types";
+import { normalizeValue, adjustConstructionTimeForCF } from "@/lib/chart-math";
 import { CiteButton } from "./CiteButton";
 
 interface ChartGridProps {
@@ -66,8 +67,38 @@ const DIMENSION_META: Record<
   deathsPerTWh: { label: "Deaths per TWh", unit: "including air pollution (OWID)" },
   lcoe: { label: "Levelized Cost of Energy", unit: "$/MWh (Lazard 2024)" },
   energyDensity: { label: "Energy Density", unit: "MJ per kg of fuel" },
-  constructionTime: { label: "Construction Time", unit: "years to commercial operation" },
+  constructionTime: { label: "Construction Time", unit: "years to deliver 1 GW avg continuous (raw yr ÷ CF)" },
   dispatchability: { label: "Dispatchability", unit: "can it respond to demand?" },
+};
+
+/**
+ * Construction time is stored as raw project years (typical ~1 GW build),
+ * but that's misleading on its own: a 1 GW solar farm delivers ~25% of a
+ * 1 GW nuclear plant's actual energy. Dividing raw years by capacity factor
+ * gives "years to bring 1 GW of *average continuous output* online," which
+ * normalizes the metric to a per-energy basis.
+ *
+ * We apply this adjustment at render time so the underlying data file stays
+ * a clean store of raw observed values.
+ */
+function adjustForEnergyBasis(
+  rawValue: number,
+  dimId: NumericDimensionId,
+  source: Source,
+  year: number,
+): number {
+  if (dimId !== "constructionTime") return rawValue;
+  const cf = resolveAtYear(source.capacityFactor, year).value;
+  return adjustConstructionTimeForCF(rawValue, cf);
+}
+
+/**
+ * Fixed axis ceilings for dimensions with a natural scale (e.g. percentages).
+ * When set, the bar axis uses this instead of max-across-sources — so capacity
+ * factor reads against a canonical 0–100 scale rather than a relative one.
+ */
+const FIXED_SCALE_MAX: Partial<Record<NumericDimensionId, number>> = {
+  capacityFactor: 100,
 };
 
 /**
@@ -81,14 +112,22 @@ const DIMENSION_META: Record<
 function getMaxValue(
   allSources: ReadonlyArray<Source>,
   dimId: NumericDimensionId,
+  year: number,
 ): number {
+  const fixed = FIXED_SCALE_MAX[dimId];
+  if (fixed !== undefined) return fixed;
+
   let max = 0;
   for (const source of allSources) {
     const dim = source[dimId];
-    if (dim.value > 0 && dim.value > max) max = dim.value;
+    // For constructionTime we scale against the CF-adjusted values so the
+    // bar axis matches what the user actually sees in the numbers column.
+    const adjusted = adjustForEnergyBasis(dim.value, dimId, source, year);
+    if (adjusted > 0 && adjusted > max) max = adjusted;
     if (dim.history) {
       for (const h of dim.history) {
-        if (h.value > max) max = h.value;
+        const hAdjusted = adjustForEnergyBasis(h.value, dimId, source, h.year);
+        if (hAdjusted > max) max = hAdjusted;
       }
     }
   }
@@ -96,18 +135,11 @@ function getMaxValue(
 }
 
 /**
- * Compute the normalized display value. Returns null if the baseline value
- * is below the normalize threshold (divide-by-small-number guard).
+ * Cycling rust-accent opacities for stacked sources in a single dimension.
+ * First source is full strength; subsequent sources step down so they stay
+ * distinguishable without introducing new hues.
  */
-function normalizeValue(
-  value: number,
-  baselineValue: number,
-  threshold: number | undefined,
-): number | null {
-  if (baselineValue === 0) return null;
-  if (threshold !== undefined && baselineValue < threshold) return null;
-  return value / baselineValue;
-}
+const BAR_OPACITIES = [1, 0.55, 0.32, 0.2] as const;
 
 export function ChartGrid({ sources, allSources, normalizeBaseline, year }: ChartGridProps) {
   const baselineSource = normalizeBaseline !== "none"
@@ -119,7 +151,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
       {/* Numeric dimensions — rendered as horizontal bars */}
       {NUMERIC_DIMENSION_IDS.map((dimId) => {
         const meta = DIMENSION_META[dimId];
-        const maxVal = getMaxValue(allSources, dimId);
+        const maxVal = getMaxValue(allSources, dimId, year);
         const timeVarying = isTimeVarying(dimId);
 
         return (
@@ -144,7 +176,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
               {sources.map((source, idx) => {
                 const dim = source[dimId];
                 const resolved = resolveAtYear(dim, year);
-                const displayValue = resolved.value;
+                const displayValue = adjustForEnergyBasis(resolved.value, dimId, source, year);
                 const displayCitation = resolved.citation;
                 const isNotApplicable = displayValue === 0 && dimId === "energyDensity";
                 const barWidth = maxVal > 0 && !isNotApplicable
@@ -156,15 +188,21 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                 if (baselineSource && !isNotApplicable) {
                   const baselineDim = baselineSource[dimId];
                   const baselineResolved = resolveAtYear(baselineDim, year);
+                  const baselineAdjusted = adjustForEnergyBasis(
+                    baselineResolved.value,
+                    dimId,
+                    baselineSource,
+                    year,
+                  );
                   normalizedMultiple = normalizeValue(
                     displayValue,
-                    baselineResolved.value,
+                    baselineAdjusted,
                     baselineDim.normalizeThreshold,
                   );
                 }
 
-                // Cycle through data colors so 3rd+ sources stay visually distinct
-                const barColorVar = `--color-data-${(idx % 3) + 1}`;
+                // Cycle rust opacity so stacked sources stay distinguishable
+                const barOpacity = BAR_OPACITIES[idx % BAR_OPACITIES.length];
 
                 return (
                   <div
@@ -183,10 +221,10 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                       {source.label}
                     </span>
 
-                    {/* Bar */}
-                    <div className="h-[22px] relative">
+                    {/* Bar — rust fill against a faint track so the full axis reads as the scale */}
+                    <div className="h-[22px] relative bg-[var(--color-rule)]">
                       {isNotApplicable ? (
-                        <div className="h-full flex items-center">
+                        <div className="h-full flex items-center pl-[var(--spacing-2)]">
                           <span className="font-[family-name:var(--font-mono)] text-[length:var(--text-xs)] text-[var(--color-text-faint)] italic">
                             not applicable — flow resource
                           </span>
@@ -196,7 +234,8 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                           className="h-full transition-[width] duration-[var(--duration-medium)]"
                           style={{
                             width: `${barWidth}%`,
-                            backgroundColor: `var(${barColorVar})`,
+                            backgroundColor: "var(--color-accent)",
+                            opacity: barOpacity,
                           }}
                         />
                       )}
