@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Spline_Sans_Mono, Instrument_Sans, JetBrains_Mono } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
 // next/font/google self-hosts the fonts at build time. Zero CLS, no external
@@ -69,7 +70,9 @@ export default function RootLayout({
       lang="en"
       className={`${splineSansMono.variable} ${instrumentSans.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <NuqsAdapter>{children}</NuqsAdapter>
+      </body>
     </html>
   );
 }
