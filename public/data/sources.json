@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-04-12T01:56:37.672Z",
+  "lastUpdated": "2026-04-12T03:52:12.030Z",
   "schemaVersion": 1,
   "sources": [
     {
@@ -60,18 +60,119 @@
         }
       },
       "lcoe": {
-        "value": 141,
+        "value": 182,
         "unit": "$/MWh",
         "citation": {
           "bibtex_key": "lazard2024lcoe_nuclear",
           "author": "Lazard",
-          "title": "Levelized Cost of Energy Analysis, Nuclear (midpoint)",
+          "title": "Levelized Cost of Energy+ v17.0, Nuclear (inflation-adjusted from v14.0)",
           "year": 2024,
           "version": "v17.0",
           "publisher": "Lazard Ltd.",
-          "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-version-17/",
-          "accessed": "2026-04-09"
-        }
+          "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-plus/",
+          "accessed": "2026-04-11"
+        },
+        "note": "Lazard stopped freshly computing new-build nuclear LCOE after v14.0 (2020). 2023+ values are CPI-adjusted from the underlying 2020 analysis, not fresh bottom-up estimates.",
+        "history": [
+          {
+            "year": 2018,
+            "value": 150.5,
+            "citation": {
+              "bibtex_key": "lazard2018lcoev12_nuclear",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v12.0, Nuclear (midpoint)",
+              "year": 2018,
+              "version": "v12.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2019,
+            "value": 155,
+            "citation": {
+              "bibtex_key": "lazard2019lcoev13_nuclear",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v13.0, Nuclear (midpoint)",
+              "year": 2019,
+              "version": "v13.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2020,
+            "value": 163.5,
+            "citation": {
+              "bibtex_key": "lazard2020lcoev14_nuclear",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v14.0, Nuclear (midpoint)",
+              "year": 2020,
+              "version": "v14.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2021,
+            "value": 167.5,
+            "citation": {
+              "bibtex_key": "lazard2021lcoev15_nuclear",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v15.0, Nuclear (midpoint)",
+              "year": 2021,
+              "version": "v15.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2023,
+            "value": 181,
+            "citation": {
+              "bibtex_key": "lazard2023lcoev16_nuclear",
+              "author": "Lazard",
+              "title": "LCOE+ v16.0, Nuclear (inflation-adjusted from v15.0)",
+              "year": 2023,
+              "version": "v16.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2024,
+            "value": 182,
+            "citation": {
+              "bibtex_key": "lazard2024lcoev17_nuclear",
+              "author": "Lazard",
+              "title": "LCOE+ v17.0, Nuclear (inflation-adjusted from v14.0)",
+              "year": 2024,
+              "version": "v17.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2025,
+            "value": 180.5,
+            "citation": {
+              "bibtex_key": "lazard2025lcoev18_nuclear",
+              "author": "Lazard",
+              "title": "LCOE+ v18.0, Nuclear (inflation-adjusted from v14.0)",
+              "year": 2025,
+              "version": "v18.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          }
+        ]
       },
       "energyDensity": {
         "value": 3900000,
@@ -175,19 +276,119 @@
         "note": "Primarily rooftop installation accidents. Below-threshold values fall back to absolute when normalized."
       },
       "lcoe": {
-        "value": 46,
+        "value": 60.5,
         "unit": "$/MWh",
         "citation": {
           "bibtex_key": "lazard2024lcoe_solar",
           "author": "Lazard",
-          "title": "Levelized Cost of Energy Analysis, Utility-Scale Solar (midpoint)",
+          "title": "LCOE+ v17.0, Utility-Scale Solar PV (midpoint)",
           "year": 2024,
           "version": "v17.0",
           "publisher": "Lazard Ltd.",
-          "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-version-17/",
-          "accessed": "2026-04-09"
+          "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-plus/",
+          "accessed": "2026-04-11"
         },
-        "note": "Unsubsidized. Does not include storage or grid integration costs."
+        "note": "Unsubsidized. Does not include storage or grid integration costs. v16 merged crystalline + thin-film into one row, which widened the reported range.",
+        "history": [
+          {
+            "year": 2018,
+            "value": 43,
+            "citation": {
+              "bibtex_key": "lazard2018lcoev12_solar",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v12.0, Solar PV Utility-Scale (midpoint)",
+              "year": 2018,
+              "version": "v12.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2019,
+            "value": 40,
+            "citation": {
+              "bibtex_key": "lazard2019lcoev13_solar",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v13.0, Solar PV Utility-Scale (midpoint)",
+              "year": 2019,
+              "version": "v13.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2020,
+            "value": 36.5,
+            "citation": {
+              "bibtex_key": "lazard2020lcoev14_solar",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v14.0, Solar PV Utility-Scale (midpoint)",
+              "year": 2020,
+              "version": "v14.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2021,
+            "value": 35.5,
+            "citation": {
+              "bibtex_key": "lazard2021lcoev15_solar",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v15.0, Solar PV Utility-Scale (midpoint)",
+              "year": 2021,
+              "version": "v15.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2023,
+            "value": 60,
+            "citation": {
+              "bibtex_key": "lazard2023lcoev16_solar",
+              "author": "Lazard",
+              "title": "LCOE+ v16.0, Solar PV Utility-Scale (midpoint)",
+              "year": 2023,
+              "version": "v16.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2024,
+            "value": 60.5,
+            "citation": {
+              "bibtex_key": "lazard2024lcoev17_solar",
+              "author": "Lazard",
+              "title": "LCOE+ v17.0, Solar PV Utility-Scale (midpoint)",
+              "year": 2024,
+              "version": "v17.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2025,
+            "value": 58,
+            "citation": {
+              "bibtex_key": "lazard2025lcoev18_solar",
+              "author": "Lazard",
+              "title": "LCOE+ v18.0, Solar PV Utility-Scale (midpoint)",
+              "year": 2025,
+              "version": "v18.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          }
+        ]
       },
       "energyDensity": {
         "value": 0,
@@ -296,13 +497,114 @@
         "citation": {
           "bibtex_key": "lazard2024lcoe_wind",
           "author": "Lazard",
-          "title": "Levelized Cost of Energy+ Analysis, Onshore Wind (midpoint)",
+          "title": "LCOE+ v17.0, Onshore Wind (midpoint)",
           "year": 2024,
           "version": "v17.0",
           "publisher": "Lazard Ltd.",
           "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-plus/",
           "accessed": "2026-04-11"
-        }
+        },
+        "note": "2025 low end jumped from $27 to $37 — first ever low-end increase per Lazard, driven by interest rates + interconnection delays + tariffs.",
+        "history": [
+          {
+            "year": 2018,
+            "value": 42.5,
+            "citation": {
+              "bibtex_key": "lazard2018lcoev12_wind",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v12.0, Onshore Wind (midpoint)",
+              "year": 2018,
+              "version": "v12.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2019,
+            "value": 41,
+            "citation": {
+              "bibtex_key": "lazard2019lcoev13_wind",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v13.0, Onshore Wind (midpoint)",
+              "year": 2019,
+              "version": "v13.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2020,
+            "value": 40,
+            "citation": {
+              "bibtex_key": "lazard2020lcoev14_wind",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v14.0, Onshore Wind (midpoint)",
+              "year": 2020,
+              "version": "v14.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2021,
+            "value": 38,
+            "citation": {
+              "bibtex_key": "lazard2021lcoev15_wind",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v15.0, Onshore Wind (midpoint)",
+              "year": 2021,
+              "version": "v15.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2023,
+            "value": 49.5,
+            "citation": {
+              "bibtex_key": "lazard2023lcoev16_wind",
+              "author": "Lazard",
+              "title": "LCOE+ v16.0, Onshore Wind (midpoint)",
+              "year": 2023,
+              "version": "v16.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2024,
+            "value": 50,
+            "citation": {
+              "bibtex_key": "lazard2024lcoev17_wind",
+              "author": "Lazard",
+              "title": "LCOE+ v17.0, Onshore Wind (midpoint)",
+              "year": 2024,
+              "version": "v17.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2025,
+            "value": 61.5,
+            "citation": {
+              "bibtex_key": "lazard2025lcoev18_wind",
+              "author": "Lazard",
+              "title": "LCOE+ v18.0, Onshore Wind (midpoint)",
+              "year": 2025,
+              "version": "v18.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          }
+        ]
       },
       "energyDensity": {
         "value": 0,
@@ -412,13 +714,113 @@
         "citation": {
           "bibtex_key": "lazard2024lcoe_gas",
           "author": "Lazard",
-          "title": "Levelized Cost of Energy+ Analysis, Gas Combined Cycle (midpoint)",
+          "title": "LCOE+ v17.0, Gas Combined Cycle (midpoint)",
           "year": 2024,
           "version": "v17.0",
           "publisher": "Lazard Ltd.",
           "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-plus/",
           "accessed": "2026-04-11"
-        }
+        },
+        "history": [
+          {
+            "year": 2018,
+            "value": 57.5,
+            "citation": {
+              "bibtex_key": "lazard2018lcoev12_gas",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v12.0, Gas CC (midpoint)",
+              "year": 2018,
+              "version": "v12.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2019,
+            "value": 56,
+            "citation": {
+              "bibtex_key": "lazard2019lcoev13_gas",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v13.0, Gas CC (midpoint)",
+              "year": 2019,
+              "version": "v13.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2020,
+            "value": 58.5,
+            "citation": {
+              "bibtex_key": "lazard2020lcoev14_gas",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v14.0, Gas CC (midpoint)",
+              "year": 2020,
+              "version": "v14.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2021,
+            "value": 59.5,
+            "citation": {
+              "bibtex_key": "lazard2021lcoev15_gas",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v15.0, Gas CC (midpoint)",
+              "year": 2021,
+              "version": "v15.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2023,
+            "value": 70,
+            "citation": {
+              "bibtex_key": "lazard2023lcoev16_gas",
+              "author": "Lazard",
+              "title": "LCOE+ v16.0, Gas CC (midpoint)",
+              "year": 2023,
+              "version": "v16.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2024,
+            "value": 76.5,
+            "citation": {
+              "bibtex_key": "lazard2024lcoev17_gas",
+              "author": "Lazard",
+              "title": "LCOE+ v17.0, Gas CC (midpoint)",
+              "year": 2024,
+              "version": "v17.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2025,
+            "value": 78.5,
+            "citation": {
+              "bibtex_key": "lazard2025lcoev18_gas",
+              "author": "Lazard",
+              "title": "LCOE+ v18.0, Gas CC (midpoint)",
+              "year": 2025,
+              "version": "v18.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          }
+        ]
       },
       "energyDensity": {
         "value": 55.5,
@@ -528,14 +930,114 @@
         "citation": {
           "bibtex_key": "lazard2024lcoe_coal",
           "author": "Lazard",
-          "title": "Levelized Cost of Energy+ Analysis, Coal (inflation-adjusted from v14.0)",
+          "title": "LCOE+ v17.0, Coal (inflation-adjusted from v14.0)",
           "year": 2024,
           "version": "v17.0",
           "publisher": "Lazard Ltd.",
           "url": "https://www.lazard.com/research-insights/levelized-cost-of-energy-plus/",
           "accessed": "2026-04-11"
         },
-        "note": "Lazard stopped computing fresh new-build coal LCOE after v14.0 (2020). This value is CPI-adjusted, not a fresh bottom-up estimate."
+        "note": "Lazard stopped computing fresh new-build coal LCOE after v14.0 (2020). 2023+ values are CPI-adjusted, not fresh bottom-up estimates.",
+        "history": [
+          {
+            "year": 2018,
+            "value": 101.5,
+            "citation": {
+              "bibtex_key": "lazard2018lcoev12_coal",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v12.0, Coal (midpoint)",
+              "year": 2018,
+              "version": "v12.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2019,
+            "value": 109,
+            "citation": {
+              "bibtex_key": "lazard2019lcoev13_coal",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v13.0, Coal (midpoint)",
+              "year": 2019,
+              "version": "v13.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2020,
+            "value": 112,
+            "citation": {
+              "bibtex_key": "lazard2020lcoev14_coal",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v14.0, Coal (midpoint)",
+              "year": 2020,
+              "version": "v14.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2021,
+            "value": 108.5,
+            "citation": {
+              "bibtex_key": "lazard2021lcoev15_coal",
+              "author": "Lazard",
+              "title": "Levelized Cost of Energy v15.0, Coal (midpoint)",
+              "year": 2021,
+              "version": "v15.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2023,
+            "value": 117,
+            "citation": {
+              "bibtex_key": "lazard2023lcoev16_coal",
+              "author": "Lazard",
+              "title": "LCOE+ v16.0, Coal (inflation-adjusted)",
+              "year": 2023,
+              "version": "v16.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2024,
+            "value": 118.5,
+            "citation": {
+              "bibtex_key": "lazard2024lcoev17_coal",
+              "author": "Lazard",
+              "title": "LCOE+ v17.0, Coal (inflation-adjusted)",
+              "year": 2024,
+              "version": "v17.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          },
+          {
+            "year": 2025,
+            "value": 122,
+            "citation": {
+              "bibtex_key": "lazard2025lcoev18_coal",
+              "author": "Lazard",
+              "title": "LCOE+ v18.0, Coal (inflation-adjusted)",
+              "year": 2025,
+              "version": "v18.0",
+              "publisher": "Lazard Ltd.",
+              "url": "https://www.lazard.com/research-insights/",
+              "accessed": "2026-04-11"
+            }
+          }
+        ]
       },
       "energyDensity": {
         "value": 24,

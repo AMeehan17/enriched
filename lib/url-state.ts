@@ -2,9 +2,17 @@ import {
   parseAsArrayOf,
   parseAsStringLiteral,
   parseAsString,
+  parseAsInteger,
   type ParserBuilder,
 } from "nuqs";
-import { SOURCE_IDS, type SourceId, type NormalizeOption } from "./data-types";
+import {
+  SOURCE_IDS,
+  MIN_YEAR,
+  MAX_YEAR,
+  DEFAULT_YEAR,
+  type SourceId,
+  type NormalizeOption,
+} from "./data-types";
 
 /**
  * URL state parsers for Module 1.
@@ -39,7 +47,14 @@ const NORMALIZE_VALUES = [...SOURCE_IDS, "none"] as const;
 export const normalizeParser: ParserBuilder<NormalizeOption> =
   parseAsStringLiteral(NORMALIZE_VALUES).withDefault("none");
 
-// ─── preset (reserved, wired in next iteration) ─────────────────────
-// parseAsString with whitelist validation deferred to the consumer until
-// the preset pill row lands. Placeholder export.
-export const presetParser = parseAsString;
+// ─── year ────────────────────────────────────────────────────────────
+// Integer year 2010-2026. Defaults to 2024. Out-of-range values clamp
+// to the default. Only LCOE and capacityFactor actually vary year over
+// year; other dimensions render their static current-year value regardless.
+export const yearParser = parseAsInteger.withDefault(DEFAULT_YEAR);
+
+// ─── preset ──────────────────────────────────────────────────────────
+// Preset slug, or null when no preset is active. Validation of the slug
+// against known presets happens at the consumer (ComparisonView) so we
+// don't have to hardcode preset IDs here.
+export const presetParser = parseAsString.withDefault("");

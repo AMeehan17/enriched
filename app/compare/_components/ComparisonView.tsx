@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback } from "react";
-import { useQueryState } from "nuqs";
+import { useCallback, useEffect, useRef } from "react";
+import { useQueryStates } from "nuqs";
 import type { Source, Preset, SourceId, NormalizeOption } from "@/lib/data-types";
-import { sourcesParser, normalizeParser } from "@/lib/url-state";
+import { sourcesParser, normalizeParser, presetParser, yearParser } from "@/lib/url-state";
+import { DEFAULT_YEAR } from "@/lib/data-types";
 import { SourcePills } from "./SourcePills";
 import { NormalizeDropdown } from "./NormalizeDropdown";
 import { ChartGrid } from "./ChartGrid";
+import { PresetPills } from "./PresetPills";
+import { PresetBanner } from "./PresetBanner";
+import { YearSlider } from "./YearSlider";
 
 /**
  * ComparisonView — the client root that owns all interactive state.
@@ -24,34 +28,102 @@ interface ComparisonViewProps {
 }
 
 export function ComparisonView({ sources, presets }: ComparisonViewProps) {
-  const [selectedSources, setSelectedSources] = useQueryState(
-    "sources",
-    sourcesParser,
-  );
-  const [normalizeBaseline, setNormalizeBaseline] = useQueryState(
-    "normalize",
-    normalizeParser,
-  );
+  // All URL params managed atomically via useQueryStates.
+  // Batching matters: when a preset is applied, sources + normalize + preset
+  // must update in a single navigation so the URL is never in an inconsistent
+  // intermediate state.
+  const [urlState, setUrlState] = useQueryStates({
+    sources: sourcesParser,
+    normalize: normalizeParser,
+    preset: presetParser,
+    year: yearParser,
+  });
+
+  const selectedSources = urlState.sources;
+  const normalizeBaseline = urlState.normalize;
+  const activePresetSlug = urlState.preset;
+  const year = urlState.year;
 
   const toggleSource = useCallback(
     (id: SourceId) => {
-      void setSelectedSources((prev) => {
-        const current = prev ?? [];
-        if (current.includes(id)) {
-          return current.filter((s) => s !== id);
-        }
-        return [...current, id];
+      void setUrlState((prev) => {
+        const current = prev.sources ?? [];
+        const nextSources = current.includes(id)
+          ? current.filter((s) => s !== id)
+          : [...current, id];
+        // Manually toggling a pill clears any active preset because the
+        // state no longer matches the preset's canonical configuration.
+        return { sources: nextSources, preset: "" };
       });
     },
-    [setSelectedSources],
+    [setUrlState],
   );
 
   const handleBaselineChange = useCallback(
     (baseline: NormalizeOption) => {
-      void setNormalizeBaseline(baseline);
+      void setUrlState({ normalize: baseline, preset: "" });
     },
-    [setNormalizeBaseline],
+    [setUrlState],
   );
+
+  const handlePresetClick = useCallback(
+    (preset: Preset) => {
+      void setUrlState({
+        sources: [...preset.sources],
+        normalize: preset.normalize,
+        preset: preset.slug,
+        year: preset.year,
+      });
+    },
+    [setUrlState],
+  );
+
+  const handleYearChange = useCallback(
+    (nextYear: number) => {
+      // Year changes don't clear the preset — the time machine works
+      // alongside preset comparisons.
+      void setUrlState({ year: nextYear });
+    },
+    [setUrlState],
+  );
+
+  const clearPreset = useCallback(() => {
+    void setUrlState({ preset: "" });
+  }, [setUrlState]);
+
+  const activePreset = activePresetSlug
+    ? presets.find((p) => p.slug === activePresetSlug)
+    : undefined;
+
+  // Hydrate from preset on mount. If a user lands on /compare?preset=X with
+  // no other params, apply the preset's full state. This makes preset URLs
+  // work as "rebuttal-in-a-link" even when only the preset param is present.
+  //
+  // Runs exactly once on mount. We track via a ref so React strict mode
+  // double-invocation and subsequent renders don't re-apply.
+  const hydratedFromPresetRef = useRef(false);
+  useEffect(() => {
+    if (hydratedFromPresetRef.current) return;
+    hydratedFromPresetRef.current = true;
+
+    if (!activePreset) return;
+
+    // Only auto-apply if sources + normalize are still at defaults.
+    // If the user already has a custom state, don't clobber it.
+    const url = new URL(window.location.href);
+    const hasSourcesParam = url.searchParams.has("sources");
+    const hasNormalizeParam = url.searchParams.has("normalize");
+
+    if (!hasSourcesParam && !hasNormalizeParam) {
+      void setUrlState({
+        sources: [...activePreset.sources],
+        normalize: activePreset.normalize,
+        preset: activePreset.slug,
+      });
+    }
+    // intentionally empty deps — this is a mount-only hydration
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Get the Source objects for the selected IDs, preserving selection order
   const activeSources = (selectedSources ?? [])
@@ -80,8 +152,19 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
         </p>
       </div>
 
+      {/* Preset banner (visible only when a preset is active) */}
+      {activePreset && (
+        <PresetBanner preset={activePreset} onDismiss={clearPreset} />
+      )}
+
       {/* Toolbar */}
       <div className="mb-[var(--spacing-8)]">
+        <PresetPills
+          presets={presets}
+          activeSlug={activePresetSlug ?? ""}
+          onPresetClick={handlePresetClick}
+        />
+
         <SourcePills
           sources={sources}
           selected={selectedSources ?? []}
@@ -93,6 +176,11 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
           selected={selectedSources ?? []}
           baseline={normalizeBaseline ?? "none"}
           onBaselineChange={handleBaselineChange}
+        />
+
+        <YearSlider
+          year={year ?? DEFAULT_YEAR}
+          onYearChange={handleYearChange}
         />
       </div>
 
@@ -108,6 +196,7 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
           sources={activeSources}
           allSources={sources}
           normalizeBaseline={normalizeBaseline ?? "none"}
+          year={year ?? DEFAULT_YEAR}
         />
       )}
 

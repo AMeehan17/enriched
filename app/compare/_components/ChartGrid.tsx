@@ -1,12 +1,58 @@
 "use client";
 
-import type { Source, NormalizeOption, NumericDimensionId, CategoricalDimensionId } from "@/lib/data-types";
-import { NUMERIC_DIMENSION_IDS, CATEGORICAL_DIMENSION_IDS } from "@/lib/data-types";
+import type {
+  Source,
+  NormalizeOption,
+  NumericDimensionId,
+  CategoricalDimensionId,
+  NumericDimensionValue,
+  Citation,
+} from "@/lib/data-types";
+import {
+  NUMERIC_DIMENSION_IDS,
+  CATEGORICAL_DIMENSION_IDS,
+  TIME_VARYING_DIMENSION_IDS,
+  DEFAULT_YEAR,
+} from "@/lib/data-types";
+import { CiteButton } from "./CiteButton";
 
 interface ChartGridProps {
   sources: ReadonlyArray<Source>;
   allSources: ReadonlyArray<Source>;
   normalizeBaseline: NormalizeOption;
+  year: number;
+}
+
+/**
+ * Resolve the effective value + citation for a dimension at a given year.
+ * If the dimension has a `history` array and the year matches an entry,
+ * return that entry's value and citation. Otherwise return the current
+ * (default-year) value. Static dimensions always return the current value.
+ */
+function resolveAtYear(
+  dim: NumericDimensionValue,
+  year: number,
+): { value: number; citation: Citation; isHistorical: boolean } {
+  if (dim.history && year !== DEFAULT_YEAR) {
+    const historical = dim.history.find((h) => h.year === year);
+    if (historical) {
+      return {
+        value: historical.value,
+        citation: historical.citation ?? dim.citation,
+        isHistorical: true,
+      };
+    }
+  }
+  return { value: dim.value, citation: dim.citation, isHistorical: false };
+}
+
+/**
+ * Whether a dimension actually varies year-over-year in our data.
+ * Only LCOE and capacityFactor have real history arrays; the others
+ * are near-static physical constants or slow-moving aggregates.
+ */
+function isTimeVarying(dimId: NumericDimensionId): boolean {
+  return (TIME_VARYING_DIMENSION_IDS as ReadonlyArray<NumericDimensionId>).includes(dimId);
 }
 
 // Human-readable labels and units for each dimension
@@ -28,14 +74,25 @@ const DIMENSION_META: Record<
  * Get the max value for a numeric dimension across ALL sources (not just selected),
  * so the bar scale stays consistent as sources are toggled on/off.
  * Zero values are excluded so "N/A" flow-resource markers don't break the scale.
+ *
+ * For time-varying dimensions, also considers the history max so the bar
+ * scale doesn't rescale as the year slider moves.
  */
-function getMaxValue(allSources: ReadonlyArray<Source>, dimId: NumericDimensionId): number {
+function getMaxValue(
+  allSources: ReadonlyArray<Source>,
+  dimId: NumericDimensionId,
+): number {
   let max = 0;
   for (const source of allSources) {
     const dim = source[dimId];
     if (dim.value > 0 && dim.value > max) max = dim.value;
+    if (dim.history) {
+      for (const h of dim.history) {
+        if (h.value > max) max = h.value;
+      }
+    }
   }
-  return max || 1; // avoid division by zero
+  return max || 1;
 }
 
 /**
@@ -52,7 +109,7 @@ function normalizeValue(
   return value / baselineValue;
 }
 
-export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridProps) {
+export function ChartGrid({ sources, allSources, normalizeBaseline, year }: ChartGridProps) {
   const baselineSource = normalizeBaseline !== "none"
     ? allSources.find((s) => s.id === normalizeBaseline)
     : undefined;
@@ -63,6 +120,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridP
       {NUMERIC_DIMENSION_IDS.map((dimId) => {
         const meta = DIMENSION_META[dimId];
         const maxVal = getMaxValue(allSources, dimId);
+        const timeVarying = isTimeVarying(dimId);
 
         return (
           <div key={dimId}>
@@ -70,6 +128,11 @@ export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridP
             <div className="flex justify-between items-baseline border-b border-[var(--color-rule)] pb-[var(--spacing-2)] mb-[var(--spacing-4)]">
               <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium uppercase tracking-[0.02em] text-[var(--color-text)]">
                 {meta.label}
+                {!timeVarying && year !== DEFAULT_YEAR && (
+                  <span className="ml-[var(--spacing-3)] text-[var(--color-text-faint)] text-[length:var(--text-xs)] font-normal normal-case tracking-normal italic">
+                    does not vary year-over-year
+                  </span>
+                )}
               </span>
               <span className="font-[family-name:var(--font-mono)] text-[length:var(--text-xs)] text-[var(--color-text-faint)]">
                 {meta.unit}
@@ -80,18 +143,22 @@ export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridP
             <div className="flex flex-col gap-[var(--spacing-3)]">
               {sources.map((source, idx) => {
                 const dim = source[dimId];
-                const isNotApplicable = dim.value === 0 && dimId === "energyDensity";
+                const resolved = resolveAtYear(dim, year);
+                const displayValue = resolved.value;
+                const displayCitation = resolved.citation;
+                const isNotApplicable = displayValue === 0 && dimId === "energyDensity";
                 const barWidth = maxVal > 0 && !isNotApplicable
-                  ? (dim.value / maxVal) * 100
+                  ? (displayValue / maxVal) * 100
                   : 0;
 
                 // Normalize if a baseline is set (and dim isn't N/A)
                 let normalizedMultiple: number | null = null;
                 if (baselineSource && !isNotApplicable) {
                   const baselineDim = baselineSource[dimId];
+                  const baselineResolved = resolveAtYear(baselineDim, year);
                   normalizedMultiple = normalizeValue(
-                    dim.value,
-                    baselineDim.value,
+                    displayValue,
+                    baselineResolved.value,
                     baselineDim.normalizeThreshold,
                   );
                 }
@@ -103,12 +170,12 @@ export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridP
                   <div
                     key={source.id}
                     className="grid items-center gap-[var(--spacing-4)]"
-                    style={{ gridTemplateColumns: "110px 1fr 140px" }}
-                    role="img"
+                    style={{ gridTemplateColumns: "110px 1fr 140px 28px" }}
+                    role="group"
                     aria-label={
                       isNotApplicable
                         ? `${source.label} ${meta.label}: not applicable (flow resource)`
-                        : `${source.label} ${meta.label}: ${dim.value} ${dim.unit}`
+                        : `${source.label} ${meta.label}: ${displayValue} ${dim.unit}`
                     }
                   >
                     {/* Source label */}
@@ -141,7 +208,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridP
                         <span className="text-[var(--color-text-faint)]">N/A</span>
                       ) : (
                         <>
-                          {formatValue(dim.value, dimId)}
+                          {formatValue(displayValue, dimId)}
                           {normalizedMultiple !== null && (
                             <span className="text-[var(--color-accent)] font-semibold ml-1">
                               {normalizedMultiple.toFixed(1)}×
@@ -155,6 +222,13 @@ export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridP
                         </>
                       )}
                     </span>
+
+                    {/* Cite button — uses the resolved (year-specific) citation */}
+                    <CiteButton
+                      citation={displayCitation}
+                      sourceLabel={source.label}
+                      dimensionLabel={meta.label}
+                    />
                   </div>
                 );
               })}
@@ -185,8 +259,8 @@ export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridP
                   <div
                     key={source.id}
                     className="grid items-center gap-[var(--spacing-4)]"
-                    style={{ gridTemplateColumns: "110px 1fr" }}
-                    role="img"
+                    style={{ gridTemplateColumns: "110px 1fr 28px" }}
+                    role="group"
                     aria-label={`${source.label} ${meta.label}: ${dim.label}`}
                   >
                     <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] text-right">
@@ -208,6 +282,11 @@ export function ChartGrid({ sources, allSources, normalizeBaseline }: ChartGridP
                     >
                       {dim.label}
                     </span>
+                    <CiteButton
+                      citation={dim.citation}
+                      sourceLabel={source.label}
+                      dimensionLabel={meta.label}
+                    />
                   </div>
                 );
               })}
