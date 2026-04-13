@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-04-12T04:39:10.950Z",
+  "lastUpdated": "2026-04-13T03:27:31.838Z",
   "schemaVersion": 1,
   "sources": [
     {
@@ -393,7 +393,7 @@
       },
       "dispatchability": {
         "category": "yes-baseload",
-        "label": "Yes (baseload)",
+        "label": "Baseload",
         "citation": {
           "bibtex_key": "eia2024dispatch_nuclear",
           "author": "U.S. Energy Information Administration",
@@ -1610,7 +1610,7 @@
       },
       "dispatchability": {
         "category": "yes-dispatchable",
-        "label": "Yes (dispatchable)",
+        "label": "Dispatchable",
         "citation": {
           "bibtex_key": "eia2024dispatch_gas",
           "author": "U.S. Energy Information Administration",
@@ -2017,7 +2017,7 @@
       },
       "dispatchability": {
         "category": "yes-baseload",
-        "label": "Yes (baseload)",
+        "label": "Baseload",
         "citation": {
           "bibtex_key": "eia2024dispatch_coal",
           "author": "U.S. Energy Information Administration",

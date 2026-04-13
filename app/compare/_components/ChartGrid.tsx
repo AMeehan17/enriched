@@ -394,21 +394,6 @@ function EnergyDensityCallout({
   // applicable" placeholders and a lonely footnote.
   if (withFuel.length === 0) return null;
 
-  // Compute the ratio headline: biggest value over smallest non-zero value
-  // among the selected fuel sources. Only makes sense with 2+ fuel sources.
-  let headline: string | null = null;
-  if (withFuel.length >= 2) {
-    const sortedByValue = [...withFuel].sort(
-      (a, b) => b.energyDensity.value - a.energyDensity.value,
-    );
-    const top = sortedByValue[0];
-    const bottom = sortedByValue[sortedByValue.length - 1];
-    if (top && bottom && bottom.energyDensity.value > 0) {
-      const ratio = top.energyDensity.value / bottom.energyDensity.value;
-      headline = `${top.label} fuel packs ${formatRatio(ratio)} more energy per kilogram than ${bottom.label}.`;
-    }
-  }
-
   return (
     <div>
       {/* Dimension header — matches the other rows for visual consistency */}
@@ -423,13 +408,6 @@ function EnergyDensityCallout({
           {meta.unit}
         </span>
       </div>
-
-      {/* Ratio headline — the story, in words */}
-      {headline && (
-        <p className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] leading-[1.4] text-[var(--color-text)] mb-[var(--spacing-4)] max-w-[640px]">
-          {headline}
-        </p>
-      )}
 
       {/* Raw values list — mono, right-aligned, with cite buttons */}
       <div className="flex flex-col gap-[var(--spacing-3)]">
