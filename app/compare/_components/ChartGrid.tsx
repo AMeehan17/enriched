@@ -179,8 +179,10 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
 
         return (
           <div key={dimId}>
-            {/* Dimension header */}
-            <div className="flex justify-between items-baseline border-b border-[var(--color-rule)] pb-[var(--spacing-2)] mb-[var(--spacing-4)]">
+            {/* Dimension header — stacks on mobile (unit strings like "years to
+                deliver 1 GW avg continuous (raw yr ÷ CF)" would otherwise run
+                onto a second line and collide with the label at 375px). */}
+            <div className="flex flex-col gap-[var(--spacing-1)] sm:flex-row sm:justify-between sm:items-baseline sm:gap-0 border-b border-[var(--color-rule)] pb-[var(--spacing-2)] mb-[var(--spacing-4)]">
               <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium uppercase tracking-[0.02em] text-[var(--color-text)]">
                 {meta.label}
                 {!timeVarying && year !== DEFAULT_YEAR && (
@@ -233,8 +235,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                 return (
                   <div
                     key={source.id}
-                    className="grid items-center gap-[var(--spacing-4)]"
-                    style={{ gridTemplateColumns: "110px 1fr 140px 28px" }}
+                    className="chart-row"
                     role="group"
                     aria-label={
                       isNotApplicable
@@ -242,13 +243,13 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                         : `${source.label} ${meta.label}: ${displayValue} ${dim.unit}`
                     }
                   >
-                    {/* Source label */}
-                    <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] text-right">
+                    {/* Source label — left on mobile (stacked row), right-aligned on desktop (inline column) */}
+                    <span className="chart-row__label font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] text-left sm:text-right">
                       {source.label}
                     </span>
 
                     {/* Bar — rust fill against a faint track so the full axis reads as the scale */}
-                    <div className="h-[22px] relative bg-[var(--color-rule)]">
+                    <div className="chart-row__bar h-[22px] relative bg-[var(--color-rule)]">
                       {isNotApplicable ? (
                         <div className="h-full flex items-center pl-[var(--spacing-2)]">
                           <span className="font-[family-name:var(--font-mono)] text-[length:var(--text-xs)] text-[var(--color-text-faint)] italic">
@@ -270,7 +271,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                     {/* Value + normalized multiple — right-justified so the numbers
                         line up in a clean column. The baseline row itself never shows
                         "1.0×" because a source compared to itself is always 1 (pure noise). */}
-                    <span className="block text-right font-[family-name:var(--font-mono)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] tabular-nums">
+                    <span className="chart-row__value block text-right font-[family-name:var(--font-mono)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] tabular-nums">
                       {isNotApplicable ? (
                         <span className="text-[var(--color-text-faint)]">N/A</span>
                       ) : (
@@ -286,11 +287,13 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                     </span>
 
                     {/* Cite button — uses the resolved (year-specific) citation */}
-                    <CiteButton
-                      citation={displayCitation}
-                      sourceLabel={source.label}
-                      dimensionLabel={meta.label}
-                    />
+                    <div className="chart-row__cite">
+                      <CiteButton
+                        citation={displayCitation}
+                        sourceLabel={source.label}
+                        dimensionLabel={meta.label}
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -305,7 +308,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
 
         return (
           <div key={dimId}>
-            <div className="flex justify-between items-baseline border-b border-[var(--color-rule)] pb-[var(--spacing-2)] mb-[var(--spacing-4)]">
+            <div className="flex flex-col gap-[var(--spacing-1)] sm:flex-row sm:justify-between sm:items-baseline sm:gap-0 border-b border-[var(--color-rule)] pb-[var(--spacing-2)] mb-[var(--spacing-4)]">
               <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium uppercase tracking-[0.02em] text-[var(--color-text)]">
                 {meta.label}
               </span>
@@ -320,12 +323,11 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                 return (
                   <div
                     key={source.id}
-                    className="grid items-center gap-[var(--spacing-4)]"
-                    style={{ gridTemplateColumns: "110px 1fr 28px" }}
+                    className="grid items-center gap-x-[var(--spacing-3)] sm:gap-x-[var(--spacing-4)] [grid-template-columns:80px_1fr_28px] sm:[grid-template-columns:110px_1fr_28px]"
                     role="group"
                     aria-label={`${source.label} ${meta.label}: ${dim.label}`}
                   >
-                    <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] text-right">
+                    <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] text-left sm:text-right">
                       {source.label}
                     </span>
                     <span
@@ -404,7 +406,7 @@ function EnergyDensityCallout({
   return (
     <div>
       {/* Dimension header — matches the other rows for visual consistency */}
-      <div className="flex justify-between items-baseline border-b border-[var(--color-rule)] pb-[var(--spacing-2)] mb-[var(--spacing-4)]">
+      <div className="flex flex-col gap-[var(--spacing-1)] sm:flex-row sm:justify-between sm:items-baseline sm:gap-0 border-b border-[var(--color-rule)] pb-[var(--spacing-2)] mb-[var(--spacing-4)]">
         <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium uppercase tracking-[0.02em] text-[var(--color-text)]">
           {meta.label}
           <span className="ml-[var(--spacing-3)] text-[var(--color-text-faint)] text-[length:var(--text-xs)] font-normal normal-case tracking-normal italic">
@@ -431,8 +433,7 @@ function EnergyDensityCallout({
           return (
             <div
               key={source.id}
-              className="grid items-center gap-[var(--spacing-4)]"
-              style={{ gridTemplateColumns: "110px 1fr 28px" }}
+              className="grid items-center gap-x-[var(--spacing-3)] sm:gap-x-[var(--spacing-4)] [grid-template-columns:80px_1fr_28px] sm:[grid-template-columns:110px_1fr_28px]"
               role="group"
               aria-label={
                 isNotApplicable
@@ -440,7 +441,7 @@ function EnergyDensityCallout({
                   : `${source.label} energy density: ${dim.value} ${dim.unit}`
               }
             >
-              <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] text-right">
+              <span className="font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] text-left sm:text-right">
                 {source.label}
               </span>
               <span className="block text-right font-[family-name:var(--font-mono)] text-[length:var(--text-sm)] font-medium text-[var(--color-text)] tabular-nums">

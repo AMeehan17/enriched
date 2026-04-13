@@ -167,20 +167,17 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
 
   return (
     <div>
-      {/* Section header */}
-      <div
-        className="border-t border-[var(--color-rule-strong)] pt-[var(--spacing-6)] mb-[var(--spacing-12)]"
-        style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "var(--spacing-12)" }}
-      >
+      {/* Section header — stacks on mobile, splits to 1fr/2fr columns on sm+ */}
+      <div className="border-t border-[var(--color-rule-strong)] pt-[var(--spacing-6)] mb-[var(--spacing-8)] sm:mb-[var(--spacing-12)] grid gap-[var(--spacing-4)] sm:gap-[var(--spacing-12)] [grid-template-columns:1fr] sm:[grid-template-columns:1fr_2fr]">
         <div>
           <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.05em] text-[var(--color-accent)]">
             {"// Energy Source Comparison"}
           </p>
-          <h2 className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-medium tracking-[-0.015em] leading-[1.15] text-[var(--color-text)] mt-[var(--spacing-2)]">
+          <h2 className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] sm:text-[length:var(--text-2xl)] font-medium tracking-[-0.015em] leading-[1.15] text-[var(--color-text)] mt-[var(--spacing-2)]">
             Six sources, eight dimensions, one honest picture.
           </h2>
         </div>
-        <p className="font-[family-name:var(--font-body)] text-[length:var(--text-lg)] leading-[1.6] text-[var(--color-text-muted)] self-end">
+        <p className="font-[family-name:var(--font-body)] text-[length:var(--text-base)] sm:text-[length:var(--text-lg)] leading-[1.6] text-[var(--color-text-muted)] sm:self-end">
           Pick which energy sources to compare. Pick which one to normalize
           against (or none). Every value is cited from IEA, IAEA, Lazard,
           OWID, or IPCC.

@@ -121,6 +121,46 @@ body::before {
   to { opacity: 1; }
 }
 
+/* ─────────────────────────────────────────────────────────
+   Chart row layout
+   ─────────────────────────────────────────────────────────
+   One row per source in the ChartGrid. Two layouts:
+
+   MOBILE (< 640px) — stacked
+     [ Label ] [ Value ] [ Cite ]
+     [ ═══════ Bar (full width) ═══════ ]
+
+   DESKTOP (>= 640px) — single row
+     [ Label ] [ ═══ Bar ═══ ] [ Value ] [ Cite ]
+
+   Implemented via grid-template-areas so DOM order stays the same
+   and the same element just lives in a different cell at each
+   breakpoint. Tailwind's arbitrary-value syntax for template-areas
+   is painful; a plain CSS class is way cleaner.
+   ───────────────────────────────────────────────────────── */
+.chart-row {
+  display: grid;
+  align-items: center;
+  column-gap: var(--spacing-3);
+  row-gap: var(--spacing-1);
+  grid-template-columns: 1fr auto 28px;
+  grid-template-areas:
+    "label value cite"
+    "bar bar bar";
+}
+@media (min-width: 640px) {
+  .chart-row {
+    column-gap: var(--spacing-4);
+    row-gap: 0;
+    grid-template-columns: 110px 1fr 140px 28px;
+    grid-template-areas: "label bar value cite";
+  }
+}
+.chart-row__label { grid-area: label; }
+.chart-row__bar   { grid-area: bar; }
+.chart-row__value { grid-area: value; }
+.chart-row__cite  { grid-area: cite; }
+
 /* Reduced motion — respect the user */
 @media (prefers-reduced-motion: reduce) {
   *,
