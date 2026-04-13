@@ -44,6 +44,40 @@ const COLORS = {
   accentSoft: "#F4E4DD",
 } as const;
 
+/**
+ * Stripe patterns paired 1:1 with opacity cycling so color-blind readers
+ * can tell bars apart by texture. Index 0 stays solid (the anchor / full
+ * opacity bar). The same patterns exist as CSS classes in globals.css for
+ * the live site — keeping them visually identical means the OG unfurl
+ * and the actual site look like the same product.
+ *
+ * Satori supports `linear-gradient` backgrounds and `backgroundSize`, so
+ * the classic 4-stop 45° trick renders faithfully. `repeating-linear-
+ * gradient` is less certain in Satori, so we use the fixed 4-stop pattern
+ * which is well-documented to work.
+ */
+const BAR_PATTERNS: ReadonlyArray<{
+  backgroundImage: string;
+  backgroundSize: string;
+} | null> = [
+  null, // idx 0: solid baseline
+  {
+    backgroundImage:
+      "linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2) 75%, transparent 75%, transparent)",
+    backgroundSize: "14px 14px",
+  },
+  {
+    backgroundImage:
+      "linear-gradient(135deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2) 75%, transparent 75%, transparent)",
+    backgroundSize: "14px 14px",
+  },
+  {
+    backgroundImage:
+      "linear-gradient(90deg, rgba(0,0,0,0.22) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.22) 50%, rgba(0,0,0,0.22) 75%, transparent 75%, transparent)",
+    backgroundSize: "10px 10px",
+  },
+];
+
 // Human-readable labels for the OG image. Intentionally concise — these
 // render at 24–32px and long strings wrap awkwardly in Satori. Mirrors
 // DIMENSION_META in ChartGrid but shorter where it helps.
@@ -308,6 +342,9 @@ async function renderOgImage(req: NextRequest) {
             // Rust accent with stepped opacity so the first (benchmark) bar
             // is boldest. Mirrors the site's BAR_OPACITIES pattern.
             const opacity = idx === 0 ? 1 : idx === 1 ? 0.55 : idx === 2 ? 0.32 : 0.2;
+            // Pattern overlay for color-blind distinguishability. Paired
+            // 1:1 with opacity — idx 0 stays solid as the visual anchor.
+            const pattern = BAR_PATTERNS[Math.min(idx, BAR_PATTERNS.length - 1)];
             return (
               <div
                 key={source.id}
@@ -347,8 +384,9 @@ async function renderOgImage(req: NextRequest) {
                       display: "flex",
                       width: `${widthPct}%`,
                       height: "100%",
-                      background: COLORS.accent,
+                      backgroundColor: COLORS.accent,
                       opacity,
+                      ...(pattern ?? {}),
                     }}
                   />
                 </div>

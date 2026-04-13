@@ -141,6 +141,19 @@ function getMaxValue(
  */
 const BAR_OPACITIES = [1, 0.55, 0.32, 0.2] as const;
 
+/**
+ * Cycling pattern classes for stacked sources, paired 1:1 with BAR_OPACITIES.
+ * Index 0 is the baseline / full-opacity bar and stays solid so it reads as
+ * the visual anchor. Everything else gets a stripe overlay that survives
+ * color-blind rendering — an empty string means no pattern class.
+ */
+const BAR_PATTERN_CLASSES = [
+  "",
+  "bar-pattern-diag-45",
+  "bar-pattern-diag-135",
+  "bar-pattern-vertical",
+] as const;
+
 export function ChartGrid({ sources, allSources, normalizeBaseline, year }: ChartGridProps) {
   // Only treat the baseline as active when it's actually on-screen. If the
   // user deselects the baseline source but URL state hasn't caught up (or
@@ -229,8 +242,10 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                   );
                 }
 
-                // Cycle rust opacity so stacked sources stay distinguishable
+                // Cycle rust opacity + stripe pattern so stacked sources stay
+                // distinguishable both in color and in texture (color-blind).
                 const barOpacity = BAR_OPACITIES[idx % BAR_OPACITIES.length];
+                const barPatternClass = BAR_PATTERN_CLASSES[idx % BAR_PATTERN_CLASSES.length];
 
                 return (
                   <div
@@ -258,12 +273,13 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                         </div>
                       ) : (
                         <div
-                          className="h-full transition-[width] duration-[var(--duration-medium)]"
+                          className={`h-full transition-[width] duration-[var(--duration-medium)] ${barPatternClass}`}
                           style={{
                             width: `${barWidth}%`,
                             backgroundColor: "var(--color-accent)",
                             opacity: barOpacity,
                           }}
+                          aria-hidden="true"
                         />
                       )}
                     </div>
