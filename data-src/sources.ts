@@ -149,7 +149,7 @@ export const sources: ReadonlyArray<Source> = [
     },
     dispatchability: {
       category: "yes-baseload",
-      label: "Yes (baseload)",
+      label: "Baseload",
       citation: {
         bibtex_key: "eia2024dispatch_nuclear",
         author: "U.S. Energy Information Administration",
@@ -583,7 +583,7 @@ export const sources: ReadonlyArray<Source> = [
     },
     dispatchability: {
       category: "yes-dispatchable",
-      label: "Yes (dispatchable)",
+      label: "Dispatchable",
       citation: {
         bibtex_key: "eia2024dispatch_gas",
         author: "U.S. Energy Information Administration",
@@ -729,7 +729,7 @@ export const sources: ReadonlyArray<Source> = [
     },
     dispatchability: {
       category: "yes-baseload",
-      label: "Yes (baseload)",
+      label: "Baseload",
       citation: {
         bibtex_key: "eia2024dispatch_coal",
         author: "U.S. Energy Information Administration",

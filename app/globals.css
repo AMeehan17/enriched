@@ -121,6 +121,106 @@ body::before {
   to { opacity: 1; }
 }
 
+/* ─────────────────────────────────────────────────────────
+   Bar pattern fills
+   ─────────────────────────────────────────────────────────
+   Color-blind accessibility — DESIGN.md requires that color
+   is never the only distinguishing feature. Rust accent on
+   its own isn't enough for users with protanopia or
+   deuteranopia (roughly 8% of men), who'd see all bars as
+   similar-valued brown smudges. Each non-baseline bar gets
+   a different stripe pattern so index/source identity is
+   legible regardless of color perception.
+
+   The baseline (index 0) stays solid — that becomes the
+   visual anchor and naturally reads as "the primary / full
+   opacity source" that the rest are being compared against.
+
+   Pattern colors use rgba(0,0,0,X) so the stripes are
+   "shadow" overlays that darken the rust rather than
+   introducing a second hue — keeps DESIGN.md's "one accent
+   color" rule intact while still adding texture.
+   ───────────────────────────────────────────────────────── */
+.bar-pattern-diag-45 {
+  background-image: linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 12px 12px;
+}
+.bar-pattern-diag-135 {
+  background-image: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 12px 12px;
+}
+.bar-pattern-vertical {
+  background-image: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.22) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.22) 50%,
+    rgba(0, 0, 0, 0.22) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 8px 8px;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Chart row layout
+   ─────────────────────────────────────────────────────────
+   One row per source in the ChartGrid. Two layouts:
+
+   MOBILE (< 640px) — stacked
+     [ Label ] [ Value ] [ Cite ]
+     [ ═══════ Bar (full width) ═══════ ]
+
+   DESKTOP (>= 640px) — single row
+     [ Label ] [ ═══ Bar ═══ ] [ Value ] [ Cite ]
+
+   Implemented via grid-template-areas so DOM order stays the same
+   and the same element just lives in a different cell at each
+   breakpoint. Tailwind's arbitrary-value syntax for template-areas
+   is painful; a plain CSS class is way cleaner.
+   ───────────────────────────────────────────────────────── */
+.chart-row {
+  display: grid;
+  align-items: center;
+  column-gap: var(--spacing-3);
+  row-gap: var(--spacing-1);
+  grid-template-columns: 1fr auto 28px;
+  grid-template-areas:
+    "label value cite"
+    "bar bar bar";
+}
+@media (min-width: 640px) {
+  .chart-row {
+    column-gap: var(--spacing-4);
+    row-gap: 0;
+    grid-template-columns: 110px 1fr 140px 28px;
+    grid-template-areas: "label bar value cite";
+  }
+}
+.chart-row__label { grid-area: label; }
+.chart-row__bar   { grid-area: bar; }
+.chart-row__value { grid-area: value; }
+.chart-row__cite  { grid-area: cite; }
+
 /* Reduced motion — respect the user */
 @media (prefers-reduced-motion: reduce) {
   *,

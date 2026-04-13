@@ -1,0 +1,15 @@
+# Reference material not needed in production deploys.
+# These directories are intentionally untracked from git but sit in
+# the working tree, and Vercel's default upload behavior would include
+# them otherwise.
+Lazard Reports/
+reference/
+
+# Dev-only and build artifacts
+.gstack/
+data-src/drafts/
+.mts-checkpoints/
+
+# Editor + OS noise
+.DS_Store
+*.log
