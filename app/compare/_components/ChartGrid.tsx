@@ -68,7 +68,7 @@ const DIMENSION_META: Record<
   lcoe: { label: "Levelized Cost of Energy", unit: "$/MWh (Lazard 2024)" },
   energyDensity: { label: "Energy Density", unit: "MJ per kg of fuel" },
   constructionTime: { label: "Construction Time", unit: "years to deliver 1 GW avg continuous (raw yr ÷ CF)" },
-  dispatchability: { label: "Dispatchability", unit: "can it respond to demand?" },
+  dispatchability: { label: "Load Profile", unit: "how output matches demand" },
 };
 
 /**
@@ -387,6 +387,12 @@ function EnergyDensityCallout({
   // exists among the fuel sources; flow resources get their own note.
   const withFuel = sources.filter((s) => s.energyDensity.value > 0);
   const withoutFuel = sources.filter((s) => s.energyDensity.value === 0);
+
+  // If nothing the user picked has fuel (e.g. solar + wind + hydro), there's
+  // no story to tell — the whole dimension is meaningless for this selection.
+  // Collapse the section entirely rather than rendering a row of "not
+  // applicable" placeholders and a lonely footnote.
+  if (withFuel.length === 0) return null;
 
   // Compute the ratio headline: biggest value over smallest non-zero value
   // among the selected fuel sources. Only makes sense with 2+ fuel sources.

@@ -44,13 +44,13 @@ export const presets: ReadonlyArray<Preset> = [
     slug: "baseload-vs-intermittent",
     title: "Baseload vs Intermittent",
     description:
-      "Capacity factor and dispatchability — the difference between energy and power.",
+      "Capacity factor and load profile — the difference between energy and power.",
     sources: ["nuclear", "solar", "wind", "gas"],
     normalize: "none",
     year: 2024,
     highlightedDimensions: ["capacityFactor", "dispatchability"],
     rhetoricalPoint:
-      "Baseload and intermittent sources are not interchangeable. Capacity factor measures how often a plant actually generates. Dispatchability measures whether you can turn it on when you need it.",
+      "Baseload and intermittent sources are not interchangeable. Capacity factor measures how often a plant actually generates. Load profile tells you whether you can turn it on when you need it.",
   },
   {
     slug: "cost-story",
@@ -62,7 +62,7 @@ export const presets: ReadonlyArray<Preset> = [
     year: 2024,
     highlightedDimensions: ["lcoe", "constructionTime"],
     rhetoricalPoint:
-      "Solar is cheapest unsubsidized per MWh. But LCOE alone misses storage costs, dispatchability, and the 60-80 year operating life of a nuclear plant compared to 25 years for solar panels.",
+      "Solar is cheapest unsubsidized per MWh. But LCOE alone misses storage costs, load profile, and the 60-80 year operating life of a nuclear plant compared to 25 years for solar panels.",
   },
   {
     slug: "land-hungry",
