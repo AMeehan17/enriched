@@ -298,7 +298,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                         <>
                           {formatValue(displayValue, dimId)}
                           {normalizedMultiple !== null && source.id !== effectiveBaseline?.id && (
-                            <span className="text-[var(--color-accent)] font-semibold ml-[var(--spacing-2)]">
+                            <span className="text-[var(--color-accent-text)] font-semibold ml-[var(--spacing-2)]">
                               {formatRatio(normalizedMultiple)}
                             </span>
                           )}
@@ -360,7 +360,7 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
                           ? "bg-[var(--color-text)] text-[var(--color-bg)]"
                           : dim.category === "variable"
                             ? "bg-[var(--color-rule)] text-[var(--color-text)]"
-                            : "bg-[var(--color-rule)] text-[var(--color-text-muted)]"
+                            : "bg-[var(--color-rule)] text-[var(--color-text)] italic"
                         }
                       `}
                     >

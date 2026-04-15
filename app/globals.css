@@ -28,6 +28,12 @@
   --color-rule-strong: #D8D4CC;
   --color-accent: #D04A1F;
   --color-accent-soft: #F4E4DD;
+  /* --color-accent at 11–13px gives only 4.26:1 against --color-bg,
+     which fails WCAG AA normal-text contrast (4.5:1 required). Shipped
+     rust is the brand anchor for bars/buttons/banners — don't touch
+     it. This darker variant is for small rust text ONLY (overline
+     labels, ×N normalize multiples). Measures ~5.75:1 vs --color-bg. */
+  --color-accent-text: #B13914;
 
   /* Data series — for chart bars */
   --color-data-1: #1A1A1A;

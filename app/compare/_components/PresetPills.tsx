@@ -47,8 +47,8 @@ export function PresetPills({
                 border-[1.5px] rounded-[var(--radius-pill)]
                 cursor-pointer transition-all duration-[var(--duration-fast)]
                 ${isActive
-                  ? "bg-[var(--color-accent)] text-[var(--color-bg)] border-[var(--color-accent)]"
-                  : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border-[var(--color-rule-strong)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                  ? "bg-[var(--color-accent-text)] text-[var(--color-bg)] border-[var(--color-accent-text)]"
+                  : "bg-[var(--color-surface)] text-[var(--color-text-muted)] border-[var(--color-rule-strong)] hover:border-[var(--color-accent-text)] hover:text-[var(--color-accent-text)]"
                 }
               `}
             >

@@ -170,7 +170,7 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
       {/* Section header — stacks on mobile, splits to 1fr/2fr columns on sm+ */}
       <div className="border-t border-[var(--color-rule-strong)] pt-[var(--spacing-6)] mb-[var(--spacing-8)] sm:mb-[var(--spacing-12)] grid gap-[var(--spacing-4)] sm:gap-[var(--spacing-12)] [grid-template-columns:1fr] sm:[grid-template-columns:1fr_2fr]">
         <div>
-          <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.05em] text-[var(--color-accent)]">
+          <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.05em] text-[var(--color-accent-text)]">
             {"// Energy Source Comparison"}
           </p>
           <h2

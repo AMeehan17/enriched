@@ -45,7 +45,7 @@ export function YearSlider({ year, onYearChange, disabled = false }: YearSliderP
         <span className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.1em] text-[var(--color-text-faint)]">
           {"/ Year"}
         </span>
-        <span className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-semibold text-[var(--color-accent)] tabular-nums">
+        <span className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-semibold text-[var(--color-accent-text)] tabular-nums">
           {year}
         </span>
       </div>

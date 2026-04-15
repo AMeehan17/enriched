@@ -23,13 +23,16 @@ export function PresetBanner({ preset, onDismiss }: PresetBannerProps) {
       aria-label="Active preset banner"
     >
       <div className="flex-1">
-        <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.1em] text-[var(--color-accent)] mb-[var(--spacing-1)]">
+        <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.1em] text-[var(--color-accent-text)] mb-[var(--spacing-1)]">
           {"// Preset"}
         </p>
         <h3 className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[var(--color-text)] mb-[var(--spacing-2)]">
           {preset.title}
         </h3>
-        <p className="font-[family-name:var(--font-body)] text-[length:var(--text-sm)] leading-[1.6] text-[var(--color-text-muted)] mb-[var(--spacing-2)]">
+        {/* Body copy is --color-text (not --color-text-muted) because the
+            accent-soft banner bg makes muted text come in at 4.31:1 — under
+            AA. Primary text on the same bg clears 12:1. */}
+        <p className="font-[family-name:var(--font-body)] text-[length:var(--text-sm)] leading-[1.6] text-[var(--color-text)] mb-[var(--spacing-2)]">
           {preset.description}
         </p>
         <p className="font-[family-name:var(--font-body)] text-[length:var(--text-sm)] leading-[1.6] italic text-[var(--color-text)]">
