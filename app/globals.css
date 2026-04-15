@@ -18,7 +18,12 @@
   --color-surface: #FFFFFF;
   --color-text: #1A1A1A;
   --color-text-muted: #6B6B6B;
-  --color-text-faint: #9A9591;
+  /* text-faint was #9A9591, which gave only 2.80:1 against --color-bg
+     and failed WCAG AA for the essential text it's used on (dimension
+     units, "rebuttal in a link" footer, year slider tick labels).
+     #6F6963 gives ~5.2:1 — comfortably above the 4.5:1 AA threshold
+     while still reading as the lightest text tier in the hierarchy. */
+  --color-text-faint: #6F6963;
   --color-rule: #E8E5DE;
   --color-rule-strong: #D8D4CC;
   --color-accent: #D04A1F;
@@ -113,6 +118,49 @@ body::before {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Skip link
+   ─────────────────────────────────────────────────────────
+   Hidden by default, becomes visible on keyboard focus.
+   Lets keyboard users bypass the nav/toolbar and jump straight
+   to the main chart content. First focusable element on the page.
+   ───────────────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: var(--spacing-4);
+  top: var(--spacing-4);
+  z-index: 100;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  /* Visually hidden but still in the tab order */
+  transform: translateY(-200%);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* Visually-hidden utility for screen-reader-only content.
+   Use on aria-live regions that announce state changes
+   without cluttering the visual layout. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Popover entrance — quiet fade, no scale, no blur (anti-slop rule) */

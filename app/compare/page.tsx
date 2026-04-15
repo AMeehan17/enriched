@@ -108,13 +108,20 @@ function ComparisonViewFallback() {
 
 export default function ComparePage() {
   return (
-    <main className="relative z-[1]">
-      {/* Hero */}
-      <section className="mx-auto max-w-[var(--container-max)] px-[var(--spacing-4)] sm:px-[var(--spacing-6)] pt-[var(--spacing-8)] sm:pt-[var(--spacing-16)] pb-[var(--spacing-6)] sm:pb-[var(--spacing-8)]">
+    <main id="main-content" className="relative z-[1]">
+      {/* Hero — labelled by its h1 so screen reader region nav announces
+          it as "Compare energy sources across eight dimensions, region". */}
+      <section
+        aria-labelledby="page-title"
+        className="mx-auto max-w-[var(--container-max)] px-[var(--spacing-4)] sm:px-[var(--spacing-6)] pt-[var(--spacing-8)] sm:pt-[var(--spacing-16)] pb-[var(--spacing-6)] sm:pb-[var(--spacing-8)]"
+      >
         <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.1em] text-[var(--color-text-muted)] mb-[var(--spacing-3)]">
           {"// Module 01"}
         </p>
-        <h1 className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] sm:text-[length:var(--text-3xl)] lg:text-[length:var(--text-4xl)] font-medium tracking-[-0.025em] leading-[1.05] mb-[var(--spacing-4)] sm:mb-[var(--spacing-6)] max-w-[900px]">
+        <h1
+          id="page-title"
+          className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] sm:text-[length:var(--text-3xl)] lg:text-[length:var(--text-4xl)] font-medium tracking-[-0.025em] leading-[1.05] mb-[var(--spacing-4)] sm:mb-[var(--spacing-6)] max-w-[900px]"
+        >
           Compare energy sources across eight dimensions.
         </h1>
         <p className="font-[family-name:var(--font-body)] text-[length:var(--text-base)] sm:text-[length:var(--text-lg)] leading-[1.55] text-[var(--color-text-muted)] max-w-[640px]">
@@ -126,8 +133,12 @@ export default function ComparePage() {
       {/* Comparison tool — client boundary.
           Suspense wraps the client component because nuqs (useSearchParams)
           forces CSR bailout during static prerendering. The fallback is a
-          static shell that matches the final layout to avoid layout shift. */}
-      <section className="mx-auto max-w-[var(--container-max)] px-[var(--spacing-4)] sm:px-[var(--spacing-6)] pb-[var(--spacing-16)] sm:pb-[var(--spacing-24)]">
+          static shell that matches the final layout to avoid layout shift.
+          aria-labelledby points at the h2 rendered inside ComparisonView. */}
+      <section
+        aria-labelledby="comparison-title"
+        className="mx-auto max-w-[var(--container-max)] px-[var(--spacing-4)] sm:px-[var(--spacing-6)] pb-[var(--spacing-16)] sm:pb-[var(--spacing-24)]"
+      >
         <Suspense fallback={<ComparisonViewFallback />}>
           <ComparisonView sources={sources} presets={presets} />
         </Suspense>
