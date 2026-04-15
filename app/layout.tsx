@@ -71,6 +71,12 @@ export default function RootLayout({
       className={`${splineSansMono.variable} ${instrumentSans.variable} ${jetbrainsMono.variable}`}
     >
       <body className="antialiased">
+        {/* Skip link — first focusable element on every page. Keyboard users
+            hitting Tab from the address bar get a visible "Skip to main
+            content" chip that jumps past the nav/toolbar to the chart area. */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <NuqsAdapter>{children}</NuqsAdapter>
       </body>
     </html>

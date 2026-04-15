@@ -173,7 +173,10 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
           <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.05em] text-[var(--color-accent)]">
             {"// Energy Source Comparison"}
           </p>
-          <h2 className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] sm:text-[length:var(--text-2xl)] font-medium tracking-[-0.015em] leading-[1.15] text-[var(--color-text)] mt-[var(--spacing-2)]">
+          <h2
+            id="comparison-title"
+            className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] sm:text-[length:var(--text-2xl)] font-medium tracking-[-0.015em] leading-[1.15] text-[var(--color-text)] mt-[var(--spacing-2)]"
+          >
             Six sources, eight dimensions, one honest picture.
           </h2>
         </div>
@@ -214,6 +217,20 @@ export function ComparisonView({ sources, presets }: ComparisonViewProps) {
           year={year ?? DEFAULT_YEAR}
           onYearChange={handleYearChange}
         />
+      </div>
+
+      {/* Screen-reader announcement of current state. Updates silently in
+          the DOM; assistive tech reads it aloud on change (polite so it
+          doesn't interrupt an in-flight utterance). Covers the three knobs
+          a keyboard user spins: sources, baseline, year. */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {activeSources.length === 0
+          ? "No sources selected."
+          : `Showing ${activeSources.map((s) => s.label).join(", ")} for ${year ?? DEFAULT_YEAR}${
+              normalizeBaseline && normalizeBaseline !== "none"
+                ? `, normalized to ${sources.find((s) => s.id === normalizeBaseline)?.label ?? normalizeBaseline}`
+                : ""
+            }.`}
       </div>
 
       {/* Chart grid */}

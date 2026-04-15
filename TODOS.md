@@ -44,11 +44,27 @@ the only distinguishing feature. Also helps in B&W print-outs and screenshots.
 ### Lazard v3–v6 LCOE backfill (2009–2012)
 **Priority:** P3
 **Added:** 2026-04-13
+**Blocked on:** primary-source PDFs
 
 We have Lazard v7 (2013) through v18 (2024) in the history arrays. Adding v3–v6
 would extend the LCOE story back to 2009, right when utility-scale solar was
-just becoming a real category. Research draft sits in
-`data-src/drafts/lazard-lcoe-extraction.md`.
+just becoming a real category.
+
+**Blocker discovered 2026-04-13:** the `Lazard Reports/` folder only has PDFs
+back to v7. There are no v3, v4, v5, or v6 PDFs on disk, and the extraction
+draft at `data-src/drafts/lazard-lcoe-extraction.md` only covers v12–v18.
+Landing this backfill requires either:
+
+1. Acquiring the v3–v6 PDFs directly from Lazard's archive and extracting
+   the unsubsidized midpoint values the same way the existing history
+   entries were extracted. Preserves the "every value cited direct from
+   primary source" brand rule. **Preferred.**
+2. Pulling v3–v6 values from secondary sources (Carbon Brief, RMI, IEA WEO,
+   academic papers that republish Lazard retrospective tables) and marking
+   the citations as secondary. Compromises primary-source provenance.
+
+Option 1 stays blocked until the PDFs are in hand. Option 2 needs explicit
+scope approval because it breaks the citation promise.
 
 ## platform
 

@@ -168,7 +168,11 @@ export function ChartGrid({ sources, allSources, normalizeBaseline, year }: Char
   const effectiveBaseline = baselineIsVisible ? baselineSource : undefined;
 
   return (
-    <div className="flex flex-col gap-[var(--spacing-12)]">
+    <div
+      role="region"
+      aria-label="Energy source comparison chart"
+      className="flex flex-col gap-[var(--spacing-12)]"
+    >
       {/* Numeric dimensions — rendered as horizontal bars */}
       {NUMERIC_DIMENSION_IDS.map((dimId) => {
         const meta = DIMENSION_META[dimId];
