@@ -2,6 +2,39 @@
 
 Interactive, open-source nuclear energy education platform. Data does the talking.
 
+## Scope — what Enriched is (and is not)
+
+Enriched is a **technical and educational tool** about how nuclear reactors work. It teaches what it takes to build a reactor: the physics, the design choices (fuel, coolant, moderator, spectrum, scale, safety features), the techno-economic trade-offs, the regulatory landscape. Every claim is cited to independently verifiable primary sources — IAEA, NRC, DOE, EIA, SEC filings, peer-reviewed papers, company press releases.
+
+The product arc is roughly:
+
+- **Module 1 — Energy Source Comparison** (shipped). Compare energy sources across eight dimensions.
+- **Module 2 — Reactor Builder** (future). Interactive configurator for reactor design. Pick a fuel / coolant / X-factor combination and learn what it means, what trade-offs you're making, what physics constraints apply, what in-development or historical reactors match. Teaching tool, not a database. The companies are an output, not the point.
+- **Module 3 — Reference Library** (future). Deep-dive articles on reactor science, fuel cycles, safety physics, waste, regulation, history. Feeds the Reactor Builder with "click to learn more" links.
+
+**Enriched does NOT cover:**
+
+- Business landscape, company underwriting, fund-style analyst judgments, or "who is serious / who is not" opinions. That is NPV's proprietary domain and lives in a separate private tool.
+- Subjective Low / Med / High confidence scores or any NPV-internal annotations.
+- Quotes, summaries, or reproductions of paywalled or proprietary research (Pitchbook, subscription analyst reports, internal decks).
+
+The split is deliberate. Enriched is the public physics / engineering textbook. NPV's company-underwriting tool will consume Enriched as its foundation (cite its cells, embed its data model) and add proprietary business analysis on top — but that analysis never lives in this repo.
+
+## Security boundary — non-negotiable
+
+This repo is **public** on GitHub at [`github.com/AMeehan17/enriched`](https://github.com/AMeehan17/enriched) and lives inside a **private NPV parent directory** (`Neutron Power Ventures/`) that contains fund documents, LP communications, deal flow, legal agreements, portfolio company materials, proprietary research, and board content. Enriched is the only folder in that tree that is committed to GitHub. Everything else is NPV-confidential.
+
+**Rules the agent must follow without exception:**
+
+1. **Never copy files from outside `/Enriched/` into this repo.** Parent-directory content is off-limits for committing, staging, or writing into any file that could be committed — including `data-src/drafts/`, `docs/`, and root-level markdown. The `Lazard Reports/` and `reference/` folders inside Enriched are already untracked via `.gitignore` + `.vercelignore`; they are the only exception, and even their contents must not be quoted into committed files.
+2. **Never reference absolute paths that leak the NPV directory structure.** You may READ files outside Enriched for research context, but output (summaries, citation catalogs, notes, TODOs) must use only public identifiers — publisher + title + year + URL — never local paths like `/Users/andrew/Documents/Neutron Power Ventures/Company Assets/...`.
+3. **Never quote or summarize NPV-internal content into committed files.** Board materials, fund reports, LP communications, deal memos, internal spreadsheets with subjective scores, unpublished NPV decks, portfolio company confidential materials — none of this appears in any Enriched file, even in `drafts/`, even as paraphrase.
+4. **Proprietary research is research-only.** Pitchbook, analyst subscriptions, MacroVoices paid content, internal research: you may READ them to inform what Enriched says, but every citation on the public site must target the independently verifiable primary source the proprietary report itself references. If you find a stat in a Pitchbook report, find the underlying SEC filing / DOE announcement / company press release / academic paper and cite that.
+5. **Never run `git add` with a path outside the Enriched repo root.** `.gitignore` protects folders inside the repo; the NPV parent directory has zero git protection. `git add -A` from inside Enriched is safe; `git add ../some-npv-file` is a critical violation.
+6. **If in doubt, ask.** The test is: *"If this file shipped to GitHub tomorrow, would anything be compromised?"* If the answer is not clearly no, the artifact does not exist in this repo.
+
+The agent should treat the NPV parent directory as a read-only reference library — useful for understanding what the user is working on, but one-way insulation between that context and anything committed to Enriched.
+
 ## Design System
 
 Always read `DESIGN.md` before making any visual or UI decision. All font choices, colors, spacing values, and aesthetic direction are defined there. Do not deviate without explicit user approval. In QA mode, flag any code that doesn't match `DESIGN.md`.
