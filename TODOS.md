@@ -4,6 +4,119 @@ Things we know we want but haven't built yet. Organized by area, priority-tagged
 The bar for adding something here is low. The bar for removing it is high — if a
 bullet sits here untouched for months, that's a signal about its actual priority.
 
+See `CLAUDE.md` for the Enriched vs NPV scope boundary and the security rule.
+Module 2 and 3 additions below respect that split — nothing here implies
+putting company underwriting content into this repo.
+
+## module 2 (reactor builder, future)
+
+### Reactor Builder — interactive configurator
+**Priority:** P1 (next module after Module 1 polish)
+**Added:** 2026-04-15
+
+The public teaching tool that teaches what it takes to build a nuclear reactor.
+User picks a Fuel / Coolant / X-Factor combination; the tool shows what those
+choices mean physically, what trade-offs they imply, and what in-development or
+historical reactor designs match the configuration. Teaching tool, not a
+database. Companies appear only as "here's who's pursuing this design," with
+a link out — never as business-landscape profiles.
+
+**Conceptual paradigm** (from the NPV SPV I deck, adapted):
+- **Fuel**: LEU-UO₂ / HALEU metal / TRISO pebbles / molten fuel salt / thorium / MOX
+- **Coolant**: light water / heavy water / helium / FLiBe salt / sodium / lead / heat pipes
+- **X-Factor**: controlled-vocab tag array covering scale (micro/small/mid/large),
+  form factor, distinctive capability (load-following, walk-away-safe, process
+  heat, thermal storage, first-of-kind licensed, etc.)
+
+Each tag is a glossary entry that deep-links into Module 3.
+
+**Scope boundary (per CLAUDE.md):** Enriched Module 2 is about reactor DESIGN,
+not reactor COMPANIES. Any company profile content — who's raised how much,
+who's on the board, who has PPAs, L/M/H underwriting scores — belongs in the
+NPV-side private tool, not here. The 18-company working spreadsheet in the
+G-drive reference folder is valuable as architectural input for the Fuel /
+Coolant / X-Factor taxonomy, but the business fields (Key Supporters, jobs
+posted, probability scores) are explicitly out of Enriched scope.
+
+**Key open questions for office-hours** (before any UI code):
+1. What's the ideal learning flow? Top-down ("pick a config, learn what it
+   means"), bottom-up ("start from a physics constraint"), or Socratic
+   (question-led)?
+2. How deep does the physics go? Enough to distinguish moderator choices
+   without requiring a nuclear engineering degree. The test: can a smart
+   reader understand why HALEU exists after 5 minutes on the page?
+3. What are the "click paths" that surprise a user? The best version of
+   this tool has moments where a reader clicks three things in a row and
+   suddenly understands something non-obvious about reactor design.
+4. Module 3 coupling: how tightly do the F/C/X glossary tags link to
+   Module 3 articles? Option A: every tag has a popover with a one-paragraph
+   explainer and a "read more" link. Option B: tags are bare words and
+   everything that matters lives in Module 3.
+
+**Do NOT start coding until office-hours has run.** This is the module that
+distinguishes Enriched from every other nuclear explainer site. It needs to
+be great, not just good, and that requires a product conversation first.
+
+## module 3 (reference library, future)
+
+### Reactor science and history reference
+**Priority:** P2
+**Added:** 2026-04-15
+
+Deep-dive articles on the physics, engineering, and history behind reactor
+design. Feeds Module 2 with "click to learn more" links on every F/C/X
+glossary tag. Not a textbook from scratch — an opinionated curated path
+through the existing public primary-source literature, with Enriched's
+narrative voice stitching the references together.
+
+**Target chapters (rough sketch):**
+- Fission physics (cross-sections, neutron spectrum, criticality, breeding)
+- Fuel cycles (mining → enrichment → fabrication → burnup → spent fuel → waste)
+- Moderators and coolants (why the choices, what the trade-offs)
+- Safety physics (decay heat, passive cooling, walk-away, TMI/Chernobyl/Fukushima)
+- Reactor history (Chicago Pile 1 → commercial LWR era → advanced reactors)
+- Fuel format deep dives (TRISO, MOX, thorium, molten salt fuel)
+- Regulatory landscape (NRC, IAEA, CNSC, ONR — who regulates what, how paths differ)
+
+**Citation sources (all public, all independently verifiable):**
+
+*Regulators and international bodies:*
+- IAEA: Status of Molten Salt Reactors (2021), Thorium Fuel Cycle, Advanced
+  Reactor Information System (ARIS) database
+- NRC: Advanced reactor licensing roadmap, ADAMS document database
+- ENSREG, CNSC, ONR: national regulator frameworks
+
+*US Department of Energy:*
+- Advanced Reactor Demonstration Program (ARDP) docs
+- Advanced Nuclear Liftoff Report
+- Office of Nuclear Energy publications
+- National lab output (ORNL, INL, ANL, PNNL, LLNL, PSI)
+
+*US Energy Information Administration:*
+- Annual Energy Outlook (AEO)
+- Electric Power Monthly
+- Monthly Energy Review
+
+*Industry associations (public):*
+- World Nuclear Association reactor database + World Nuclear Performance
+  Reports
+- Nuclear Energy Institute publications
+
+*Peer-reviewed:*
+- IEEE Transactions on Nuclear Science
+- Nuclear Engineering and Design
+- Progress in Nuclear Energy
+- Conference proceedings (ANS, ENC, ICAPP)
+
+**Research rule (enforced by CLAUDE.md §5):** proprietary analyst subscriptions
+(Pitchbook, paid industry research, internal decks) may be consulted by the
+author for background and context, but every fact on the public site must
+cite a primary source a reader can independently verify. No paywalled
+citations, no "trust me, I read it in a private report" claims. If a useful
+stat lives behind a paywall, find the underlying SEC filing / DOE announcement
+/ academic paper / company press release the paywalled report itself used
+and cite that instead.
+
 ## compare (module 1)
 
 ### Time-passage animation
