@@ -19,6 +19,7 @@
 
 import { sources } from "../data-src/sources";
 import { presets } from "../data-src/presets";
+import { reactorTaxonomy } from "../data-src/reactor-taxonomy";
 import {
   ALL_DIMENSION_IDS,
   CATEGORICAL_DIMENSION_IDS,
@@ -29,6 +30,13 @@ import {
   type DimensionId,
   type Source,
 } from "../lib/data-types";
+import {
+  FUEL_IDS,
+  COOLANT_IDS,
+  X_FACTOR_IDS,
+  type TaxonomyTag,
+} from "../lib/reactor-types";
+import { isAllowedCitationHost } from "../lib/citation-allowlist";
 
 class ValidationError extends Error {
   constructor(message: string) {
@@ -45,10 +53,10 @@ function err(path: string, message: string): void {
 
 function validateCitation(path: string, c: Citation): void {
   if (!c.bibtex_key) err(`${path}.bibtex_key`, "missing");
-  if (!/^[a-z0-9_]+$/.test(c.bibtex_key)) {
+  if (!/^[a-z0-9_-]+$/.test(c.bibtex_key)) {
     err(
       `${path}.bibtex_key`,
-      `must match /^[a-z0-9_]+$/, got "${c.bibtex_key}"`,
+      `must match /^[a-z0-9_-]+$/, got "${c.bibtex_key}"`,
     );
   }
   if (!c.author) err(`${path}.author`, "missing");
@@ -162,6 +170,7 @@ function validateBibKeyUniqueness(): void {
     }
   }
 
+  // Module 1: sources
   for (const source of sources) {
     for (const dimId of NUMERIC_DIMENSION_IDS) {
       const dim = source[dimId];
@@ -184,6 +193,113 @@ function validateBibKeyUniqueness(): void {
       if (dim?.citation?.bibtex_key) {
         check(dim.citation.bibtex_key, `sources.${source.id}.${dimId}.citation`);
       }
+    }
+  }
+
+  // Module 2: taxonomy tags
+  const { fuelTags, coolantTags, xFactorTags } = reactorTaxonomy;
+  const allTags = [
+    ...fuelTags.map((t, i) => ({ tag: t, path: `taxonomy.fuel[${i}]` })),
+    ...coolantTags.map((t, i) => ({ tag: t, path: `taxonomy.coolant[${i}]` })),
+    ...xFactorTags.map((t, i) => ({ tag: t, path: `taxonomy.xFactor[${i}]` })),
+  ];
+  for (const { tag, path } of allTags) {
+    for (const [ci, c] of tag.citations.entries()) {
+      if (c.bibtex_key) {
+        check(c.bibtex_key, `${path}.citations[${ci}]`);
+      }
+    }
+  }
+}
+
+// ─── Module 2: Reactor taxonomy validation ──────────────────────────
+
+function validateTaxonomyTag(
+  path: string,
+  tag: TaxonomyTag,
+  validIds: readonly string[],
+): void {
+  if (!validIds.includes(tag.id)) {
+    err(`${path}.id`, `unknown tag ID "${tag.id}"`);
+  }
+  if (!tag.label) err(`${path}.label`, "missing");
+  if (!tag.oneLineHook) {
+    err(`${path}.oneLineHook`, "missing");
+  } else if (tag.oneLineHook.length > 160) {
+    err(
+      `${path}.oneLineHook`,
+      `exceeds 160 chars (got ${tag.oneLineHook.length})`,
+    );
+  }
+  if (!tag.popoverBody) err(`${path}.popoverBody`, "missing");
+  if (!tag.citations || tag.citations.length === 0) {
+    err(`${path}.citations`, "must have ≥1 citation");
+  } else {
+    for (const [i, c] of tag.citations.entries()) {
+      validateCitation(`${path}.citations[${i}]`, c);
+      // Allowlist check
+      if (c.url && !isAllowedCitationHost(c.url)) {
+        err(
+          `${path}.citations[${i}].url`,
+          `host not in citation allowlist: "${c.url}"`,
+        );
+      }
+    }
+  }
+}
+
+function validateTaxonomy(): void {
+  const { fuelTags, coolantTags, xFactorTags } = reactorTaxonomy;
+
+  // Fuel tags
+  const fuelIdSet = new Set<string>();
+  for (const [i, tag] of fuelTags.entries()) {
+    validateTaxonomyTag(`taxonomy.fuel[${i}]`, tag, [...FUEL_IDS]);
+    if (fuelIdSet.has(tag.id)) {
+      err(`taxonomy.fuel[${i}].id`, `duplicate fuel tag ID "${tag.id}"`);
+    }
+    fuelIdSet.add(tag.id);
+  }
+  // Ensure all FUEL_IDS have a tag
+  for (const id of FUEL_IDS) {
+    if (!fuelIdSet.has(id)) {
+      err("taxonomy.fuel", `missing tag for fuel ID "${id}"`);
+    }
+  }
+
+  // Coolant tags
+  const coolantIdSet = new Set<string>();
+  for (const [i, tag] of coolantTags.entries()) {
+    validateTaxonomyTag(`taxonomy.coolant[${i}]`, tag, [...COOLANT_IDS]);
+    if (coolantIdSet.has(tag.id)) {
+      err(`taxonomy.coolant[${i}].id`, `duplicate coolant tag ID "${tag.id}"`);
+    }
+    coolantIdSet.add(tag.id);
+  }
+  for (const id of COOLANT_IDS) {
+    if (!coolantIdSet.has(id)) {
+      err("taxonomy.coolant", `missing tag for coolant ID "${id}"`);
+    }
+  }
+
+  // X-Factor tags
+  const xIdSet = new Set<string>();
+  for (const [i, tag] of xFactorTags.entries()) {
+    validateTaxonomyTag(`taxonomy.xFactor[${i}]`, tag, [...X_FACTOR_IDS]);
+    if (xIdSet.has(tag.id)) {
+      err(`taxonomy.xFactor[${i}].id`, `duplicate X-Factor tag ID "${tag.id}"`);
+    }
+    xIdSet.add(tag.id);
+    if (!tag.group || !["scale", "capability"].includes(tag.group)) {
+      err(
+        `taxonomy.xFactor[${i}].group`,
+        `must be "scale" or "capability", got "${tag.group}"`,
+      );
+    }
+  }
+  for (const id of X_FACTOR_IDS) {
+    if (!xIdSet.has(id)) {
+      err("taxonomy.xFactor", `missing tag for X-Factor ID "${id}"`);
     }
   }
 }
@@ -246,6 +362,9 @@ function main(): void {
   console.log("→ Validating data-src/presets.ts");
   validatePresetReferences();
 
+  console.log("→ Validating data-src/reactor-taxonomy.ts");
+  validateTaxonomy();
+
   if (errors.length > 0) {
     console.error(`\n✗ Validation failed with ${errors.length} error(s):\n`);
     for (const e of errors) console.error(e);
@@ -255,8 +374,9 @@ function main(): void {
     throw new ValidationError(`${errors.length} validation error(s)`);
   }
 
+  const { fuelTags: ft, coolantTags: ct, xFactorTags: xt } = reactorTaxonomy;
   console.log(
-    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, all citations unique and within plausibility bounds.`,
+    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${ft.length + ct.length + xt.length} taxonomy tags, all citations unique and within plausibility bounds.`,
   );
 }
 
