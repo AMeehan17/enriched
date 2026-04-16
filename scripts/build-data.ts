@@ -24,13 +24,15 @@ import "./validate-data";
 import { sources } from "../data-src/sources";
 import { presets } from "../data-src/presets";
 import { reactorTaxonomy } from "../data-src/reactor-taxonomy";
+import { reactors } from "../data-src/reactors";
 import type { PresetsJson, SourcesJson } from "../lib/data-types";
-import type { TaxonomyJson } from "../lib/reactor-types";
+import type { TaxonomyJson, ReactorsJson } from "../lib/reactor-types";
 
 const outputDir = resolve(import.meta.dirname, "..", "public", "data");
 const sourcesPath = resolve(outputDir, "sources.json");
 const presetsPath = resolve(outputDir, "presets.json");
 const taxonomyPath = resolve(outputDir, "taxonomy.json");
+const reactorsPath = resolve(outputDir, "reactors.json");
 
 async function ensureDir(path: string): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
@@ -65,13 +67,21 @@ async function main(): Promise<void> {
     xFactor: reactorTaxonomy.xFactorTags,
   };
 
+  const reactorsJson: ReactorsJson = {
+    lastUpdated,
+    schemaVersion: 1,
+    reactors,
+  };
+
   await writeJson(sourcesPath, sourcesJson);
   await writeJson(presetsPath, presetsJson);
   await writeJson(taxonomyPath, taxonomyJson);
+  await writeJson(reactorsPath, reactorsJson);
 
   console.log(`→ Wrote ${sourcesPath}`);
   console.log(`→ Wrote ${presetsPath}`);
   console.log(`→ Wrote ${taxonomyPath}`);
+  console.log(`→ Wrote ${reactorsPath}`);
   console.log("\n✓ Data build complete.");
 }
 

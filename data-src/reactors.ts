@@ -1,0 +1,382 @@
+import type { ReactorDesign } from "@/lib/reactor-types";
+
+/**
+ * REACTORS — the 6 starting reactor designs for Module 2 v1.
+ *
+ * Each design is tagged against the F/C/X taxonomy and carries:
+ *   - Technical specs (outlet temp, spectrum, tags)
+ *   - Descriptive attribution (pursuedBy: company name + public URL)
+ *   - "Why this design?" logic chain (3-5 steps of physics reasoning)
+ *   - Primary-source citations
+ *
+ * SCOPE BOUNDARY (per CLAUDE.md §3):
+ *   - Company names + public URLs are ALLOWED (descriptive attribution)
+ *   - No scores, funding, underwriting, LP framing, or editorial judgment
+ *   - Every fact cites an independently verifiable primary source
+ *
+ * This file is compiled to public/data/reactors.json by scripts/build-data.ts.
+ * The validator (scripts/validate-data.ts) enforces tag validity, citation
+ * allowlist membership, plausibility bounds, and bibtex_key uniqueness.
+ *
+ * Starting set chosen to span the F/C/X grid with minimal overlap:
+ *   AP1000      — light-water, large, LEU-UO₂ (the incumbent baseline)
+ *   VOYGR       — light-water, small, LEU-UO₂ (SMR variant of the baseline)
+ *   Xe-100      — helium, small, TRISO (HTGR, process heat)
+ *   BWRX-300    — light-water, small, LEU-UO₂ (simplified BWR)
+ *   Natrium     — sodium, mid, HALEU (fast reactor + thermal storage)
+ *   KP-FHR      — FLiBe salt, small, TRISO (fluoride-salt-cooled)
+ */
+
+export const reactors: ReadonlyArray<ReactorDesign> = [
+  // ─── AP1000 ───────────────────────────────────────────────────────
+  {
+    id: "ap1000",
+    name: "AP1000",
+    description:
+      "Generation III+ pressurized water reactor. Two units operational at Vogtle (Georgia), the first new US nuclear builds in 30 years.",
+    pursuedBy: [
+      {
+        name: "Westinghouse Electric Company",
+        url: "https://www.westinghousenuclear.com/energy-systems/ap1000-pwr",
+      },
+    ],
+    fuelTags: ["leu-uo2"],
+    coolantTags: ["light-water"],
+    xFactorTags: ["large", "first-of-kind-licensed"],
+    outletTempC: 321,
+    spectrum: "thermal",
+    whyChain: [
+      {
+        text: "Uses standard LEU-UO₂ fuel pellets in zirconium cladding — the same fuel supply chain that powers 90% of the global fleet.",
+        tagRef: "leu-uo2",
+      },
+      {
+        text: "Light water serves as both coolant and moderator, thermalizing neutrons for a well-understood fission chain reaction.",
+        tagRef: "light-water",
+      },
+      {
+        text: "Outlet temperature of ~321°C drives a conventional Rankine steam cycle — proven thermodynamics, no exotic materials.",
+      },
+      {
+        text: "At 1117 MWe per unit, it achieves the lowest cost per MWh at steady-state operation through sheer scale.",
+        tagRef: "large",
+      },
+      {
+        text: "The AP1000's innovation is passive safety: gravity-fed water tanks and natural circulation replace diesel-powered emergency pumps, though it still relies on the pressurized water architecture that TMI/Fukushima challenged.",
+      },
+    ],
+    citations: [
+      {
+        bibtex_key: "westinghouse2024ap1000_ap1000",
+        author: "Westinghouse Electric Company",
+        title: "AP1000 Plant Design",
+        year: 2024,
+        publisher: "Westinghouse",
+        url: "https://www.westinghousenuclear.com/energy-systems/ap1000-pwr",
+        accessed: "2026-04-15",
+      },
+      {
+        bibtex_key: "nrc2023ap1000dcd_ap1000",
+        author: "U.S. Nuclear Regulatory Commission",
+        title: "AP1000 Design Certification",
+        year: 2023,
+        publisher: "NRC",
+        url: "https://www.nrc.gov/reactors/new-reactors/large-lwr/ap1000.html",
+        accessed: "2026-04-15",
+      },
+    ],
+  },
+
+  // ─── VOYGR (NuScale) ─────────────────────────────────────────────
+  {
+    id: "voygr",
+    name: "VOYGR (NuScale SMR)",
+    description:
+      "Light-water SMR using natural circulation — no reactor coolant pumps. First SMR to receive NRC design certification (2023).",
+    pursuedBy: [
+      {
+        name: "NuScale Power",
+        url: "https://www.nuscalepower.com/en/products/voygr-smr-plants",
+      },
+    ],
+    fuelTags: ["leu-uo2"],
+    coolantTags: ["light-water"],
+    xFactorTags: ["small", "walk-away-safe", "first-of-kind-licensed"],
+    outletTempC: 316,
+    spectrum: "thermal",
+    whyChain: [
+      {
+        text: "Uses standard LEU-UO₂ fuel — no HALEU supply chain dependency, compatible with existing enrichment infrastructure.",
+        tagRef: "leu-uo2",
+      },
+      {
+        text: "Light water cools the core via natural circulation, eliminating reactor coolant pumps entirely — fewer moving parts, fewer failure modes.",
+        tagRef: "light-water",
+      },
+      {
+        text: "Each module is 77 MWe, factory-fabricated and shipped by truck — shorter construction timeline than site-built reactors.",
+        tagRef: "small",
+      },
+      {
+        text: "The entire module sits in an underground pool. If all power is lost, decay heat transfers passively to the pool water — no operator action needed for 30+ days.",
+        tagRef: "walk-away-safe",
+      },
+      {
+        text: "First SMR to receive NRC Standard Design Approval (2023), proving the regulatory pathway for small modular designs.",
+        tagRef: "first-of-kind-licensed",
+      },
+    ],
+    citations: [
+      {
+        bibtex_key: "nuscale2024voygr_voygr",
+        author: "NuScale Power",
+        title: "VOYGR SMR Power Plants",
+        year: 2024,
+        publisher: "NuScale Power",
+        url: "https://www.nuscalepower.com/en/products/voygr-smr-plants",
+        accessed: "2026-04-15",
+      },
+      {
+        bibtex_key: "nrc2023nuscalesda_voygr",
+        author: "U.S. Nuclear Regulatory Commission",
+        title: "NuScale Small Modular Reactor Design Certification",
+        year: 2023,
+        publisher: "NRC",
+        url: "https://www.nrc.gov/reactors/new-reactors/smr/nuscale.html",
+        accessed: "2026-04-15",
+      },
+    ],
+  },
+
+  // ─── Xe-100 ───────────────────────────────────────────────────────
+  {
+    id: "xe-100",
+    name: "Xe-100",
+    description:
+      "High-temperature gas-cooled pebble-bed reactor. 80 MWe per module, 750°C outlet, designed for process heat and hydrogen production.",
+    pursuedBy: [
+      {
+        name: "X-energy",
+        url: "https://x-energy.com/reactors/xe-100",
+      },
+    ],
+    fuelTags: ["triso", "haleu-metal"],
+    coolantTags: ["helium"],
+    xFactorTags: ["small", "walk-away-safe", "process-heat"],
+    outletTempC: 750,
+    spectrum: "thermal",
+    whyChain: [
+      {
+        text: "TRISO pebble fuel retains fission products up to ~1600°C — since the reactor operates at 750°C, there is over 800°C of thermal margin before any fuel damage is physically possible.",
+        tagRef: "triso",
+      },
+      {
+        text: "Helium coolant is chemically inert (no corrosion, no phase changes) and enables the high outlet temperatures that make process heat applications viable.",
+        tagRef: "helium",
+      },
+      {
+        text: "At 750°C outlet, this reactor can supply heat for hydrogen production via steam electrolysis, industrial processes, and high-efficiency gas turbine electricity generation.",
+        tagRef: "process-heat",
+      },
+      {
+        text: "The combination of TRISO's built-in containment and helium's inertness means the reactor cannot melt, cannot explode, and reaches a safe state without human intervention.",
+        tagRef: "walk-away-safe",
+      },
+    ],
+    citations: [
+      {
+        bibtex_key: "xenergy2024xe100_xe-100",
+        author: "X-energy",
+        title: "Xe-100 Reactor",
+        year: 2024,
+        publisher: "X-energy",
+        url: "https://x-energy.com/reactors/xe-100",
+        accessed: "2026-04-15",
+      },
+      {
+        bibtex_key: "nrc2024xenergy_xe-100",
+        author: "U.S. Nuclear Regulatory Commission",
+        title: "X-energy — Xe-100 Pre-Application Activities",
+        year: 2024,
+        publisher: "NRC",
+        url: "https://www.nrc.gov/reactors/new-reactors/advanced.html",
+        accessed: "2026-04-15",
+      },
+    ],
+  },
+
+  // ─── BWRX-300 ─────────────────────────────────────────────────────
+  {
+    id: "bwrx-300",
+    name: "BWRX-300",
+    description:
+      "Simplified boiling water SMR. 300 MWe, designed to cost 60% less per kW than large nuclear through radical simplification.",
+    pursuedBy: [
+      {
+        name: "GE Vernova",
+        url: "https://www.gevernova.com/nuclear/bwrx-300",
+      },
+    ],
+    fuelTags: ["leu-uo2"],
+    coolantTags: ["light-water"],
+    xFactorTags: ["small", "walk-away-safe"],
+    outletTempC: 287,
+    spectrum: "thermal",
+    whyChain: [
+      {
+        text: "Uses the same LEU-UO₂ fuel assemblies proven in decades of BWR operation — no new fuel supply chain needed.",
+        tagRef: "leu-uo2",
+      },
+      {
+        text: "Boiling water reactor: coolant boils directly in the core and drives the turbine as steam, eliminating the separate steam generators that PWRs require.",
+        tagRef: "light-water",
+      },
+      {
+        text: "Radical simplification from the ESBWR design: natural circulation (no recirculation pumps), isolation condensers for passive decay heat removal, and a smaller containment enabled by lower operating pressure.",
+        tagRef: "walk-away-safe",
+      },
+      {
+        text: "At 300 MWe, it targets the SMR sweet spot: large enough for meaningful baseload contribution, small enough for factory fabrication of key components.",
+        tagRef: "small",
+      },
+    ],
+    citations: [
+      {
+        bibtex_key: "gevernova2024bwrx_bwrx-300",
+        author: "GE Vernova",
+        title: "BWRX-300 Small Modular Reactor",
+        year: 2024,
+        publisher: "GE Vernova",
+        url: "https://www.gevernova.com/nuclear/bwrx-300",
+        accessed: "2026-04-15",
+      },
+    ],
+  },
+
+  // ─── Natrium ──────────────────────────────────────────────────────
+  {
+    id: "natrium",
+    name: "Natrium",
+    description:
+      "Sodium-cooled fast reactor paired with molten salt thermal energy storage. 345 MWe base, can peak to 500 MWe for 5+ hours.",
+    pursuedBy: [
+      {
+        name: "TerraPower",
+        url: "https://www.terrapower.com/our-work/natriumpower/",
+      },
+    ],
+    fuelTags: ["haleu-metal"],
+    coolantTags: ["sodium"],
+    xFactorTags: [
+      "mid",
+      "walk-away-safe",
+      "load-following",
+      "thermal-storage",
+      "waste-burner",
+    ],
+    outletTempC: 530,
+    spectrum: "fast",
+    whyChain: [
+      {
+        text: "HALEU metallic fuel enables a compact core with high fissile density, achieving higher burnup and longer refueling intervals than LEU.",
+        tagRef: "haleu-metal",
+      },
+      {
+        text: "Sodium coolant does not moderate neutrons, maintaining a fast neutron spectrum that can fission actinides from spent fuel — making this a waste-burning design.",
+        tagRef: "sodium",
+      },
+      {
+        text: "The fast spectrum also enables fuel breeding (producing more fissile material than consumed), dramatically extending uranium resource utilization.",
+        tagRef: "waste-burner",
+      },
+      {
+        text: "A molten salt thermal storage system decouples the reactor from the turbine: the reactor runs at steady 345 MWe thermal, while stored heat can boost electrical output to 500 MWe during peak demand.",
+        tagRef: "thermal-storage",
+      },
+      {
+        text: "Sodium's excellent thermal conductivity and the metallic fuel's thermal expansion coefficient provide inherent passive shutdown — the reactor slows itself as temperature rises.",
+        tagRef: "walk-away-safe",
+      },
+    ],
+    citations: [
+      {
+        bibtex_key: "terrapower2024natrium_natrium",
+        author: "TerraPower",
+        title: "Natrium Technology",
+        year: 2024,
+        publisher: "TerraPower",
+        url: "https://www.terrapower.com/our-work/natriumpower/",
+        accessed: "2026-04-15",
+      },
+      {
+        bibtex_key: "doe2024ardp_natrium",
+        author: "U.S. Department of Energy",
+        title: "Advanced Reactor Demonstration Program — TerraPower Natrium",
+        year: 2024,
+        publisher: "Office of Nuclear Energy",
+        url: "https://www.energy.gov/ne/advanced-reactor-demonstration-program",
+        accessed: "2026-04-15",
+      },
+    ],
+  },
+
+  // ─── KP-FHR (Kairos Power) ───────────────────────────────────────
+  {
+    id: "kp-fhr",
+    name: "KP-FHR (Kairos)",
+    description:
+      "Fluoride-salt-cooled high-temperature reactor using TRISO pebble fuel in molten FLiBe salt. Low-pressure, high-temperature, walk-away-safe.",
+    pursuedBy: [
+      {
+        name: "Kairos Power",
+        url: "https://kairospower.com/technology/",
+      },
+    ],
+    fuelTags: ["triso"],
+    coolantTags: ["flibe-salt"],
+    xFactorTags: ["small", "walk-away-safe", "process-heat"],
+    outletTempC: 650,
+    spectrum: "thermal",
+    whyChain: [
+      {
+        text: "TRISO pebble fuel provides built-in containment: each pebble is its own miniature pressure vessel, retaining fission products to 1600°C.",
+        tagRef: "triso",
+      },
+      {
+        text: "FLiBe molten salt coolant operates at atmospheric pressure — no massive pressure vessel needed, dramatically simplifying the plant and reducing cost.",
+        tagRef: "flibe-salt",
+      },
+      {
+        text: "The combination of low-pressure FLiBe and TRISO's thermal margin means the reactor is inherently walk-away-safe — decay heat dissipates passively through the salt and vessel walls.",
+        tagRef: "walk-away-safe",
+      },
+      {
+        text: "At 650°C outlet temperature, the KP-FHR can supply process heat for industrial applications while also driving efficient power conversion.",
+        tagRef: "process-heat",
+      },
+      {
+        text: "Unlike molten salt fuel reactors where the fuel IS the salt, the KP-FHR keeps fuel and coolant separate — using proven TRISO fuel in a novel coolant, reducing development risk.",
+      },
+    ],
+    citations: [
+      {
+        bibtex_key: "kairos2024kpfhr_kp-fhr",
+        author: "Kairos Power",
+        title: "Kairos Power Technology",
+        year: 2024,
+        publisher: "Kairos Power",
+        url: "https://kairospower.com/technology/",
+        accessed: "2026-04-15",
+      },
+      {
+        bibtex_key: "nrc2024kairos_kp-fhr",
+        author: "U.S. Nuclear Regulatory Commission",
+        title: "Kairos Power — Hermes Test Reactor",
+        year: 2024,
+        publisher: "NRC",
+        url: "https://www.nrc.gov/reactors/new-reactors/advanced.html",
+        accessed: "2026-04-15",
+      },
+    ],
+  },
+];

@@ -20,6 +20,7 @@
 import { sources } from "../data-src/sources";
 import { presets } from "../data-src/presets";
 import { reactorTaxonomy } from "../data-src/reactor-taxonomy";
+import { reactors } from "../data-src/reactors";
 import {
   ALL_DIMENSION_IDS,
   CATEGORICAL_DIMENSION_IDS,
@@ -34,7 +35,9 @@ import {
   FUEL_IDS,
   COOLANT_IDS,
   X_FACTOR_IDS,
+  REACTOR_PLAUSIBILITY_BOUNDS,
   type TaxonomyTag,
+  type ReactorDesign,
 } from "../lib/reactor-types";
 import { isAllowedCitationHost } from "../lib/citation-allowlist";
 
@@ -210,6 +213,15 @@ function validateBibKeyUniqueness(): void {
       }
     }
   }
+
+  // Module 2: reactor designs
+  for (const [ri, r] of reactors.entries()) {
+    for (const [ci, c] of r.citations.entries()) {
+      if (c.bibtex_key) {
+        check(c.bibtex_key, `reactors[${ri}].citations[${ci}]`);
+      }
+    }
+  }
 }
 
 // ─── Module 2: Reactor taxonomy validation ──────────────────────────
@@ -304,6 +316,118 @@ function validateTaxonomy(): void {
   }
 }
 
+// ─── Module 2: Reactor design validation ────────────────────────────
+
+function validateReactors(): void {
+  const fuelSet = new Set<string>(FUEL_IDS);
+  const coolantSet = new Set<string>(COOLANT_IDS);
+  const xSet = new Set<string>(X_FACTOR_IDS);
+  const idSet = new Set<string>();
+  const { outletTempC: tempBounds } = REACTOR_PLAUSIBILITY_BOUNDS;
+
+  if (reactors.length === 0) {
+    err("reactors", "must have ≥1 reactor design");
+  }
+
+  for (const [i, r] of reactors.entries()) {
+    const path = `reactors[${i}] (${r.id})`;
+
+    // ID uniqueness
+    if (idSet.has(r.id)) {
+      err(`${path}.id`, `duplicate reactor ID "${r.id}"`);
+    }
+    idSet.add(r.id);
+
+    if (!r.name) err(`${path}.name`, "missing");
+    if (!r.description) err(`${path}.description`, "missing");
+
+    // pursuedBy
+    if (!r.pursuedBy || r.pursuedBy.length === 0) {
+      err(`${path}.pursuedBy`, "must have ≥1 entry");
+    } else {
+      for (const [pi, p] of r.pursuedBy.entries()) {
+        if (!p.name) err(`${path}.pursuedBy[${pi}].name`, "missing");
+        if (!p.url || !p.url.startsWith("http")) {
+          err(`${path}.pursuedBy[${pi}].url`, `missing or invalid`);
+        } else if (!isAllowedCitationHost(p.url)) {
+          err(
+            `${path}.pursuedBy[${pi}].url`,
+            `host not in citation allowlist: "${p.url}"`,
+          );
+        }
+      }
+    }
+
+    // Tag validity
+    for (const t of r.fuelTags) {
+      if (!fuelSet.has(t)) err(`${path}.fuelTags`, `unknown fuel tag "${t}"`);
+    }
+    for (const t of r.coolantTags) {
+      if (!coolantSet.has(t))
+        err(`${path}.coolantTags`, `unknown coolant tag "${t}"`);
+    }
+    for (const t of r.xFactorTags) {
+      if (!xSet.has(t))
+        err(`${path}.xFactorTags`, `unknown X-Factor tag "${t}"`);
+    }
+
+    // Plausibility
+    if (
+      typeof r.outletTempC !== "number" ||
+      r.outletTempC < tempBounds.min ||
+      r.outletTempC > tempBounds.max
+    ) {
+      err(
+        `${path}.outletTempC`,
+        `out of bounds [${tempBounds.min}, ${tempBounds.max}], got ${r.outletTempC}`,
+      );
+    }
+
+    // Spectrum
+    if (!["thermal", "fast", "epithermal"].includes(r.spectrum)) {
+      err(`${path}.spectrum`, `invalid: "${r.spectrum}"`);
+    }
+
+    // Why chain
+    if (!r.whyChain || r.whyChain.length === 0) {
+      err(`${path}.whyChain`, "must have ≥1 step");
+    } else {
+      for (const [si, step] of r.whyChain.entries()) {
+        if (!step.text)
+          err(`${path}.whyChain[${si}].text`, "missing");
+        // tagRef validity (optional field)
+        if (step.tagRef) {
+          const valid =
+            fuelSet.has(step.tagRef) ||
+            coolantSet.has(step.tagRef) ||
+            xSet.has(step.tagRef);
+          if (!valid) {
+            err(
+              `${path}.whyChain[${si}].tagRef`,
+              `unknown tag "${step.tagRef}"`,
+            );
+          }
+        }
+      }
+    }
+
+    // Citations
+    if (!r.citations || r.citations.length === 0) {
+      err(`${path}.citations`, "must have ≥1 citation");
+    } else {
+      for (const [ci, c] of r.citations.entries()) {
+        validateCitation(`${path}.citations[${ci}]`, c);
+        if (c.url && !isAllowedCitationHost(c.url)) {
+          err(
+            `${path}.citations[${ci}].url`,
+            `host not in citation allowlist: "${c.url}"`,
+          );
+        }
+      }
+    }
+  }
+}
+
 function validatePresetReferences(): void {
   const sourceIdSet = new Set(SOURCE_IDS);
   const dimIdSet = new Set<DimensionId>(ALL_DIMENSION_IDS);
@@ -365,6 +489,9 @@ function main(): void {
   console.log("→ Validating data-src/reactor-taxonomy.ts");
   validateTaxonomy();
 
+  console.log("→ Validating data-src/reactors.ts");
+  validateReactors();
+
   if (errors.length > 0) {
     console.error(`\n✗ Validation failed with ${errors.length} error(s):\n`);
     for (const e of errors) console.error(e);
@@ -376,7 +503,7 @@ function main(): void {
 
   const { fuelTags: ft, coolantTags: ct, xFactorTags: xt } = reactorTaxonomy;
   console.log(
-    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${ft.length + ct.length + xt.length} taxonomy tags, all citations unique and within plausibility bounds.`,
+    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${ft.length + ct.length + xt.length} taxonomy tags, ${reactors.length} reactor designs, all citations unique and within plausibility bounds.`,
   );
 }
 
