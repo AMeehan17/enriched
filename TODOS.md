@@ -38,24 +38,89 @@ G-drive reference folder is valuable as architectural input for the Fuel /
 Coolant / X-Factor taxonomy, but the business fields (Key Supporters, jobs
 posted, probability scores) are explicitly out of Enriched scope.
 
-**Key open questions for office-hours** (before any UI code):
-1. What's the ideal learning flow? Top-down ("pick a config, learn what it
-   means"), bottom-up ("start from a physics constraint"), or Socratic
-   (question-led)?
-2. How deep does the physics go? Enough to distinguish moderator choices
-   without requiring a nuclear engineering degree. The test: can a smart
-   reader understand why HALEU exists after 5 minutes on the page?
-3. What are the "click paths" that surprise a user? The best version of
-   this tool has moments where a reader clicks three things in a row and
-   suddenly understands something non-obvious about reactor design.
-4. Module 3 coupling: how tightly do the F/C/X glossary tags link to
-   Module 3 articles? Option A: every tag has a popover with a one-paragraph
-   explainer and a "read more" link. Option B: tags are bare words and
-   everything that matters lives in Module 3.
+**Status (2026-04-15):** office-hours has run. Design doc approved, lives at
+`~/.gstack/projects/Enriched/andrew-main-design-20260415-153112.md`. Key
+outcome: Module 2 split into two separate shipments. Module 2 v1 = configurator
++ chip popovers only (~7 working days), data-first build order. Module 3
+(Learn) is a separate future ship. Popovers written for Module 2 become seed
+content for Module 3 articles — zero rework.
 
-**Do NOT start coding until office-hours has run.** This is the module that
-distinguishes Enriched from every other nuclear explainer site. It needs to
-be great, not just good, and that requires a product conversation first.
+**Headline aha path:** walk-away-safe = coolant (the safety reframe), delivered
+in v1 as a canned preset link at the top of the page. Cross-dimension chip
+graying deferred to v1.1.
+
+**v1 launch blockers (in order):**
+1. Block 1 — `lib/reactor-taxonomy.ts` locked with ~25 F/C/X tags,
+   each with label + oneLineHook + popoverBody + citations, + `lib/citation-allowlist.ts`
+2. Block 2 — `data/reactors.json` with exactly 6 designs tagged against
+   the taxonomy (AP1000, VOYGR/NuScale, Xe-100, BWRX-300, Natrium, Kairos KP-FHR)
+3. Block 3 — `lib/reactor-match.ts` pure function + ≥10 unit tests
+4. Block 4 — `/reactor-builder` route, multi-select chips, nuqs state, popovers,
+   MatchList, aria-live, walk-away-safe preset, nav entry
+
+**Next step:** run `/plan-eng-review` on the design doc before any code.
+Then `/plan-design-review` is optional (chip UI reuses Module 1 patterns but
+the gray-out interaction is new — though deferred to v1.1, so low risk).
+
+**Scope boundary reminder (per CLAUDE.md §3):** company IDs are allowed in
+Module 2 output as purely descriptive attributions — `pursuedBy: [{name, url}]`
+on each matching design, pointing to public company materials. No scores,
+no funding, no underwriting. Grep test pre-launch: `scored`, `underwrite`,
+`LP`, `confidential`, `Pitchbook` must return zero hits anywhere in the
+Module 2 tree.
+
+## module 2 v1.1+ (post-launch, from CEO review 2026-04-15)
+
+### Reactor comparison mode
+**Priority:** P2
+**Added:** 2026-04-15 (CEO review)
+**Depends on:** Module 2 v1 shipped + validated
+
+Pick two or more real-world reactor designs from the matching list and compare
+them side-by-side across physical parameters (outlet temp, spectrum, fuel
+burnup, scale). Reuses Module 1's comparison interaction pattern — different
+data, same UI. Estimated effort: ~2-3 days CC time. Ship when v1 configurator
+is validated by dogfood.
+
+### Timeline dimension
+**Priority:** P3
+**Added:** 2026-04-15 (CEO review)
+**Blocked on:** reliable milestone data for all designs
+
+Each matching reactor shows its development arc: R&D start, regulatory review,
+expected licensing, expected first operation. Horizontal timeline bar per design.
+Blocked on data availability — not all 6 starting designs have public milestone
+dates. Estimated effort: ~1-2 days CC once data is sourced.
+
+### "No match" as physics explanation
+**Priority:** P3
+**Added:** 2026-04-15 (CEO review)
+
+When no current designs match a combination, instead of a neutral "no match"
+card, show computed physical constraints and a "why nobody's building this"
+explanation (e.g., "lead-cooled + thorium requires reprocessing infrastructure
+that doesn't exist commercially"). Content-heavy: requires deep physics writing
+for every common impossible combination. Estimated effort: ~2-3 days CC
+(mostly content).
+
+### Live constraint physics computation
+**Priority:** P4 (vision)
+**Added:** 2026-04-15 (CEO review)
+
+When you pick a fuel + coolant, the spec card computes and displays the
+physical consequences: outlet temp range, neutron spectrum, thermal efficiency,
+max burnup. The physics is calculated, not looked up. Requires a physics
+model engine — months of R&D. The ultimate version of the teaching
+experience but the farthest from shippable.
+
+### LLM-powered natural language search
+**Priority:** P4 (vision)
+**Added:** 2026-04-15 (CEO review)
+
+Type "show me small reactors that can do process heat" and the tool maps it
+to F/C/X tags. LLM-powered search as an alternative entry point to the chip
+configurator. Concerns: latency, accuracy, cost. Defer until the F/C/X
+taxonomy is proven and the dataset is larger (>15 designs).
 
 ## module 3 (reference library, future)
 
@@ -255,15 +320,21 @@ scope approval because it breaks the citation promise.
 
 ## platform
 
-### OG image route
+### OG image route + Module 2 per-configuration OG (bundle)
 **Priority:** P2
-**Added:** 2026-04-13
+**Added:** 2026-04-13, updated 2026-04-15
 
-`/og/compare` via Satori — renders a URL's state as a static 1200×630 PNG for
-social sharing. Preset + sources + year baked into the image. Research draft
-sits in `data-src/drafts/og-satori-patterns.md`. The whole "rebuttal in a link"
-story depends on this — right now a shared Enriched link shows up as a plain
-Next.js default card.
+`/og/compare` already exists at `app/og/compare/route.tsx` (Module 1). When
+Module 2 ships v1.1 OG images, add `/og/reactor-builder` using the same
+Satori codepath. Bundle both as a single v1.1 effort — shared helper for
+Satori rendering, shared font loading, per-module route handlers. Don't do
+Module 2 OG independently.
+
+Context: Module 2 v1 ships WITHOUT per-configuration OG (shared URLs get a
+generic card). Adding OG is the first v1.1 item. Per-config OG also means
+`generateMetadata` reading `searchParams`, which forces dynamic rendering —
+Module 2 v1 is intentionally static-prerendered to avoid this cost. Accept
+the dynamic trade-off only when OG ships.
 
 ### Accessibility pass
 **Priority:** P2
