@@ -2,7 +2,9 @@
 
 import type {
   ReactorTaxonomy,
-  FuelId,
+  FissileElementId,
+  KickstarterId,
+  FuelFormId,
   CoolantId,
   XFactorId,
 } from "@/lib/reactor-types";
@@ -11,21 +13,20 @@ import { MatchCard } from "./MatchCard";
 
 interface MatchListProps {
   taxonomy: ReactorTaxonomy;
-  selectedFuel: FuelId[];
+  selectedFuelElement: FissileElementId | null;
+  selectedKickstarter: KickstarterId | null;
+  selectedFuelForm: FuelFormId | null;
   selectedCoolant: CoolantId[];
   selectedXFactor: XFactorId[];
   result: MatchResult;
   onClearAll: () => void;
 }
 
-/**
- * MatchList — renders the list of matching reactor designs below the
- * configurator, or the "no current designs match" card when the
- * selection has no matches.
- */
 export function MatchList({
   taxonomy,
-  selectedFuel,
+  selectedFuelElement,
+  selectedKickstarter,
+  selectedFuelForm,
   selectedCoolant,
   selectedXFactor,
   result,
@@ -74,7 +75,9 @@ export function MatchList({
               <MatchCard
                 reactor={r}
                 taxonomy={taxonomy}
-                selectedFuel={selectedFuel}
+                selectedFuelElement={selectedFuelElement}
+                selectedKickstarter={selectedKickstarter}
+                selectedFuelForm={selectedFuelForm}
                 selectedCoolant={selectedCoolant}
                 selectedXFactor={selectedXFactor}
               />

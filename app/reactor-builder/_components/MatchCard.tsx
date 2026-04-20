@@ -4,7 +4,9 @@ import { useState } from "react";
 import type {
   ReactorDesign,
   ReactorTaxonomy,
-  FuelId,
+  FissileElementId,
+  KickstarterId,
+  FuelFormId,
   CoolantId,
   XFactorId,
 } from "@/lib/reactor-types";
@@ -12,7 +14,9 @@ import type {
 interface MatchCardProps {
   reactor: ReactorDesign;
   taxonomy: ReactorTaxonomy;
-  selectedFuel: FuelId[];
+  selectedFuelElement: FissileElementId | null;
+  selectedKickstarter: KickstarterId | null;
+  selectedFuelForm: FuelFormId | null;
   selectedCoolant: CoolantId[];
   selectedXFactor: XFactorId[];
 }
@@ -20,35 +24,41 @@ interface MatchCardProps {
 /**
  * MatchCard — one reactor design in the match list.
  *
- * Layout: name + brief, pursuer name with link, compact spec row
- * (outlet temp / spectrum / scale-summary), F/C/X tag pills with
- * matched tags highlighted in accent-soft, and a collapsible
- * "Why this design?" expandable logic chain section.
- *
- * Why chain: click to expand reveals a numbered list of reasoning
- * steps. Each step has optional text spans that reference specific
- * F/C/X tags (for future wiring to deep-link into the tag popovers).
+ * Schema v2: renders fuel as element + kickstarter (if present) + form,
+ * shows reactorType as a prominent derived field, tag pills highlight
+ * matched selections in accent-soft.
  */
 export function MatchCard({
   reactor,
   taxonomy,
-  selectedFuel,
+  selectedFuelElement,
+  selectedKickstarter,
+  selectedFuelForm,
   selectedCoolant,
   selectedXFactor,
 }: MatchCardProps) {
   const [whyOpen, setWhyOpen] = useState(false);
 
-  const fuelTagMap = new Map(taxonomy.fuelTags.map((t) => [t.id, t]));
+  const feTag = taxonomy.fissileElementTags.find(
+    (t) => t.id === reactor.fuelElement,
+  );
+  const ksTag = reactor.kickstarter
+    ? taxonomy.kickstarterTags.find((t) => t.id === reactor.kickstarter)
+    : null;
+  const ffTag = taxonomy.fuelFormTags.find((t) => t.id === reactor.fuelForm);
   const coolantTagMap = new Map(taxonomy.coolantTags.map((t) => [t.id, t]));
   const xTagMap = new Map(taxonomy.xFactorTags.map((t) => [t.id, t]));
 
-  const selectedFuelSet = new Set<string>(selectedFuel);
   const selectedCoolantSet = new Set<string>(selectedCoolant);
   const selectedXSet = new Set<string>(selectedXFactor);
 
+  const fuelElementMatched = selectedFuelElement === reactor.fuelElement;
+  const kickstarterMatched =
+    selectedKickstarter !== null && selectedKickstarter === reactor.kickstarter;
+  const fuelFormMatched = selectedFuelForm === reactor.fuelForm;
+
   return (
     <article className="border-t border-[var(--color-rule)] py-[var(--spacing-8)] last:border-b last:border-[var(--color-rule)] grid grid-cols-1 gap-[var(--spacing-6)]">
-      {/* Top: name + pursuer + brief | specs */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-[var(--spacing-6)] items-start">
         <div>
           <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.08em] text-[var(--color-text-faint)] m-0 mb-[var(--spacing-2)]">
@@ -75,28 +85,43 @@ export function MatchCard({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-[var(--spacing-3)_var(--spacing-6)] sm:grid-cols-[repeat(2,auto)] border-t border-b border-[var(--color-rule)] py-[var(--spacing-3)] self-start">
+        <div className="grid grid-cols-2 gap-[var(--spacing-3)_var(--spacing-6)] sm:grid-cols-[repeat(3,auto)] border-t border-b border-[var(--color-rule)] py-[var(--spacing-3)] self-start">
+          <SpecCol label="Type" value={reactor.reactorType} />
           <SpecCol label="Outlet" value={`${reactor.outletTempC}°C`} />
           <SpecCol label="Spectrum" value={reactor.spectrum} />
         </div>
       </div>
 
-      {/* Tag pills with matched-vs-unmatched styling */}
+      {/* Tag pills */}
       <div className="flex flex-wrap gap-[var(--spacing-2)]">
-        {reactor.fuelTags.map((id) => {
-          const tag = fuelTagMap.get(id);
-          const matched = selectedFuelSet.has(id);
-          return <TagPill key={id} label={tag?.label ?? id} matched={matched} />;
-        })}
+        {feTag ? (
+          <TagPill label={feTag.label} matched={fuelElementMatched} />
+        ) : null}
+        {ksTag ? (
+          <TagPill label={ksTag.label} matched={kickstarterMatched} />
+        ) : null}
+        {ffTag ? (
+          <TagPill label={ffTag.label} matched={fuelFormMatched} />
+        ) : null}
         {reactor.coolantTags.map((id) => {
           const tag = coolantTagMap.get(id);
-          const matched = selectedCoolantSet.has(id);
-          return <TagPill key={id} label={tag?.label ?? id} matched={matched} />;
+          return (
+            <TagPill
+              key={id}
+              label={tag?.label ?? id}
+              matched={selectedCoolantSet.has(id)}
+            />
+          );
         })}
         {reactor.xFactorTags.map((id) => {
           const tag = xTagMap.get(id);
-          const matched = selectedXSet.has(id);
-          return <TagPill key={id} label={tag?.label ?? id} matched={matched} />;
+          return (
+            <TagPill
+              key={id}
+              label={tag?.label ?? id}
+              matched={selectedXSet.has(id)}
+            />
+          );
         })}
       </div>
 

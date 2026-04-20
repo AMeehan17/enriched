@@ -3,67 +3,67 @@ import {
   parseAsStringLiteral,
 } from "nuqs";
 import {
-  FUEL_IDS,
+  FISSILE_ELEMENT_IDS,
+  KICKSTARTER_IDS,
+  FUEL_FORM_IDS,
   COOLANT_IDS,
   X_FACTOR_IDS,
-  type FuelId,
   type CoolantId,
   type XFactorId,
 } from "./reactor-types";
 
 /**
- * URL state parsers for Module 2 (Reactor Builder).
- *
- * These are the nuqs parser definitions for all query params that drive
- * the reactor builder tool. Defined in one place so the OG image route
- * (when v1.1 lands), preset links, and any future consumer reference the
- * same serialization.
+ * URL state parsers for Module 2 (Reactor Builder) — SCHEMA v2.
  *
  * URL schema:
- *   /reactor-builder?fuel=haleu-metal,triso&coolant=helium&x=walk-away-safe,process-heat
+ *   /reactor-builder
+ *     ?fe=th-232                   (fissile element, single)
+ *     &ks=u-235-kickstart           (kickstarter, single, optional)
+ *     &ff=molten-salt               (fuel form, single)
+ *     &c=flibe,sodium               (coolant, array)
+ *     &x=walk-away-safe,process-heat (x-factor, array)
  *
- * Invariants enforced by the parsers:
- *   - fuel: must be a subset of the 6 known fuel IDs. Unknown values filtered.
- *   - coolant: must be a subset of the 7 known coolant IDs. Unknown values filtered.
- *   - x (shorthand for xFactor): must be a subset of the 12 known X-Factor IDs.
- *     Unknown values filtered.
+ * Single-value dimensions (fe, ks, ff) serialize as their raw string id
+ * via parseAsStringLiteral. Default is null.
  *
- * Default is empty array for every dimension (no filter). Matching the
- * behavior from Module 2's matchReactors() pure function: empty dimension
- * = unfiltered on that axis.
+ * Array dimensions (c, x) use parseAsArrayOf for multi-select filtering.
  *
  * parseAsStringLiteral filters invalid values automatically — if someone
- * hits /reactor-builder?fuel=banana,triso, the fuel array becomes just
- * ["triso"] without a validation error thrown. Matches Module 1's
- * url-state pattern.
+ * hits ?fe=banana, the value becomes null. Matches Module 1's robustness.
  */
 
-// ─── fuel ────────────────────────────────────────────────────────────
-export const fuelParser = parseAsArrayOf(
-  parseAsStringLiteral(FUEL_IDS),
-  ",",
-).withDefault([] as FuelId[]);
+// ─── fissile element (single, nullable) ─────────────────────────────
+export const fissileElementParser = parseAsStringLiteral(
+  FISSILE_ELEMENT_IDS,
+).withDefault(null as never).withOptions({ clearOnDefault: true });
 
-// ─── coolant ─────────────────────────────────────────────────────────
+// ─── kickstarter (single, nullable, conditional on th-232) ──────────
+export const kickstarterParser = parseAsStringLiteral(
+  KICKSTARTER_IDS,
+).withDefault(null as never).withOptions({ clearOnDefault: true });
+
+// ─── fuel form (single, nullable) ───────────────────────────────────
+export const fuelFormParser = parseAsStringLiteral(
+  FUEL_FORM_IDS,
+).withDefault(null as never).withOptions({ clearOnDefault: true });
+
+// ─── coolant (array) ────────────────────────────────────────────────
 export const coolantParser = parseAsArrayOf(
   parseAsStringLiteral(COOLANT_IDS),
   ",",
 ).withDefault([] as CoolantId[]);
 
-// ─── x (X-Factor) ────────────────────────────────────────────────────
-// Short key name because it's the dimension most likely to appear in
-// shared URLs ("?x=walk-away-safe"). The preset links use this parser.
+// ─── x-factor (array) ───────────────────────────────────────────────
 export const xFactorParser = parseAsArrayOf(
   parseAsStringLiteral(X_FACTOR_IDS),
   ",",
 ).withDefault([] as XFactorId[]);
 
 // ─── combined search params descriptor ───────────────────────────────
-// Consumers (nuqs useQueryStates) pass this to get all three parsers at
-// once. Server components reading the URL for OG images or metadata use
-// the same descriptor.
 export const REACTOR_BUILDER_SEARCH_PARAMS = {
-  fuel: fuelParser,
-  coolant: coolantParser,
+  fe: fissileElementParser,
+  ks: kickstarterParser,
+  ff: fuelFormParser,
+  c: coolantParser,
   x: xFactorParser,
 } as const;

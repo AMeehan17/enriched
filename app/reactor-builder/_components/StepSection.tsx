@@ -4,51 +4,41 @@ import type { TaxonomyTag } from "@/lib/reactor-types";
 import { TagChip } from "./TagChip";
 
 interface StepSectionProps {
-  stepNumber: 1 | 2 | 3;
+  stepNumber: 1 | 2 | 3 | 4;
+  /** Override the numeric label — used for sub-steps like "1a" (kickstarter). */
+  subStepLabel?: string;
   title: string;
   intro: string;
   tags: ReadonlyArray<TaxonomyTag>;
   selected: ReadonlySet<string>;
+  /** Tag IDs that should render locked (dimmed + non-interactive) even
+      though the step overall is active. Used for coolant options that are
+      physically impossible under the current fuel form. */
+  lockedIds?: ReadonlySet<string>;
   onToggle: (id: string) => void;
   onClear: (() => void) | undefined;
   dim: boolean;
-  /** Optional sub-groups for rendering tags in multiple labeled groups
-      (used by Step 3 for Scale + Capability sub-rows). */
+  /** Optional sub-groups (used by Step 4 for Scale + Capability rows). */
   subGroups?: ReadonlyArray<{
     label: string;
     tags: ReadonlyArray<TaxonomyTag>;
   }>;
 }
 
-/**
- * StepSection — one sequential step in the reactor builder.
- *
- * Renders a numbered header (01, 02, 03), the step title, a 1-2 sentence
- * intro, and a chip grid. When `dim` is true, the section renders at
- * opacity 0.4 with pointer-events: none — visually signaling the gate
- * but keeping the markup in the DOM for screen readers.
- *
- * Steps 1 and 2 render a single flat chip grid via the `tags` prop.
- * Step 3 renders two sub-groups (Scale + Capability) via the `subGroups`
- * prop, each with a sub-label.
- *
- * Per the design review, chips are multi-select toggles: clicking a
- * selected chip deselects it; clicking an unselected chip adds it.
- * The matching function (Block 3) ORs within a dimension, so multiple
- * chips selected in this step broaden the filter.
- */
 export function StepSection({
   stepNumber,
+  subStepLabel,
   title,
   intro,
   tags,
   selected,
+  lockedIds,
   onToggle,
   onClear,
   dim,
   subGroups,
 }: StepSectionProps) {
-  const paddedNum = String(stepNumber).padStart(2, "0");
+  const label = subStepLabel ?? String(stepNumber).padStart(2, "0");
 
   return (
     <section
@@ -62,7 +52,7 @@ export function StepSection({
           aria-hidden="true"
           className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.12em] text-[var(--color-text-muted)] min-w-[48px]"
         >
-          Step {paddedNum}
+          Step {label}
         </span>
         <h3 className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] sm:text-[length:var(--text-2xl)] font-medium tracking-[-0.02em] leading-[1.1] m-0 flex-1">
           {title}
@@ -84,6 +74,7 @@ export function StepSection({
                   key={tag.id}
                   tag={tag}
                   selected={selected.has(tag.id)}
+                  locked={lockedIds?.has(tag.id) ?? false}
                   onToggle={() => onToggle(tag.id)}
                 />
               ))}
@@ -97,6 +88,7 @@ export function StepSection({
               key={tag.id}
               tag={tag}
               selected={selected.has(tag.id)}
+              locked={lockedIds?.has(tag.id) ?? false}
               onToggle={() => onToggle(tag.id)}
             />
           ))}

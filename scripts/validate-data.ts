@@ -32,12 +32,14 @@ import {
   type Source,
 } from "../lib/data-types";
 import {
-  FUEL_IDS,
+  FISSILE_ELEMENT_IDS,
+  KICKSTARTER_IDS,
+  FUEL_FORM_IDS,
   COOLANT_IDS,
   X_FACTOR_IDS,
+  REACTOR_TYPES,
   REACTOR_PLAUSIBILITY_BOUNDS,
   type TaxonomyTag,
-  type ReactorDesign,
 } from "../lib/reactor-types";
 import { isAllowedCitationHost } from "../lib/citation-allowlist";
 
@@ -199,10 +201,27 @@ function validateBibKeyUniqueness(): void {
     }
   }
 
-  // Module 2: taxonomy tags
-  const { fuelTags, coolantTags, xFactorTags } = reactorTaxonomy;
+  // Module 2: taxonomy tags (schema v2: fissile + kickstarter + form + coolant + x-factor)
+  const {
+    fissileElementTags,
+    kickstarterTags,
+    fuelFormTags,
+    coolantTags,
+    xFactorTags,
+  } = reactorTaxonomy;
   const allTags = [
-    ...fuelTags.map((t, i) => ({ tag: t, path: `taxonomy.fuel[${i}]` })),
+    ...fissileElementTags.map((t, i) => ({
+      tag: t,
+      path: `taxonomy.fissileElement[${i}]`,
+    })),
+    ...kickstarterTags.map((t, i) => ({
+      tag: t,
+      path: `taxonomy.kickstarter[${i}]`,
+    })),
+    ...fuelFormTags.map((t, i) => ({
+      tag: t,
+      path: `taxonomy.fuelForm[${i}]`,
+    })),
     ...coolantTags.map((t, i) => ({ tag: t, path: `taxonomy.coolant[${i}]` })),
     ...xFactorTags.map((t, i) => ({ tag: t, path: `taxonomy.xFactor[${i}]` })),
   ];
@@ -261,40 +280,45 @@ function validateTaxonomyTag(
 }
 
 function validateTaxonomy(): void {
-  const { fuelTags, coolantTags, xFactorTags } = reactorTaxonomy;
+  const {
+    fissileElementTags,
+    kickstarterTags,
+    fuelFormTags,
+    coolantTags,
+    xFactorTags,
+  } = reactorTaxonomy;
 
-  // Fuel tags
-  const fuelIdSet = new Set<string>();
-  for (const [i, tag] of fuelTags.entries()) {
-    validateTaxonomyTag(`taxonomy.fuel[${i}]`, tag, [...FUEL_IDS]);
-    if (fuelIdSet.has(tag.id)) {
-      err(`taxonomy.fuel[${i}].id`, `duplicate fuel tag ID "${tag.id}"`);
+  // Generic validator for a taxonomy dimension: check every tag, dedupe IDs,
+  // and verify every valid ID has a tag.
+  function validateDimension(
+    label: string,
+    tags: ReadonlyArray<TaxonomyTag>,
+    validIds: readonly string[],
+  ): void {
+    const idSet = new Set<string>();
+    for (const [i, tag] of tags.entries()) {
+      validateTaxonomyTag(`taxonomy.${label}[${i}]`, tag, validIds);
+      if (idSet.has(tag.id)) {
+        err(
+          `taxonomy.${label}[${i}].id`,
+          `duplicate ${label} tag ID "${tag.id}"`,
+        );
+      }
+      idSet.add(tag.id);
     }
-    fuelIdSet.add(tag.id);
-  }
-  // Ensure all FUEL_IDS have a tag
-  for (const id of FUEL_IDS) {
-    if (!fuelIdSet.has(id)) {
-      err("taxonomy.fuel", `missing tag for fuel ID "${id}"`);
-    }
-  }
-
-  // Coolant tags
-  const coolantIdSet = new Set<string>();
-  for (const [i, tag] of coolantTags.entries()) {
-    validateTaxonomyTag(`taxonomy.coolant[${i}]`, tag, [...COOLANT_IDS]);
-    if (coolantIdSet.has(tag.id)) {
-      err(`taxonomy.coolant[${i}].id`, `duplicate coolant tag ID "${tag.id}"`);
-    }
-    coolantIdSet.add(tag.id);
-  }
-  for (const id of COOLANT_IDS) {
-    if (!coolantIdSet.has(id)) {
-      err("taxonomy.coolant", `missing tag for coolant ID "${id}"`);
+    for (const id of validIds) {
+      if (!idSet.has(id)) {
+        err(`taxonomy.${label}`, `missing tag for ID "${id}"`);
+      }
     }
   }
 
-  // X-Factor tags
+  validateDimension("fissileElement", fissileElementTags, [...FISSILE_ELEMENT_IDS]);
+  validateDimension("kickstarter", kickstarterTags, [...KICKSTARTER_IDS]);
+  validateDimension("fuelForm", fuelFormTags, [...FUEL_FORM_IDS]);
+  validateDimension("coolant", coolantTags, [...COOLANT_IDS]);
+
+  // X-Factor has additional group validation
   const xIdSet = new Set<string>();
   for (const [i, tag] of xFactorTags.entries()) {
     validateTaxonomyTag(`taxonomy.xFactor[${i}]`, tag, [...X_FACTOR_IDS]);
@@ -319,9 +343,12 @@ function validateTaxonomy(): void {
 // ─── Module 2: Reactor design validation ────────────────────────────
 
 function validateReactors(): void {
-  const fuelSet = new Set<string>(FUEL_IDS);
+  const fissileSet = new Set<string>(FISSILE_ELEMENT_IDS);
+  const kickstarterSet = new Set<string>(KICKSTARTER_IDS);
+  const fuelFormSet = new Set<string>(FUEL_FORM_IDS);
   const coolantSet = new Set<string>(COOLANT_IDS);
   const xSet = new Set<string>(X_FACTOR_IDS);
+  const reactorTypeSet = new Set<string>(REACTOR_TYPES);
   const idSet = new Set<string>();
   const { outletTempC: tempBounds } = REACTOR_PLAUSIBILITY_BOUNDS;
 
@@ -358,17 +385,54 @@ function validateReactors(): void {
       }
     }
 
-    // Tag validity
-    for (const t of r.fuelTags) {
-      if (!fuelSet.has(t)) err(`${path}.fuelTags`, `unknown fuel tag "${t}"`);
+    // Fuel dimension (schema v2)
+    if (!fissileSet.has(r.fuelElement)) {
+      err(`${path}.fuelElement`, `unknown fissile element "${r.fuelElement}"`);
     }
+    if (!fuelFormSet.has(r.fuelForm)) {
+      err(`${path}.fuelForm`, `unknown fuel form "${r.fuelForm}"`);
+    }
+    // Kickstarter coupling: required when fuelElement is "th-232", forbidden otherwise
+    if (r.fuelElement === "th-232") {
+      if (!r.kickstarter) {
+        err(
+          `${path}.kickstarter`,
+          "required when fuelElement is 'th-232' (thorium needs a fissile kickstarter)",
+        );
+      } else if (!kickstarterSet.has(r.kickstarter)) {
+        err(`${path}.kickstarter`, `unknown kickstarter "${r.kickstarter}"`);
+      }
+    } else if (r.kickstarter) {
+      err(
+        `${path}.kickstarter`,
+        `kickstarter only allowed when fuelElement is 'th-232', got fuelElement='${r.fuelElement}'`,
+      );
+    }
+    // Coolant coupling: fuelForm = 'molten-salt' restricts coolants to salt chemistries
+    const SALT_COOLANTS = new Set(["flibe", "flinak", "chloride-salt"]);
+    if (r.fuelForm === "molten-salt") {
+      for (const c of r.coolantTags) {
+        if (!SALT_COOLANTS.has(c)) {
+          err(
+            `${path}.coolantTags`,
+            `coolant '${c}' not allowed with fuelForm='molten-salt' (fuel is dissolved in salt, so coolant must be a salt chemistry)`,
+          );
+        }
+      }
+    }
+    // Coolant tag validity
     for (const t of r.coolantTags) {
       if (!coolantSet.has(t))
         err(`${path}.coolantTags`, `unknown coolant tag "${t}"`);
     }
+    // X-Factor tag validity
     for (const t of r.xFactorTags) {
       if (!xSet.has(t))
         err(`${path}.xFactorTags`, `unknown X-Factor tag "${t}"`);
+    }
+    // Reactor type
+    if (!reactorTypeSet.has(r.reactorType)) {
+      err(`${path}.reactorType`, `unknown reactor type "${r.reactorType}"`);
     }
 
     // Plausibility
@@ -395,10 +459,12 @@ function validateReactors(): void {
       for (const [si, step] of r.whyChain.entries()) {
         if (!step.text)
           err(`${path}.whyChain[${si}].text`, "missing");
-        // tagRef validity (optional field)
+        // tagRef validity (optional field — can reference any dimension)
         if (step.tagRef) {
           const valid =
-            fuelSet.has(step.tagRef) ||
+            fissileSet.has(step.tagRef) ||
+            kickstarterSet.has(step.tagRef) ||
+            fuelFormSet.has(step.tagRef) ||
             coolantSet.has(step.tagRef) ||
             xSet.has(step.tagRef);
           if (!valid) {
@@ -501,9 +567,16 @@ function main(): void {
     throw new ValidationError(`${errors.length} validation error(s)`);
   }
 
-  const { fuelTags: ft, coolantTags: ct, xFactorTags: xt } = reactorTaxonomy;
+  const {
+    fissileElementTags: ft,
+    kickstarterTags: kt,
+    fuelFormTags: ffT,
+    coolantTags: ct,
+    xFactorTags: xt,
+  } = reactorTaxonomy;
+  const tagCount = ft.length + kt.length + ffT.length + ct.length + xt.length;
   console.log(
-    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${ft.length + ct.length + xt.length} taxonomy tags, ${reactors.length} reactor designs, all citations unique and within plausibility bounds.`,
+    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${tagCount} taxonomy tags, ${reactors.length} reactor designs, all citations unique and within plausibility bounds.`,
   );
 }
 

@@ -13,50 +13,93 @@ import type { Citation } from "./data-types";
  *
  * The validator (scripts/validate-data.ts) enforces schema correctness,
  * citation allowlist membership, plausibility bounds, and tag validity.
+ *
+ * SCHEMA v2 (2026-04-20): the fuel dimension split into fissile element,
+ * (conditional) kickstarter, and fuel form. Coolant dimension expanded
+ * to include specific salt chemistries and liquid metal species.
+ * Added `reactorType` as a derived PRIS-sourced field on each design.
  */
 
-// ─── Fuel IDs ───────────────────────────────────────────────────────
-export type FuelId =
-  | "leu-uo2"
-  | "haleu-metal"
-  | "triso"
-  | "molten-fuel-salt"
-  | "thorium"
-  | "mox";
+// ─── Fissile element IDs ────────────────────────────────────────────
+// What atom is actually undergoing fission. Independent of physical form.
+export type FissileElementId = "u-235" | "th-232" | "pu-239";
 
-export const FUEL_IDS: readonly FuelId[] = [
-  "leu-uo2",
-  "haleu-metal",
+export const FISSILE_ELEMENT_IDS: readonly FissileElementId[] = [
+  "u-235",
+  "th-232",
+  "pu-239",
+] as const;
+
+// ─── Kickstarter IDs ────────────────────────────────────────────────
+// Th-232 is not itself fissile — thorium reactors need a fissile starter
+// to get the chain reaction going. This dimension is only meaningful
+// when fissile element = th-232.
+export type KickstarterId = "u-235-kickstart" | "pu-239-kickstart";
+
+export const KICKSTARTER_IDS: readonly KickstarterId[] = [
+  "u-235-kickstart",
+  "pu-239-kickstart",
+] as const;
+
+// ─── Fuel form IDs ──────────────────────────────────────────────────
+// How the fissile material is physically packaged.
+// - ceramic-pellets: traditional UO₂ pellets in zirconium cladding (LWR fuel)
+// - metal: metallic fuel rods (fast reactors, HALEU metal)
+// - triso: ceramic particles with built-in containment layers
+// - molten-salt: fuel dissolved in a liquid salt carrier — COUPLING: locks
+//   coolant to a salt chemistry (FLiBe / FLiNaK / Chloride)
+export type FuelFormId =
+  | "ceramic-pellets"
+  | "metal"
+  | "triso"
+  | "molten-salt";
+
+export const FUEL_FORM_IDS: readonly FuelFormId[] = [
+  "ceramic-pellets",
+  "metal",
   "triso",
-  "molten-fuel-salt",
-  "thorium",
-  "mox",
+  "molten-salt",
 ] as const;
 
 // ─── Coolant IDs ────────────────────────────────────────────────────
+// Expanded in schema v2: salt chemistries split into 3, liquid metal
+// split into 3. Water stays unified — BWR/PWR/PHWR distinction lives
+// on the reactorType field of each design, not in the coolant dimension.
 export type CoolantId =
   | "light-water"
   | "heavy-water"
   | "helium"
-  | "flibe-salt"
+  | "flibe"
+  | "flinak"
+  | "chloride-salt"
   | "sodium"
   | "lead"
+  | "lead-bismuth"
   | "heat-pipes";
 
 export const COOLANT_IDS: readonly CoolantId[] = [
   "light-water",
   "heavy-water",
   "helium",
-  "flibe-salt",
+  "flibe",
+  "flinak",
+  "chloride-salt",
   "sodium",
   "lead",
+  "lead-bismuth",
   "heat-pipes",
 ] as const;
 
-// ─── X-Factor IDs ───────────────────────────────────────────────────
-// Single flat union. The `group` field on each tag distinguishes
-// "scale" from "capability" for UI rendering. The matching function
-// treats all X-Factor tags identically (OR within dimension).
+// Salt-family coolants — when fuel form = molten-salt, only these are
+// selectable. The UI dims non-salt coolants and the matching function
+// enforces the coupling.
+export const SALT_COOLANT_IDS: readonly CoolantId[] = [
+  "flibe",
+  "flinak",
+  "chloride-salt",
+] as const;
+
+// ─── X-Factor IDs (unchanged from v1) ───────────────────────────────
 export type XFactorId =
   | "micro"
   | "small"
@@ -88,12 +131,36 @@ export const X_FACTOR_IDS: readonly XFactorId[] = [
 
 export type XFactorGroup = "scale" | "capability";
 
+// ─── Reactor type (derived from PRIS, shown on match cards) ─────────
+// Not a user-pickable dimension — a consequence of the F/C/X choices.
+// Displayed on the MatchCard as "Type: PWR" etc.
+export type ReactorType =
+  | "PWR"   // Pressurized water reactor (most common)
+  | "BWR"   // Boiling water reactor (direct cycle)
+  | "PHWR"  // Pressurized heavy water reactor (CANDU)
+  | "HTGR"  // High-temperature gas-cooled reactor
+  | "SFR"   // Sodium-cooled fast reactor
+  | "LFR"   // Lead-cooled fast reactor
+  | "MSR"   // Molten salt reactor
+  | "other";
+
+export const REACTOR_TYPES: readonly ReactorType[] = [
+  "PWR",
+  "BWR",
+  "PHWR",
+  "HTGR",
+  "SFR",
+  "LFR",
+  "MSR",
+  "other",
+] as const;
+
 // ─── Taxonomy tag ───────────────────────────────────────────────────
-// Every F/C/X chip in the UI renders from one of these.
+// Every chip in the UI renders from one of these.
 export interface TaxonomyTag {
   id: string;
   label: string;
-  /** ≤1 sentence shown on the chip tooltip / first line of popover. */
+  /** ≤1 sentence shown on the chip as the hook line. */
   oneLineHook: string;
   /** ≤1 paragraph shown in the tag popover body. */
   popoverBody: string;
@@ -104,61 +171,68 @@ export interface TaxonomyTag {
 }
 
 // ─── Reactor design ─────────────────────────────────────────────────
-// One entry per historical or in-development reactor design.
-
 export interface WhyChainStep {
-  /** Plain-English statement (e.g., "Uses HALEU metal fuel"). */
+  /** Plain-English statement. */
   text: string;
-  /** Optional tag ID this step references (renders as a popover link). */
-  tagRef?: FuelId | CoolantId | XFactorId;
+  /** Optional tag ID this step references. */
+  tagRef?:
+    | FissileElementId
+    | FuelFormId
+    | KickstarterId
+    | CoolantId
+    | XFactorId;
 }
 
 export interface ReactorDesign {
   id: string;
   name: string;
-  /** 1-2 sentence description of what this reactor is. */
   description: string;
-  /** Company or national lab pursuing this design. Name + public URL only. */
   pursuedBy: ReadonlyArray<{ name: string; url: string }>;
-  fuelTags: FuelId[];
+  // Fuel dimension (v2 schema)
+  fuelElement: FissileElementId;
+  fuelForm: FuelFormId;
+  /** Only set when fuelElement is "th-232". */
+  kickstarter?: KickstarterId;
+  // Other dimensions
   coolantTags: CoolantId[];
   xFactorTags: XFactorId[];
-  /** Coolant outlet temperature in °C. Used in the spec card. */
   outletTempC: number;
-  /** Neutron spectrum. */
   spectrum: "thermal" | "fast" | "epithermal";
-  /** "Why this design?" expandable logic chain. 3-5 steps per design. */
+  /** Derived from PRIS. Shown on match cards. */
+  reactorType: ReactorType;
   whyChain: WhyChainStep[];
-  /** ≥1 citation per design. */
   citations: Citation[];
 }
 
 // ─── Taxonomy collections ───────────────────────────────────────────
-// What data-src/reactor-taxonomy.ts exports.
 export interface ReactorTaxonomy {
-  fuelTags: ReadonlyArray<TaxonomyTag & { id: FuelId }>;
+  fissileElementTags: ReadonlyArray<TaxonomyTag & { id: FissileElementId }>;
+  kickstarterTags: ReadonlyArray<TaxonomyTag & { id: KickstarterId }>;
+  fuelFormTags: ReadonlyArray<TaxonomyTag & { id: FuelFormId }>;
   coolantTags: ReadonlyArray<TaxonomyTag & { id: CoolantId }>;
-  xFactorTags: ReadonlyArray<TaxonomyTag & { id: XFactorId; group: XFactorGroup }>;
+  xFactorTags: ReadonlyArray<
+    TaxonomyTag & { id: XFactorId; group: XFactorGroup }
+  >;
 }
 
 // ─── Output JSON shapes ─────────────────────────────────────────────
-// What build-data.ts writes to public/data/.
 export interface TaxonomyJson {
   lastUpdated: string;
-  schemaVersion: 1;
-  fuel: ReadonlyArray<TaxonomyTag>;
+  schemaVersion: 2;
+  fissileElement: ReadonlyArray<TaxonomyTag>;
+  kickstarter: ReadonlyArray<TaxonomyTag>;
+  fuelForm: ReadonlyArray<TaxonomyTag>;
   coolant: ReadonlyArray<TaxonomyTag>;
   xFactor: ReadonlyArray<TaxonomyTag>;
 }
 
 export interface ReactorsJson {
   lastUpdated: string;
-  schemaVersion: 1;
+  schemaVersion: 2;
   reactors: ReadonlyArray<ReactorDesign>;
 }
 
 // ─── Plausibility bounds ────────────────────────────────────────────
-// The validator enforces these ranges for reactor numeric fields.
 export const REACTOR_PLAUSIBILITY_BOUNDS = {
   outletTempC: { min: 0, max: 1200 },
 } as const;

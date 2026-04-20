@@ -104,6 +104,8 @@ export const CITATION_ALLOWLIST: ReadonlySet<string> = new Set([
   "www.terrapower.com",
   "kairospower.com",
   "www.kairospower.com",
+  "copenhagenatomics.com",
+  "www.copenhagenatomics.com",
 ]);
 
 /**

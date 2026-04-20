@@ -6,11 +6,15 @@ import { TagPopover } from "./TagPopover";
 interface TagChipProps {
   tag: TaxonomyTag;
   selected: boolean;
+  /** When true, the chip is visually dimmed and non-interactive (e.g.,
+      coolant options locked to salts when fuel form = molten-salt). The
+      info popover still works so the user can read why it's locked. */
+  locked?: boolean;
   onToggle: () => void;
 }
 
 /**
- * TagChip — one F/C/X chip in a step.
+ * TagChip — one chip in a step.
  *
  * The ENTIRE chip is a toggle button (click anywhere to select/deselect).
  * A small circled "i" info button floats in the top-right corner and
@@ -19,22 +23,25 @@ interface TagChipProps {
  *
  * Selected state: filled --color-text background with --color-bg text.
  * Unselected: border + --color-text-muted text.
+ * Locked state: dimmed opacity, pointer-events disabled on the toggle
+ * (but the info button stays interactive so the user can read why).
  */
-export function TagChip({ tag, selected, onToggle }: TagChipProps) {
+export function TagChip({ tag, selected, locked = false, onToggle }: TagChipProps) {
   return (
     <div
       className={`relative rounded-[var(--radius-md)] border transition-colors duration-[var(--duration-fast)] ${
-        selected
-          ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
-          : "border-[var(--color-rule)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-rule-strong)]"
+        locked
+          ? "opacity-40 border-[var(--color-rule)] bg-[var(--color-surface)] text-[var(--color-text-muted)]"
+          : selected
+            ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-bg)]"
+            : "border-[var(--color-rule)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-rule-strong)]"
       }`}
     >
-      {/* The whole chip is the toggle target. Reserve right padding so text
-          doesn't collide with the floating info button. */}
       <button
         onClick={onToggle}
+        disabled={locked}
         aria-pressed={selected}
-        className="block w-full text-left cursor-pointer bg-transparent border-0 p-[var(--spacing-3)] pr-[var(--spacing-8)] font-inherit color-inherit rounded-[var(--radius-md)]"
+        className="block w-full text-left cursor-pointer disabled:cursor-not-allowed bg-transparent border-0 p-[var(--spacing-3)] pr-[var(--spacing-8)] font-inherit color-inherit rounded-[var(--radius-md)]"
       >
         <span className="block font-[family-name:var(--font-display)] text-[length:var(--text-base)] font-medium tracking-[-0.01em] leading-[1.2] mb-[var(--spacing-1)]">
           {tag.label}

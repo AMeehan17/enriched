@@ -3,93 +3,137 @@ import { matchReactors, type MatchConfig } from "./reactor-match";
 import { reactors } from "../data-src/reactors";
 
 /**
- * Tests for matchReactors — the core filtering + ranking logic.
+ * Tests for matchReactors — schema v2.
  *
- * Uses the real reactor data from data-src/reactors.ts (6 designs)
- * so tests stay grounded in actual content. If a design is added or
- * removed, these tests may need updating.
+ * Uses the real reactor data from data-src/reactors.ts (7 designs after
+ * Copenhagen Atomics addition) so tests stay grounded in actual content.
  *
- * Current starting set:
- *   AP1000      — leu-uo2 / light-water / large, first-of-kind-licensed
- *   VOYGR       — leu-uo2 / light-water / small, walk-away-safe, first-of-kind-licensed
- *   Xe-100      — triso, haleu-metal / helium / small, walk-away-safe, process-heat
- *   BWRX-300    — leu-uo2 / light-water / small, walk-away-safe
- *   Natrium     — haleu-metal / sodium / mid, walk-away-safe, load-following, thermal-storage, waste-burner
- *   KP-FHR      — triso / flibe-salt / small, walk-away-safe, process-heat
+ * Schema v2 starting set:
+ *   AP1000         u-235 / ceramic-pellets / light-water / PWR / large, FOAK
+ *   VOYGR          u-235 / ceramic-pellets / light-water / PWR / small, walk-away-safe, FOAK
+ *   Xe-100         u-235 / triso / helium / HTGR / small, walk-away-safe, process-heat
+ *   BWRX-300       u-235 / ceramic-pellets / light-water / BWR / small, walk-away-safe
+ *   Natrium        u-235 / metal / sodium / SFR / mid, walk-away-safe, load-following,
+ *                  thermal-storage, waste-burner
+ *   KP-FHR         u-235 / triso / flibe / other / small, walk-away-safe, process-heat
+ *   Copenhagen     th-232 + u-235-kickstart / molten-salt / flibe / MSR / small,
+ *                  walk-away-safe, fuel-breeder, non-proliferative
  */
 
-const empty: MatchConfig = { fuel: [], coolant: [], xFactor: [] };
+const empty: MatchConfig = {
+  fuelElement: null,
+  kickstarter: null,
+  fuelForm: null,
+  coolant: [],
+  xFactor: [],
+};
 
-describe("matchReactors", () => {
+describe("matchReactors (schema v2)", () => {
   it("returns all reactors when no filters are set", () => {
     const result = matchReactors(empty, reactors);
-    expect(result.results).toHaveLength(6);
+    expect(result.results).toHaveLength(7);
     expect(result.noMatch).toBe(false);
   });
 
-  it("filters by a single fuel tag", () => {
+  it("filters by fissile element (single-value)", () => {
     const result = matchReactors(
-      { fuel: ["triso"], coolant: [], xFactor: [] },
+      { ...empty, fuelElement: "th-232" },
+      reactors,
+    );
+    // Only Copenhagen Atomics uses Th-232
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]?.id).toBe("copenhagen-atomics");
+  });
+
+  it("filters by fissile element u-235", () => {
+    const result = matchReactors(
+      { ...empty, fuelElement: "u-235" },
+      reactors,
+    );
+    // All except Copenhagen Atomics
+    expect(result.results).toHaveLength(6);
+    expect(result.results.map((r) => r.id)).not.toContain("copenhagen-atomics");
+  });
+
+  it("filters by fuel form (single-value)", () => {
+    const result = matchReactors(
+      { ...empty, fuelForm: "triso" },
       reactors,
     );
     // Xe-100 and KP-FHR use TRISO
-    expect(result.results.map((r) => r.id)).toEqual(
-      expect.arrayContaining(["xe-100", "kp-fhr"]),
-    );
     expect(result.results).toHaveLength(2);
-    expect(result.noMatch).toBe(false);
+    expect(result.results.map((r) => r.id).sort()).toEqual(["kp-fhr", "xe-100"]);
   });
 
-  it("filters by a single coolant tag", () => {
+  it("filters by fuel form molten-salt", () => {
     const result = matchReactors(
-      { fuel: [], coolant: ["sodium"], xFactor: [] },
+      { ...empty, fuelForm: "molten-salt" },
       reactors,
     );
-    // Only Natrium uses sodium
+    // Only Copenhagen Atomics uses molten-salt fuel form
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]?.id).toBe("copenhagen-atomics");
+  });
+
+  it("filters by kickstarter (single-value)", () => {
+    const result = matchReactors(
+      { ...empty, kickstarter: "u-235-kickstart" },
+      reactors,
+    );
+    // Only Copenhagen Atomics has a U-235 kickstarter
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]?.id).toBe("copenhagen-atomics");
+  });
+
+  it("filters by single coolant (array with one value)", () => {
+    const result = matchReactors(
+      { ...empty, coolant: ["sodium"] },
+      reactors,
+    );
     expect(result.results).toHaveLength(1);
     expect(result.results[0]?.id).toBe("natrium");
   });
 
-  it("filters by a single X-Factor tag", () => {
+  it("OR semantics: multiple coolants broaden the filter", () => {
     const result = matchReactors(
-      { fuel: [], coolant: [], xFactor: ["walk-away-safe"] },
+      { ...empty, coolant: ["sodium", "helium"] },
       reactors,
     );
-    // VOYGR, Xe-100, BWRX-300, Natrium, KP-FHR are walk-away-safe
-    // AP1000 is NOT (it has passive safety features but isn't tagged walk-away-safe)
-    expect(result.results).toHaveLength(5);
+    // Natrium (sodium) + Xe-100 (helium)
+    expect(result.results).toHaveLength(2);
+    expect(result.results.map((r) => r.id).sort()).toEqual(["natrium", "xe-100"]);
+  });
+
+  it("single X-Factor tag filters correctly", () => {
+    const result = matchReactors(
+      { ...empty, xFactor: ["walk-away-safe"] },
+      reactors,
+    );
+    // AP1000 is the only one not tagged walk-away-safe
+    expect(result.results).toHaveLength(6);
     expect(result.results.map((r) => r.id)).not.toContain("ap1000");
   });
 
-  it("AND across dimensions: fuel + coolant narrows results", () => {
+  it("AND across dimensions: u-235 + triso narrows results", () => {
     const result = matchReactors(
-      { fuel: ["leu-uo2"], coolant: ["light-water"], xFactor: [] },
+      { ...empty, fuelElement: "u-235", fuelForm: "triso" },
       reactors,
     );
-    // AP1000, VOYGR, BWRX-300 all use LEU-UO2 + light water
-    expect(result.results).toHaveLength(3);
-    expect(result.results.map((r) => r.id)).toEqual(
-      expect.arrayContaining(["ap1000", "voygr", "bwrx-300"]),
-    );
-  });
-
-  it("OR within a dimension: multiple fuel tags match either", () => {
-    const result = matchReactors(
-      { fuel: ["triso", "haleu-metal"], coolant: [], xFactor: [] },
-      reactors,
-    );
-    // triso: Xe-100, KP-FHR. haleu-metal: Xe-100, Natrium. Union = Xe-100, KP-FHR, Natrium
-    expect(result.results).toHaveLength(3);
-    expect(result.results.map((r) => r.id)).toEqual(
-      expect.arrayContaining(["xe-100", "kp-fhr", "natrium"]),
-    );
+    // Xe-100 and KP-FHR both use U-235 + TRISO
+    expect(result.results).toHaveLength(2);
+    expect(result.results.map((r) => r.id).sort()).toEqual(["kp-fhr", "xe-100"]);
   });
 
   it("returns noMatch=true for an impossible combination", () => {
     const result = matchReactors(
-      { fuel: ["thorium"], coolant: ["lead"], xFactor: ["walk-away-safe"] },
+      {
+        ...empty,
+        fuelElement: "th-232",
+        fuelForm: "ceramic-pellets",
+      },
       reactors,
     );
+    // No reactor has th-232 + ceramic-pellets (Copenhagen uses molten-salt)
     expect(result.results).toHaveLength(0);
     expect(result.noMatch).toBe(true);
   });
@@ -99,27 +143,22 @@ describe("matchReactors", () => {
     expect(result.noMatch).toBe(false);
   });
 
-  it("ranks by number of matched tags (more matches first)", () => {
+  it("ranks by number of matched tags", () => {
     // Natrium has walk-away-safe + load-following + thermal-storage + waste-burner
-    // VOYGR has walk-away-safe + first-of-kind-licensed
-    // Selecting walk-away-safe + load-following should rank Natrium above VOYGR
+    // Other walk-away-safe reactors match just walk-away-safe (score 1)
     const result = matchReactors(
       {
-        fuel: [],
-        coolant: [],
+        ...empty,
         xFactor: ["walk-away-safe", "load-following"],
       },
       reactors,
     );
-    // Natrium matches both tags (score 2), others match only walk-away-safe (score 1)
     expect(result.results[0]?.id).toBe("natrium");
   });
 
-  it("uses alphabetical tiebreak when scores are equal", () => {
-    // With just walk-away-safe selected, BWRX-300, KP-FHR, Natrium, VOYGR, Xe-100
-    // all have score 1. They should sort alphabetically by name.
+  it("alphabetical tiebreak when scores equal", () => {
     const result = matchReactors(
-      { fuel: [], coolant: [], xFactor: ["walk-away-safe"] },
+      { ...empty, xFactor: ["walk-away-safe"] },
       reactors,
     );
     const names = result.results.map((r) => r.name);
@@ -127,52 +166,57 @@ describe("matchReactors", () => {
     expect(names).toEqual(sorted);
   });
 
-  it("empty fuel + non-empty coolant filters only on coolant", () => {
-    const result = matchReactors(
-      { fuel: [], coolant: ["helium"], xFactor: [] },
-      reactors,
-    );
-    // Only Xe-100 uses helium
-    expect(result.results).toHaveLength(1);
-    expect(result.results[0]?.id).toBe("xe-100");
-  });
-
-  it("all three dimensions filtered narrows to specific designs", () => {
+  it("three-dimension filter narrows to one design", () => {
     const result = matchReactors(
       {
-        fuel: ["haleu-metal"],
+        fuelElement: "u-235",
+        kickstarter: null,
+        fuelForm: "metal",
         coolant: ["sodium"],
         xFactor: ["thermal-storage"],
       },
       reactors,
     );
-    // Only Natrium matches all three
     expect(result.results).toHaveLength(1);
     expect(result.results[0]?.id).toBe("natrium");
   });
 
-  it("broad selection returns all reactors that match any combination", () => {
+  it("Copenhagen Atomics matches via full thorium config", () => {
     const result = matchReactors(
       {
-        fuel: ["leu-uo2", "triso", "haleu-metal"],
-        coolant: ["light-water", "helium", "sodium", "flibe-salt"],
+        fuelElement: "th-232",
+        kickstarter: "u-235-kickstart",
+        fuelForm: "molten-salt",
+        coolant: ["flibe"],
         xFactor: [],
       },
       reactors,
     );
-    // This covers all 6 designs' fuel + coolant combos
-    expect(result.results).toHaveLength(6);
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]?.id).toBe("copenhagen-atomics");
   });
 
-  it("single reactor in dataset still returns correctly", () => {
-    const firstReactor = reactors[0];
-    if (!firstReactor) throw new Error("reactors[] is empty — test precondition failed");
-    const singleReactor = [firstReactor]; // AP1000
+  it("broad selection returns all qualifying reactors", () => {
     const result = matchReactors(
-      { fuel: ["leu-uo2"], coolant: [], xFactor: [] },
-      singleReactor,
+      { ...empty, fuelElement: "u-235", xFactor: ["small"] },
+      reactors,
     );
-    expect(result.results).toHaveLength(1);
-    expect(result.results[0]?.id).toBe("ap1000");
+    // U-235 + small: VOYGR, Xe-100, BWRX-300, KP-FHR (all U-235 and tagged 'small')
+    expect(result.results).toHaveLength(4);
+    expect(result.results.map((r) => r.id).sort()).toEqual([
+      "bwrx-300",
+      "kp-fhr",
+      "voygr",
+      "xe-100",
+    ]);
+  });
+
+  it("empty reactor list returns empty results", () => {
+    const result = matchReactors(
+      { ...empty, fuelElement: "u-235" },
+      [],
+    );
+    expect(result.results).toHaveLength(0);
+    expect(result.noMatch).toBe(true);
   });
 });

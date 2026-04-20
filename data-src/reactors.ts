@@ -1,12 +1,19 @@
 import type { ReactorDesign } from "@/lib/reactor-types";
 
 /**
- * REACTORS — the 6 starting reactor designs for Module 2 v1.
+ * REACTORS — starting reactor designs for Module 2 v1.
+ *
+ * SCHEMA v2 (2026-04-20): fuel dimension split into fissileElement /
+ * fuelForm / (optional) kickstarter. Coolant expanded to 10 options.
+ * Added reactorType derived field.
  *
  * Each design is tagged against the F/C/X taxonomy and carries:
- *   - Technical specs (outlet temp, spectrum, tags)
- *   - Descriptive attribution (pursuedBy: company name + public URL)
- *   - "Why this design?" logic chain (3-5 steps of physics reasoning)
+ *   - Fuel: fissileElement + fuelForm (+ kickstarter when Th-232)
+ *   - Coolant: one or more coolantTags
+ *   - X-Factor: scale + capability tags
+ *   - reactorType: derived from PRIS (PWR/BWR/PHWR/HTGR/SFR/LFR/MSR/other)
+ *   - Technical specs (outlet temp, spectrum, pursuedBy attribution)
+ *   - "Why this design?" logic chain (3-5 physics reasoning steps)
  *   - Primary-source citations
  *
  * SCOPE BOUNDARY (per CLAUDE.md §3):
@@ -14,17 +21,14 @@ import type { ReactorDesign } from "@/lib/reactor-types";
  *   - No scores, funding, underwriting, LP framing, or editorial judgment
  *   - Every fact cites an independently verifiable primary source
  *
- * This file is compiled to public/data/reactors.json by scripts/build-data.ts.
- * The validator (scripts/validate-data.ts) enforces tag validity, citation
- * allowlist membership, plausibility bounds, and bibtex_key uniqueness.
- *
  * Starting set chosen to span the F/C/X grid with minimal overlap:
- *   AP1000      — light-water, large, LEU-UO₂ (the incumbent baseline)
- *   VOYGR       — light-water, small, LEU-UO₂ (SMR variant of the baseline)
- *   Xe-100      — helium, small, TRISO (HTGR, process heat)
- *   BWRX-300    — light-water, small, LEU-UO₂ (simplified BWR)
- *   Natrium     — sodium, mid, HALEU (fast reactor + thermal storage)
- *   KP-FHR      — FLiBe salt, small, TRISO (fluoride-salt-cooled)
+ *   AP1000          U-235 / ceramic-pellets / light-water (large PWR)
+ *   VOYGR/NuScale   U-235 / ceramic-pellets / light-water (small PWR)
+ *   Xe-100          U-235 / TRISO / helium (HTGR)
+ *   BWRX-300        U-235 / ceramic-pellets / light-water (BWR)
+ *   Natrium         U-235 / metal / sodium (SFR + thermal storage)
+ *   KP-FHR          U-235 / TRISO / FLiBe (FHR, fluoride-salt cooled)
+ *   Copenhagen      Th-232 / molten-salt / FLiBe (MSR with U-235 kickstarter)
  */
 
 export const reactors: ReadonlyArray<ReactorDesign> = [
@@ -40,15 +44,21 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.westinghousenuclear.com/energy-systems/ap1000-pwr",
       },
     ],
-    fuelTags: ["leu-uo2"],
+    fuelElement: "u-235",
+    fuelForm: "ceramic-pellets",
     coolantTags: ["light-water"],
     xFactorTags: ["large", "first-of-kind-licensed"],
     outletTempC: 321,
     spectrum: "thermal",
+    reactorType: "PWR",
     whyChain: [
       {
-        text: "Uses standard LEU-UO₂ fuel pellets in zirconium cladding — the same fuel supply chain that powers 90% of the global fleet.",
-        tagRef: "leu-uo2",
+        text: "Uses U-235 as the fissile element, enriched to ~4.5% (LEU) — same fuel chain that powers 90% of the global fleet.",
+        tagRef: "u-235",
+      },
+      {
+        text: "Ceramic UO₂ pellets in zirconium cladding — the proven fuel form with decades of operating history.",
+        tagRef: "ceramic-pellets",
       },
       {
         text: "Light water serves as both coolant and moderator, thermalizing neutrons for a well-understood fission chain reaction.",
@@ -62,7 +72,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         tagRef: "large",
       },
       {
-        text: "The AP1000's innovation is passive safety: gravity-fed water tanks and natural circulation replace diesel-powered emergency pumps, though it still relies on the pressurized water architecture that TMI/Fukushima challenged.",
+        text: "The AP1000's innovation is passive safety: gravity-fed water tanks and natural circulation replace diesel-powered emergency pumps, though it still relies on pressurized water architecture.",
       },
     ],
     citations: [
@@ -73,7 +83,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "Westinghouse",
         url: "https://www.westinghousenuclear.com/energy-systems/ap1000-pwr",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
       {
         bibtex_key: "nrc2023ap1000dcd_ap1000",
@@ -82,7 +92,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2023,
         publisher: "NRC",
         url: "https://www.nrc.gov/reactors/new-reactors/large-lwr/ap1000.html",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
     ],
   },
@@ -99,15 +109,21 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.nuscalepower.com/en/products/voygr-smr-plants",
       },
     ],
-    fuelTags: ["leu-uo2"],
+    fuelElement: "u-235",
+    fuelForm: "ceramic-pellets",
     coolantTags: ["light-water"],
     xFactorTags: ["small", "walk-away-safe", "first-of-kind-licensed"],
     outletTempC: 316,
     spectrum: "thermal",
+    reactorType: "PWR",
     whyChain: [
       {
-        text: "Uses standard LEU-UO₂ fuel — no HALEU supply chain dependency, compatible with existing enrichment infrastructure.",
-        tagRef: "leu-uo2",
+        text: "U-235 as the fissile element, enriched to standard LEU levels — no HALEU supply chain dependency.",
+        tagRef: "u-235",
+      },
+      {
+        text: "Ceramic UO₂ pellets in the proven BWR/PWR fuel form — compatible with existing enrichment and fabrication infrastructure.",
+        tagRef: "ceramic-pellets",
       },
       {
         text: "Light water cools the core via natural circulation, eliminating reactor coolant pumps entirely — fewer moving parts, fewer failure modes.",
@@ -134,7 +150,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "NuScale Power",
         url: "https://www.nuscalepower.com/en/products/voygr-smr-plants",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
       {
         bibtex_key: "nrc2023nuscalesda_voygr",
@@ -143,7 +159,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2023,
         publisher: "NRC",
         url: "https://www.nrc.gov/reactors/new-reactors/smr/nuscale.html",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
     ],
   },
@@ -160,12 +176,18 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://x-energy.com/reactors/xe-100",
       },
     ],
-    fuelTags: ["triso", "haleu-metal"],
+    fuelElement: "u-235",
+    fuelForm: "triso",
     coolantTags: ["helium"],
     xFactorTags: ["small", "walk-away-safe", "process-heat"],
     outletTempC: 750,
     spectrum: "thermal",
+    reactorType: "HTGR",
     whyChain: [
+      {
+        text: "U-235 as the fissile element, enriched to HALEU levels (~15%) to achieve the fissile density needed in a TRISO pebble.",
+        tagRef: "u-235",
+      },
       {
         text: "TRISO pebble fuel retains fission products up to ~1600°C — since the reactor operates at 750°C, there is over 800°C of thermal margin before any fuel damage is physically possible.",
         tagRef: "triso",
@@ -191,7 +213,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "X-energy",
         url: "https://x-energy.com/reactors/xe-100",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
       {
         bibtex_key: "nrc2024xenergy_xe-100",
@@ -200,7 +222,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "NRC",
         url: "https://www.nrc.gov/reactors/new-reactors/advanced.html",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
     ],
   },
@@ -217,15 +239,21 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.gevernova.com/nuclear/bwrx-300",
       },
     ],
-    fuelTags: ["leu-uo2"],
+    fuelElement: "u-235",
+    fuelForm: "ceramic-pellets",
     coolantTags: ["light-water"],
     xFactorTags: ["small", "walk-away-safe"],
     outletTempC: 287,
     spectrum: "thermal",
+    reactorType: "BWR",
     whyChain: [
       {
-        text: "Uses the same LEU-UO₂ fuel assemblies proven in decades of BWR operation — no new fuel supply chain needed.",
-        tagRef: "leu-uo2",
+        text: "U-235 as the fissile element with standard LEU enrichment — same fuel supply chain as decades of BWR operation.",
+        tagRef: "u-235",
+      },
+      {
+        text: "Ceramic UO₂ pellets in the proven BWR fuel form — no new fuel supply chain needed.",
+        tagRef: "ceramic-pellets",
       },
       {
         text: "Boiling water reactor: coolant boils directly in the core and drives the turbine as steam, eliminating the separate steam generators that PWRs require.",
@@ -248,7 +276,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "GE Vernova",
         url: "https://www.gevernova.com/nuclear/bwrx-300",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
     ],
   },
@@ -265,7 +293,8 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.terrapower.com/our-work/natriumpower/",
       },
     ],
-    fuelTags: ["haleu-metal"],
+    fuelElement: "u-235",
+    fuelForm: "metal",
     coolantTags: ["sodium"],
     xFactorTags: [
       "mid",
@@ -276,10 +305,15 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
     ],
     outletTempC: 530,
     spectrum: "fast",
+    reactorType: "SFR",
     whyChain: [
       {
-        text: "HALEU metallic fuel enables a compact core with high fissile density, achieving higher burnup and longer refueling intervals than LEU.",
-        tagRef: "haleu-metal",
+        text: "U-235 as the fissile element, enriched to HALEU (~15-19%) to achieve the high fissile density a compact fast-reactor core requires.",
+        tagRef: "u-235",
+      },
+      {
+        text: "Metallic uranium-zirconium alloy fuel enables high burnup, long refueling intervals, and inherent safety through fuel thermal expansion reducing reactivity.",
+        tagRef: "metal",
       },
       {
         text: "Sodium coolant does not moderate neutrons, maintaining a fast neutron spectrum that can fission actinides from spent fuel — making this a waste-burning design.",
@@ -306,7 +340,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "TerraPower",
         url: "https://www.terrapower.com/our-work/natriumpower/",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
       {
         bibtex_key: "doe2024ardp_natrium",
@@ -315,12 +349,12 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "Office of Nuclear Energy",
         url: "https://www.energy.gov/ne/advanced-reactor-demonstration-program",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
     ],
   },
 
-  // ─── KP-FHR (Kairos Power) ───────────────────────────────────────
+  // ─── KP-FHR (Kairos) ─────────────────────────────────────────────
   {
     id: "kp-fhr",
     name: "KP-FHR (Kairos)",
@@ -332,19 +366,25 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://kairospower.com/technology/",
       },
     ],
-    fuelTags: ["triso"],
-    coolantTags: ["flibe-salt"],
+    fuelElement: "u-235",
+    fuelForm: "triso",
+    coolantTags: ["flibe"],
     xFactorTags: ["small", "walk-away-safe", "process-heat"],
     outletTempC: 650,
     spectrum: "thermal",
+    reactorType: "other",
     whyChain: [
+      {
+        text: "U-235 as the fissile element at ~19.75% HALEU, packed into TRISO pebbles for compact cores with built-in containment.",
+        tagRef: "u-235",
+      },
       {
         text: "TRISO pebble fuel provides built-in containment: each pebble is its own miniature pressure vessel, retaining fission products to 1600°C.",
         tagRef: "triso",
       },
       {
         text: "FLiBe molten salt coolant operates at atmospheric pressure — no massive pressure vessel needed, dramatically simplifying the plant and reducing cost.",
-        tagRef: "flibe-salt",
+        tagRef: "flibe",
       },
       {
         text: "The combination of low-pressure FLiBe and TRISO's thermal margin means the reactor is inherently walk-away-safe — decay heat dissipates passively through the salt and vessel walls.",
@@ -366,7 +406,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "Kairos Power",
         url: "https://kairospower.com/technology/",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
       },
       {
         bibtex_key: "nrc2024kairos_kp-fhr",
@@ -375,7 +415,75 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         year: 2024,
         publisher: "NRC",
         url: "https://www.nrc.gov/reactors/new-reactors/advanced.html",
-        accessed: "2026-04-15",
+        accessed: "2026-04-20",
+      },
+    ],
+  },
+
+  // ─── Copenhagen Atomics (NEW — thorium + kickstarter demo) ──────
+  {
+    id: "copenhagen-atomics",
+    name: "Copenhagen Atomics Onion Core",
+    description:
+      "Thorium molten salt reactor using U-235 as kickstarter fuel. Shipping-container-sized 100 MWt modules targeting distributed deployment.",
+    pursuedBy: [
+      {
+        name: "Copenhagen Atomics",
+        url: "https://www.copenhagenatomics.com/technology/",
+      },
+    ],
+    fuelElement: "th-232",
+    kickstarter: "u-235-kickstart",
+    fuelForm: "molten-salt",
+    coolantTags: ["flibe"],
+    xFactorTags: ["small", "walk-away-safe", "fuel-breeder", "non-proliferative"],
+    outletTempC: 600,
+    spectrum: "thermal",
+    reactorType: "MSR",
+    whyChain: [
+      {
+        text: "Th-232 as the fertile element — 3-4x more abundant than uranium in the Earth's crust, but not itself fissile.",
+        tagRef: "th-232",
+      },
+      {
+        text: "U-235 kickstarter provides the initial fissile inventory to start the chain reaction; as the reactor runs, neutrons breed U-233 from Th-232 to sustain operation.",
+        tagRef: "u-235-kickstart",
+      },
+      {
+        text: "Molten salt fuel form — the fissile material is dissolved directly in FLiBe salt, eliminating solid fuel fabrication and enabling online reprocessing.",
+        tagRef: "molten-salt",
+      },
+      {
+        text: "FLiBe serves as both fuel carrier AND primary coolant — the fuel IS the coolant. Atmospheric pressure operation, no pressure vessel needed.",
+        tagRef: "flibe",
+      },
+      {
+        text: "U-233 bred from thorium contains U-232 contaminant, a strong gamma emitter that makes weapons fabrication impractical — inherent proliferation resistance.",
+        tagRef: "non-proliferative",
+      },
+      {
+        text: "Shipping-container-sized modules (100 MWt each) enable factory manufacturing and truck transport, positioning thorium MSR as a distributed-energy technology rather than a megaproject.",
+        tagRef: "small",
+      },
+    ],
+    citations: [
+      {
+        bibtex_key: "copenhagenatomics2024_copenhagen-atomics",
+        author: "Copenhagen Atomics",
+        title: "Copenhagen Atomics Technology",
+        year: 2024,
+        publisher: "Copenhagen Atomics",
+        url: "https://www.copenhagenatomics.com/technology/",
+        accessed: "2026-04-20",
+      },
+      {
+        bibtex_key: "iaea2021msr_copenhagen-atomics",
+        author: "International Atomic Energy Agency",
+        title: "Status of Molten Salt Reactor Technology",
+        year: 2021,
+        publisher: "IAEA",
+        url: "https://www.iaea.org/publications/15116/status-of-molten-salt-reactor-technology",
+        accessed: "2026-04-20",
       },
     ],
   },

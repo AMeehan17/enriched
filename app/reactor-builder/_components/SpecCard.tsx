@@ -2,7 +2,9 @@
 
 import type {
   ReactorTaxonomy,
-  FuelId,
+  FissileElementId,
+  KickstarterId,
+  FuelFormId,
   CoolantId,
   XFactorId,
 } from "@/lib/reactor-types";
@@ -10,7 +12,9 @@ import { ShareButton } from "./ShareButton";
 
 interface SpecCardProps {
   taxonomy: ReactorTaxonomy;
-  fuel: FuelId[];
+  fuelElement: FissileElementId | null;
+  kickstarter: KickstarterId | null;
+  fuelForm: FuelFormId | null;
   coolant: CoolantId[];
   xFactor: XFactorId[];
   matchCount: number;
@@ -20,25 +24,19 @@ interface SpecCardProps {
 }
 
 /**
- * SpecCard — the sticky "your reactor" panel that updates live as the
- * user picks chips.
+ * SpecCard — sticky "your reactor" panel that updates live.
  *
- * Desktop (≥880px): renders as a sticky card in the right column of the
- * builder grid. Width ~360px, sticky top with a small offset.
+ * Schema v2: shows the single-value dimensions (fissile, kickstarter,
+ * fuel form) each as their own row, plus array dimensions (coolant,
+ * x-factor) as pill lists.
  *
- * Mobile (<880px): in the ReactorBuilderView layout, this card stacks
- * below the steps. A separate sticky summary bar would render at the
- * viewport top, but for v1 we keep the simpler stack pattern — the user
- * sees their config below the configurator as they scroll, and the
- * match list below that. The sticky-bar-on-mobile feature lives in
- * TODOS for v1.1 if the simpler pattern doesn't work in dogfood.
- *
- * role="status" + aria-live="polite" so screen readers announce updates
- * as the user toggles chips.
+ * role="status" + aria-live="polite" so screen readers announce updates.
  */
 export function SpecCard({
   taxonomy,
-  fuel,
+  fuelElement,
+  kickstarter,
+  fuelForm,
   coolant,
   xFactor,
   matchCount,
@@ -46,20 +44,25 @@ export function SpecCard({
   hasAnySelection,
   onClearAll,
 }: SpecCardProps) {
-  const fuelLabels = fuel.map((id) =>
-    taxonomy.fuelTags.find((t) => t.id === id)?.label ?? id,
+  const feLabel = fuelElement
+    ? taxonomy.fissileElementTags.find((t) => t.id === fuelElement)?.label ??
+      fuelElement
+    : null;
+  const ksLabel = kickstarter
+    ? taxonomy.kickstarterTags.find((t) => t.id === kickstarter)?.label ??
+      kickstarter
+    : null;
+  const ffLabel = fuelForm
+    ? taxonomy.fuelFormTags.find((t) => t.id === fuelForm)?.label ?? fuelForm
+    : null;
+  const coolantLabels = coolant.map(
+    (id) => taxonomy.coolantTags.find((t) => t.id === id)?.label ?? id,
   );
-  const coolantLabels = coolant.map((id) =>
-    taxonomy.coolantTags.find((t) => t.id === id)?.label ?? id,
-  );
-  const xFactorLabels = xFactor.map((id) =>
-    taxonomy.xFactorTags.find((t) => t.id === id)?.label ?? id,
+  const xFactorLabels = xFactor.map(
+    (id) => taxonomy.xFactorTags.find((t) => t.id === id)?.label ?? id,
   );
 
   const displayedMatchCount = hasAnySelection ? matchCount : totalReactors;
-  const matchLabel = hasAnySelection
-    ? "matching designs"
-    : "total designs";
 
   return (
     <aside
@@ -82,17 +85,21 @@ export function SpecCard({
         </div>
       </header>
 
-      <Row label="Fuel" values={fuelLabels} />
-      <Row label="Coolant" values={coolantLabels} />
-      <Row label="X-Factor" values={xFactorLabels} />
+      <SingleRow label="Fissile" value={feLabel} />
+      {kickstarter !== null ? (
+        <SingleRow label="Kickstarter" value={ksLabel} />
+      ) : null}
+      <SingleRow label="Fuel form" value={ffLabel} />
+      <MultiRow label="Coolant" values={coolantLabels} />
+      <MultiRow label="X-Factor" values={xFactorLabels} />
 
       <footer className="mt-[var(--spacing-4)] pt-[var(--spacing-4)] border-t border-[var(--color-rule)]">
         <p className="font-[family-name:var(--font-body)] text-[length:var(--text-sm)] text-[var(--color-text-muted)] m-0 leading-[1.5]">
           {hasAnySelection
             ? matchCount === 0
               ? "No current designs match this combination."
-              : `${matchLabel}.`
-            : "Showing every reactor. Pick a fuel to narrow the field."}
+              : "Matching designs."
+            : "Showing every reactor. Start with a fissile element to narrow the field."}
         </p>
         {hasAnySelection ? (
           <div className="mt-[var(--spacing-3)] flex items-baseline justify-between gap-[var(--spacing-3)]">
@@ -113,20 +120,42 @@ export function SpecCard({
   );
 }
 
-function Row({
+function SingleRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="py-[var(--spacing-4)] border-b border-[var(--color-rule)]">
+      <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.12em] text-[var(--color-text-muted)] m-0 mb-[var(--spacing-2)]">
+        {label}
+      </p>
+      {value ? (
+        <p className="flex items-baseline gap-[var(--spacing-2)] font-[family-name:var(--font-display)] text-[length:var(--text-base)] font-medium tracking-[-0.01em] m-0">
+          <span
+            aria-hidden="true"
+            className="inline-block w-[6px] h-[6px] rounded-full bg-[var(--color-accent)]"
+          />
+          {value}
+        </p>
+      ) : (
+        <p className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] text-[var(--color-text-faint)] m-0">
+          —
+        </p>
+      )}
+    </div>
+  );
+}
+
+function MultiRow({
   label,
   values,
 }: {
   label: string;
   values: string[];
 }) {
-  const hasValues = values.length > 0;
   return (
     <div className="py-[var(--spacing-4)] border-b border-[var(--color-rule)] last-of-type:border-b-0">
       <p className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.12em] text-[var(--color-text-muted)] m-0 mb-[var(--spacing-2)]">
         {label}
       </p>
-      {hasValues ? (
+      {values.length > 0 ? (
         <ul className="flex flex-wrap gap-[var(--spacing-2)] list-none m-0 p-0">
           {values.map((v) => (
             <li
