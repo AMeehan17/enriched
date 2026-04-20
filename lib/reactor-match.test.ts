@@ -47,7 +47,7 @@ describe("matchReactors", () => {
     );
     // Only Natrium uses sodium
     expect(result.results).toHaveLength(1);
-    expect(result.results[0].id).toBe("natrium");
+    expect(result.results[0]?.id).toBe("natrium");
   });
 
   it("filters by a single X-Factor tag", () => {
@@ -112,7 +112,7 @@ describe("matchReactors", () => {
       reactors,
     );
     // Natrium matches both tags (score 2), others match only walk-away-safe (score 1)
-    expect(result.results[0].id).toBe("natrium");
+    expect(result.results[0]?.id).toBe("natrium");
   });
 
   it("uses alphabetical tiebreak when scores are equal", () => {
@@ -134,7 +134,7 @@ describe("matchReactors", () => {
     );
     // Only Xe-100 uses helium
     expect(result.results).toHaveLength(1);
-    expect(result.results[0].id).toBe("xe-100");
+    expect(result.results[0]?.id).toBe("xe-100");
   });
 
   it("all three dimensions filtered narrows to specific designs", () => {
@@ -148,7 +148,7 @@ describe("matchReactors", () => {
     );
     // Only Natrium matches all three
     expect(result.results).toHaveLength(1);
-    expect(result.results[0].id).toBe("natrium");
+    expect(result.results[0]?.id).toBe("natrium");
   });
 
   it("broad selection returns all reactors that match any combination", () => {
@@ -165,12 +165,14 @@ describe("matchReactors", () => {
   });
 
   it("single reactor in dataset still returns correctly", () => {
-    const singleReactor = [reactors[0]]; // AP1000
+    const firstReactor = reactors[0];
+    if (!firstReactor) throw new Error("reactors[] is empty — test precondition failed");
+    const singleReactor = [firstReactor]; // AP1000
     const result = matchReactors(
       { fuel: ["leu-uo2"], coolant: [], xFactor: [] },
       singleReactor,
     );
     expect(result.results).toHaveLength(1);
-    expect(result.results[0].id).toBe("ap1000");
+    expect(result.results[0]?.id).toBe("ap1000");
   });
 });

@@ -8,6 +8,48 @@ See `CLAUDE.md` for the Enriched vs NPV scope boundary and the security rule.
 Module 2 and 3 additions below respect that split — nothing here implies
 putting company underwriting content into this repo.
 
+## module 4 (reactor database, queued behind module 2)
+
+### Reactor Database — editorial transformation of PRIS data
+**Priority:** P2 (starts AFTER Module 2 v1 ships and dogfood completes)
+**Added:** 2026-04-19
+**Design doc:** `~/.gstack/projects/Enriched/andrew-main-design-20260419-211344.md` (APPROVED)
+
+Transform IAEA PRIS's "wall of tables" into the Enriched editorial aesthetic.
+v1 is US operating fleet only (~90 reactors). Landing = beautifully-typeset
+editorial table (sortable, filterable, searchable). Click any row → per-reactor
+page with editorial blurb, historical capacity factor chart, construction
+timeline, link to Module 2 design it instantiates, primary-source citations.
+
+**Gated on Module 2 shipping.** Do not start Block 0 until Module 2 v1 is in
+production and the 10-human dogfood pass is complete.
+
+**v1 block sequence (~6-7 working weeks total):**
+- Block 0: PRIS extraction research spike (~0.5 day)
+- Block 1: types + data pipeline (~1 day)
+- Block 2: data acquisition + editorial blurbs (~2 weeks — revisit after Block 0)
+- Block 3: table + filter UI (~3-4 days)
+- Block 4: per-reactor page shell + editorial (~2 days)
+- Block 5: capacity factor chart (~1-2 days, independently cuttable)
+- Block 6: construction timeline viz (~1-2 days, independently cuttable)
+- Dogfood pass (~2-3 days)
+
+**v2 (future):** map + timeline view — watch the 70s construction boom bloom
+across the world. Timeline alone is weak; timeline + map is the whoa.
+
+**v3 (vision):** AI-access layer — MCP server + public API so agents can
+query and cite Enriched data alongside human readers. First vertical-domain
+MCP server in nuclear.
+
+**Assignment (before Block 0 ever runs):** spend 30 min clicking through 5-10
+US reactor pages on IAEA PRIS (pris.iaea.org). Note what data you WISH was
+rendered differently. Becomes the editorial brief for Block 2.
+
+**Scope boundary (per CLAUDE.md §3):** operator names + public URLs only.
+No scores, funding, underwriting judgments. Notable events use objective
+criteria only (NRC scrams, Level I-III violations, INES-rated incidents,
+commissioning milestones). Economic/political context explicitly excluded.
+
 ## module 2 (reactor builder, future)
 
 ### Reactor Builder — interactive configurator

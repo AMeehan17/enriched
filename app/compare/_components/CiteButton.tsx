@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useId } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Citation } from "@/lib/data-types";
 import { generateBibTeX } from "@/lib/citation";
+import { Popover } from "@/app/_components/Popover";
 
 interface CiteButtonProps {
   citation: Citation;
@@ -14,69 +15,23 @@ interface CiteButtonProps {
  * CiteButton — the `{}` affordance on every data point.
  *
  * Click opens an anchored popover with the BibTeX entry and a Copy button.
- * Esc or click-outside closes the popover. Focus returns to the button on
- * close (accessibility requirement from DESIGN.md and the eng review).
+ * Wraps the shared Popover shell from app/_components/Popover.tsx (the shell
+ * owns Esc/click-outside/focus-return behavior and aria plumbing) and
+ * contributes the BibTeX-specific content.
  *
- * No <dialog>, no backdrop blur, no scale-in animation. Just opacity 0 → 1
- * in 100ms. This is the anti-slop rule from the design review.
+ * Refactored from the original standalone implementation in Module 2's
+ * Block 4 work so Module 2's TagPopover can reuse the same shell without
+ * duplicating the a11y event handling.
  */
 export function CiteButton({
   citation,
   sourceLabel,
   dimensionLabel,
 }: CiteButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const popoverId = useId();
-
   const bibtex = generateBibTeX(citation);
 
-  const close = useCallback(() => {
-    setIsOpen(false);
-    // Return focus to the trigger button
-    buttonRef.current?.focus();
-  }, []);
-
-  // Esc to close
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        close();
-      }
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [isOpen, close]);
-
-  // Click-outside to close
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(target)
-      ) {
-        close();
-      }
-    };
-    // Delay one tick so the opening click doesn't immediately close
-    const timer = setTimeout(() => {
-      document.addEventListener("mousedown", handleClick);
-    }, 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("mousedown", handleClick);
-    };
-  }, [isOpen, close]);
-
-  // Auto-clear copy feedback
+  // Auto-clear copy feedback after 1.5s
   useEffect(() => {
     if (copyState === "idle") return;
     const timer = setTimeout(() => setCopyState("idle"), 1500);
@@ -96,44 +51,33 @@ export function CiteButton({
     }
   }, [bibtex]);
 
-  return (
-    <div className="relative inline-block">
-      <button
-        ref={buttonRef}
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
-        aria-controls={isOpen ? popoverId : undefined}
-        aria-label={`Cite ${sourceLabel} ${dimensionLabel}`}
-        title="Cite this value"
-        className={`
-          w-6 h-6 rounded-[var(--radius-sm)]
-          border border-[var(--color-rule)]
-          bg-transparent
-          font-[family-name:var(--font-display)] text-[length:var(--text-xs)]
-          text-[var(--color-text-muted)]
-          cursor-pointer transition-all duration-[var(--duration-fast)]
-          flex items-center justify-center
-          hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] hover:border-[var(--color-accent)]
-          ${isOpen ? "bg-[var(--color-accent)] text-[var(--color-bg)] border-[var(--color-accent)]" : ""}
-        `}
-      >
-        {"{}"}
-      </button>
+  const triggerClassName = `
+    w-6 h-6 rounded-[var(--radius-sm)]
+    border border-[var(--color-rule)]
+    bg-transparent
+    font-[family-name:var(--font-display)] text-[length:var(--text-xs)]
+    text-[var(--color-text-muted)]
+    cursor-pointer transition-all duration-[var(--duration-fast)]
+    flex items-center justify-center
+    hover:bg-[var(--color-accent)] hover:text-[var(--color-bg)] hover:border-[var(--color-accent)]
+  `;
 
-      {isOpen && (
-        <div
-          ref={popoverRef}
-          id={popoverId}
-          role="dialog"
-          aria-modal="false"
-          aria-labelledby={`${popoverId}-title`}
-          className="absolute top-[calc(100%+var(--spacing-2))] right-0 z-50 w-[min(540px,calc(100vw-2rem))] bg-[var(--color-surface)] border border-[var(--color-rule)] rounded-[var(--radius-md)] p-[var(--spacing-6)] shadow-none animate-[fadeIn_100ms_ease-out]"
-          style={{ opacity: 1 }}
-        >
+  const panelClassName =
+    "absolute top-[calc(100%+var(--spacing-2))] right-0 z-50 w-[min(540px,calc(100vw-2rem))] bg-[var(--color-surface)] border border-[var(--color-rule)] rounded-[var(--radius-md)] p-[var(--spacing-6)] shadow-none animate-[fadeIn_100ms_ease-out]";
+
+  return (
+    <Popover
+      trigger={<>{"{}"}</>}
+      triggerAriaLabel={`Cite ${sourceLabel} ${dimensionLabel}`}
+      triggerTitle="Cite this value"
+      triggerClassName={triggerClassName}
+      panelClassName={panelClassName}
+    >
+      {({ titleId, close }) => (
+        <>
           <div className="flex items-start justify-between mb-[var(--spacing-3)]">
             <p
-              id={`${popoverId}-title`}
+              id={titleId}
               className="font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium uppercase tracking-[0.1em] text-[var(--color-text-faint)]"
             >
               {"/ Cite this value"}
@@ -171,8 +115,8 @@ export function CiteButton({
               Primary source ↗
             </a>
           </div>
-        </div>
+        </>
       )}
-    </div>
+    </Popover>
   );
 }

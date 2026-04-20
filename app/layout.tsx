@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Spline_Sans_Mono, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Nav } from "./_components/Nav";
 import "./globals.css";
 
 // next/font/google self-hosts the fonts at build time. Zero CLS, no external
@@ -77,6 +78,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
+        <Nav />
         <NuqsAdapter>{children}</NuqsAdapter>
       </body>
     </html>

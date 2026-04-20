@@ -24,3 +24,10 @@ coverage/
 # /public/data/sources.json
 # /public/data/presets.json
 .vercel
+
+# Reference material — local-only, not shipped
+# (also in .vercelignore; adding to .gitignore to prevent accidental commits)
+/Lazard Reports/
+/NuclearGDriveFolder/
+/reference/
+/Claude Design/
