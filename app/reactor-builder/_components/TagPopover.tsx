@@ -26,14 +26,15 @@ interface TagPopoverProps {
  */
 export function TagPopover({ tag, inverted }: TagPopoverProps) {
   const triggerClassName = `
-    inline-flex items-center justify-center w-5 h-5
-    rounded-[var(--radius-sm)]
+    inline-flex items-center justify-center w-[22px] h-[22px]
+    rounded-full border
     font-[family-name:var(--font-display)] text-[length:var(--text-xs)] font-medium
     cursor-pointer transition-colors duration-[var(--duration-fast)]
+    leading-none
     ${
       inverted
-        ? "text-[var(--color-bg)] opacity-70 hover:opacity-100"
-        : "text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-rule)]"
+        ? "border-[var(--color-bg)] text-[var(--color-bg)] opacity-70 hover:opacity-100"
+        : "border-[var(--color-rule-strong)] text-[var(--color-text-muted)] bg-[var(--color-bg)] hover:border-[var(--color-text)] hover:text-[var(--color-text)]"
     }
   `;
 
