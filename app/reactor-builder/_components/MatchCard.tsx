@@ -4,7 +4,7 @@ import { useState } from "react";
 import type {
   ReactorDesign,
   ReactorTaxonomy,
-  FissileElementId,
+  FuelMaterialId,
   KickstarterId,
   FuelFormId,
   CoolantId,
@@ -14,7 +14,7 @@ import type {
 interface MatchCardProps {
   reactor: ReactorDesign;
   taxonomy: ReactorTaxonomy;
-  selectedFuelElement: FissileElementId | null;
+  selectedFuelElement: FuelMaterialId | null;
   selectedKickstarter: KickstarterId | null;
   selectedFuelForm: FuelFormId | null;
   selectedCoolant: CoolantId[];
@@ -39,8 +39,8 @@ export function MatchCard({
 }: MatchCardProps) {
   const [whyOpen, setWhyOpen] = useState(false);
 
-  const feTag = taxonomy.fissileElementTags.find(
-    (t) => t.id === reactor.fuelElement,
+  const feTag = taxonomy.fuelMaterialTags.find(
+    (t) => t.id === reactor.fuelMaterial,
   );
   const ksTag = reactor.kickstarter
     ? taxonomy.kickstarterTags.find((t) => t.id === reactor.kickstarter)
@@ -52,7 +52,7 @@ export function MatchCard({
   const selectedCoolantSet = new Set<string>(selectedCoolant);
   const selectedXSet = new Set<string>(selectedXFactor);
 
-  const fuelElementMatched = selectedFuelElement === reactor.fuelElement;
+  const fuelMaterialMatched = selectedFuelElement === reactor.fuelMaterial;
   const kickstarterMatched =
     selectedKickstarter !== null && selectedKickstarter === reactor.kickstarter;
   const fuelFormMatched = selectedFuelForm === reactor.fuelForm;
@@ -95,7 +95,7 @@ export function MatchCard({
       {/* Tag pills */}
       <div className="flex flex-wrap gap-[var(--spacing-2)]">
         {feTag ? (
-          <TagPill label={feTag.label} matched={fuelElementMatched} />
+          <TagPill label={feTag.label} matched={fuelMaterialMatched} />
         ) : null}
         {ksTag ? (
           <TagPill label={ksTag.label} matched={kickstarterMatched} />

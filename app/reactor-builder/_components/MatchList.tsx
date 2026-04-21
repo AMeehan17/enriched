@@ -2,7 +2,7 @@
 
 import type {
   ReactorTaxonomy,
-  FissileElementId,
+  FuelMaterialId,
   KickstarterId,
   FuelFormId,
   CoolantId,
@@ -13,7 +13,7 @@ import { MatchCard } from "./MatchCard";
 
 interface MatchListProps {
   taxonomy: ReactorTaxonomy;
-  selectedFuelElement: FissileElementId | null;
+  selectedFuelElement: FuelMaterialId | null;
   selectedKickstarter: KickstarterId | null;
   selectedFuelForm: FuelFormId | null;
   selectedCoolant: CoolantId[];

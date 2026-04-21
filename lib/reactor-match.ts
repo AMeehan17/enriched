@@ -1,5 +1,5 @@
 import type {
-  FissileElementId,
+  FuelMaterialId,
   KickstarterId,
   FuelFormId,
   CoolantId,
@@ -11,14 +11,14 @@ import type {
  * reactor-match.ts — pure matching function for the Reactor Builder.
  *
  * SCHEMA v2 (2026-04-20):
- *   Fuel is now 3 fields: fuelElement (single), kickstarter (single optional),
+ *   Fuel is now 3 fields: fuelMaterial (single), kickstarter (single optional),
  *   fuelForm (single). Coolant and xFactor stay as arrays (multi-select).
  *
  * No React, no DOM, no side effects. Takes a user's configuration and
  * returns the qualifying reactor designs, ranked by relevance.
  *
  * Semantics:
- *   - Single-value dimensions (fuelElement, kickstarter, fuelForm): a
+ *   - Single-value dimensions (fuelMaterial, kickstarter, fuelForm): a
  *     reactor matches if its value equals the config's value, OR the
  *     config's value is null (dimension unfiltered).
  *   - Array dimensions (coolant, xFactor): AND across dimensions, OR
@@ -32,7 +32,7 @@ import type {
  */
 
 export interface MatchConfig {
-  fuelElement: FissileElementId | null;
+  fuelMaterial: FuelMaterialId | null;
   kickstarter: KickstarterId | null;
   fuelForm: FuelFormId | null;
   coolant: CoolantId[];
@@ -86,7 +86,7 @@ export function matchReactors(
   allReactors: readonly ReactorDesign[],
 ): MatchResult {
   const hasAnyFilter =
-    config.fuelElement !== null ||
+    config.fuelMaterial !== null ||
     config.kickstarter !== null ||
     config.fuelForm !== null ||
     config.coolant.length > 0 ||
@@ -94,7 +94,7 @@ export function matchReactors(
 
   const qualifying = allReactors.filter(
     (r) =>
-      matchesSingle(r.fuelElement, config.fuelElement) &&
+      matchesSingle(r.fuelMaterial, config.fuelMaterial) &&
       matchesSingle(r.kickstarter, config.kickstarter) &&
       matchesSingle(r.fuelForm, config.fuelForm) &&
       matchesArray(r.coolantTags, config.coolant) &&
@@ -104,13 +104,13 @@ export function matchReactors(
   // Rank by total matched tags, alphabetical tiebreak.
   const ranked = [...qualifying].sort((a, b) => {
     const scoreA =
-      (config.fuelElement !== null && a.fuelElement === config.fuelElement ? 1 : 0) +
+      (config.fuelMaterial !== null && a.fuelMaterial === config.fuelMaterial ? 1 : 0) +
       (config.kickstarter !== null && a.kickstarter === config.kickstarter ? 1 : 0) +
       (config.fuelForm !== null && a.fuelForm === config.fuelForm ? 1 : 0) +
       countArrayMatches(a.coolantTags, config.coolant) +
       countArrayMatches(a.xFactorTags, config.xFactor);
     const scoreB =
-      (config.fuelElement !== null && b.fuelElement === config.fuelElement ? 1 : 0) +
+      (config.fuelMaterial !== null && b.fuelMaterial === config.fuelMaterial ? 1 : 0) +
       (config.kickstarter !== null && b.kickstarter === config.kickstarter ? 1 : 0) +
       (config.fuelForm !== null && b.fuelForm === config.fuelForm ? 1 : 0) +
       countArrayMatches(b.coolantTags, config.coolant) +

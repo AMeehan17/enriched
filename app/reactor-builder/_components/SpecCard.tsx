@@ -2,7 +2,7 @@
 
 import type {
   ReactorTaxonomy,
-  FissileElementId,
+  FuelMaterialId,
   KickstarterId,
   FuelFormId,
   CoolantId,
@@ -12,7 +12,7 @@ import { ShareButton } from "./ShareButton";
 
 interface SpecCardProps {
   taxonomy: ReactorTaxonomy;
-  fuelElement: FissileElementId | null;
+  fuelMaterial: FuelMaterialId | null;
   kickstarter: KickstarterId | null;
   fuelForm: FuelFormId | null;
   coolant: CoolantId[];
@@ -34,7 +34,7 @@ interface SpecCardProps {
  */
 export function SpecCard({
   taxonomy,
-  fuelElement,
+  fuelMaterial,
   kickstarter,
   fuelForm,
   coolant,
@@ -44,9 +44,9 @@ export function SpecCard({
   hasAnySelection,
   onClearAll,
 }: SpecCardProps) {
-  const feLabel = fuelElement
-    ? taxonomy.fissileElementTags.find((t) => t.id === fuelElement)?.label ??
-      fuelElement
+  const feLabel = fuelMaterial
+    ? taxonomy.fuelMaterialTags.find((t) => t.id === fuelMaterial)?.label ??
+      fuelMaterial
     : null;
   const ksLabel = kickstarter
     ? taxonomy.kickstarterTags.find((t) => t.id === kickstarter)?.label ??
@@ -85,7 +85,7 @@ export function SpecCard({
         </div>
       </header>
 
-      <SingleRow label="Fissile" value={feLabel} />
+      <SingleRow label="Fuel" value={feLabel} />
       {kickstarter !== null ? (
         <SingleRow label="Kickstarter" value={ksLabel} />
       ) : null}
@@ -99,7 +99,7 @@ export function SpecCard({
             ? matchCount === 0
               ? "No current designs match this combination."
               : "Matching designs."
-            : "Showing every reactor. Start with a fissile element to narrow the field."}
+            : "Showing every reactor. Start with a fuel to narrow the field."}
         </p>
         {hasAnySelection ? (
           <div className="mt-[var(--spacing-3)] flex items-baseline justify-between gap-[var(--spacing-3)]">

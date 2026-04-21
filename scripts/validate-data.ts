@@ -32,7 +32,7 @@ import {
   type Source,
 } from "../lib/data-types";
 import {
-  FISSILE_ELEMENT_IDS,
+  FUEL_MATERIAL_IDS,
   KICKSTARTER_IDS,
   FUEL_FORM_IDS,
   COOLANT_IDS,
@@ -203,16 +203,16 @@ function validateBibKeyUniqueness(): void {
 
   // Module 2: taxonomy tags (schema v2: fissile + kickstarter + form + coolant + x-factor)
   const {
-    fissileElementTags,
+    fuelMaterialTags,
     kickstarterTags,
     fuelFormTags,
     coolantTags,
     xFactorTags,
   } = reactorTaxonomy;
   const allTags = [
-    ...fissileElementTags.map((t, i) => ({
+    ...fuelMaterialTags.map((t, i) => ({
       tag: t,
-      path: `taxonomy.fissileElement[${i}]`,
+      path: `taxonomy.fuelMaterial[${i}]`,
     })),
     ...kickstarterTags.map((t, i) => ({
       tag: t,
@@ -281,7 +281,7 @@ function validateTaxonomyTag(
 
 function validateTaxonomy(): void {
   const {
-    fissileElementTags,
+    fuelMaterialTags,
     kickstarterTags,
     fuelFormTags,
     coolantTags,
@@ -313,7 +313,7 @@ function validateTaxonomy(): void {
     }
   }
 
-  validateDimension("fissileElement", fissileElementTags, [...FISSILE_ELEMENT_IDS]);
+  validateDimension("fuelMaterial", fuelMaterialTags, [...FUEL_MATERIAL_IDS]);
   validateDimension("kickstarter", kickstarterTags, [...KICKSTARTER_IDS]);
   validateDimension("fuelForm", fuelFormTags, [...FUEL_FORM_IDS]);
   validateDimension("coolant", coolantTags, [...COOLANT_IDS]);
@@ -343,7 +343,7 @@ function validateTaxonomy(): void {
 // ─── Module 2: Reactor design validation ────────────────────────────
 
 function validateReactors(): void {
-  const fissileSet = new Set<string>(FISSILE_ELEMENT_IDS);
+  const fissileSet = new Set<string>(FUEL_MATERIAL_IDS);
   const kickstarterSet = new Set<string>(KICKSTARTER_IDS);
   const fuelFormSet = new Set<string>(FUEL_FORM_IDS);
   const coolantSet = new Set<string>(COOLANT_IDS);
@@ -386,18 +386,18 @@ function validateReactors(): void {
     }
 
     // Fuel dimension (schema v2)
-    if (!fissileSet.has(r.fuelElement)) {
-      err(`${path}.fuelElement`, `unknown fissile element "${r.fuelElement}"`);
+    if (!fissileSet.has(r.fuelMaterial)) {
+      err(`${path}.fuelMaterial`, `unknown fissile element "${r.fuelMaterial}"`);
     }
     if (!fuelFormSet.has(r.fuelForm)) {
       err(`${path}.fuelForm`, `unknown fuel form "${r.fuelForm}"`);
     }
-    // Kickstarter coupling: required when fuelElement is "th-232", forbidden otherwise
-    if (r.fuelElement === "th-232") {
+    // Kickstarter coupling: required when fuelMaterial is "th-232", forbidden otherwise
+    if (r.fuelMaterial === "th-232") {
       if (!r.kickstarter) {
         err(
           `${path}.kickstarter`,
-          "required when fuelElement is 'th-232' (thorium needs a fissile kickstarter)",
+          "required when fuelMaterial is 'th-232' (thorium needs a fissile kickstarter)",
         );
       } else if (!kickstarterSet.has(r.kickstarter)) {
         err(`${path}.kickstarter`, `unknown kickstarter "${r.kickstarter}"`);
@@ -405,7 +405,7 @@ function validateReactors(): void {
     } else if (r.kickstarter) {
       err(
         `${path}.kickstarter`,
-        `kickstarter only allowed when fuelElement is 'th-232', got fuelElement='${r.fuelElement}'`,
+        `kickstarter only allowed when fuelMaterial is 'th-232', got fuelMaterial='${r.fuelMaterial}'`,
       );
     }
     // Coolant coupling: fuelForm = 'molten-salt' restricts coolants to salt chemistries
@@ -568,7 +568,7 @@ function main(): void {
   }
 
   const {
-    fissileElementTags: ft,
+    fuelMaterialTags: ft,
     kickstarterTags: kt,
     fuelFormTags: ffT,
     coolantTags: ct,

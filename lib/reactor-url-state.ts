@@ -3,7 +3,7 @@ import {
   parseAsStringLiteral,
 } from "nuqs";
 import {
-  FISSILE_ELEMENT_IDS,
+  FUEL_MATERIAL_IDS,
   KICKSTARTER_IDS,
   FUEL_FORM_IDS,
   COOLANT_IDS,
@@ -33,8 +33,8 @@ import {
  */
 
 // ─── fissile element (single, nullable) ─────────────────────────────
-export const fissileElementParser = parseAsStringLiteral(
-  FISSILE_ELEMENT_IDS,
+export const fuelMaterialParser = parseAsStringLiteral(
+  FUEL_MATERIAL_IDS,
 ).withDefault(null as never).withOptions({ clearOnDefault: true });
 
 // ─── kickstarter (single, nullable, conditional on th-232) ──────────
@@ -61,7 +61,7 @@ export const xFactorParser = parseAsArrayOf(
 
 // ─── combined search params descriptor ───────────────────────────────
 export const REACTOR_BUILDER_SEARCH_PARAMS = {
-  fe: fissileElementParser,
+  fe: fuelMaterialParser,
   ks: kickstarterParser,
   ff: fuelFormParser,
   c: coolantParser,

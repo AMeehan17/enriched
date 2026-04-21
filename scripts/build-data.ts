@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   const taxonomyJson: TaxonomyJson = {
     lastUpdated,
     schemaVersion: 2,
-    fissileElement: reactorTaxonomy.fissileElementTags,
+    fuelMaterial: reactorTaxonomy.fuelMaterialTags,
     kickstarter: reactorTaxonomy.kickstarterTags,
     fuelForm: reactorTaxonomy.fuelFormTags,
     coolant: reactorTaxonomy.coolantTags,

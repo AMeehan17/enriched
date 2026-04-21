@@ -21,7 +21,7 @@ import { reactors } from "../data-src/reactors";
  */
 
 const empty: MatchConfig = {
-  fuelElement: null,
+  fuelMaterial: null,
   kickstarter: null,
   fuelForm: null,
   coolant: [],
@@ -37,7 +37,7 @@ describe("matchReactors (schema v2)", () => {
 
   it("filters by fissile element (single-value)", () => {
     const result = matchReactors(
-      { ...empty, fuelElement: "th-232" },
+      { ...empty, fuelMaterial: "th-232" },
       reactors,
     );
     // Only Copenhagen Atomics uses Th-232
@@ -47,7 +47,7 @@ describe("matchReactors (schema v2)", () => {
 
   it("filters by fissile element u-235", () => {
     const result = matchReactors(
-      { ...empty, fuelElement: "u-235" },
+      { ...empty, fuelMaterial: "u-235" },
       reactors,
     );
     // All except Copenhagen Atomics
@@ -116,7 +116,7 @@ describe("matchReactors (schema v2)", () => {
 
   it("AND across dimensions: u-235 + triso narrows results", () => {
     const result = matchReactors(
-      { ...empty, fuelElement: "u-235", fuelForm: "triso" },
+      { ...empty, fuelMaterial: "u-235", fuelForm: "triso" },
       reactors,
     );
     // Xe-100 and KP-FHR both use U-235 + TRISO
@@ -128,7 +128,7 @@ describe("matchReactors (schema v2)", () => {
     const result = matchReactors(
       {
         ...empty,
-        fuelElement: "th-232",
+        fuelMaterial: "th-232",
         fuelForm: "ceramic-pellets",
       },
       reactors,
@@ -169,7 +169,7 @@ describe("matchReactors (schema v2)", () => {
   it("three-dimension filter narrows to one design", () => {
     const result = matchReactors(
       {
-        fuelElement: "u-235",
+        fuelMaterial: "u-235",
         kickstarter: null,
         fuelForm: "metal",
         coolant: ["sodium"],
@@ -184,7 +184,7 @@ describe("matchReactors (schema v2)", () => {
   it("Copenhagen Atomics matches via full thorium config", () => {
     const result = matchReactors(
       {
-        fuelElement: "th-232",
+        fuelMaterial: "th-232",
         kickstarter: "u-235-kickstart",
         fuelForm: "molten-salt",
         coolant: ["flibe"],
@@ -198,7 +198,7 @@ describe("matchReactors (schema v2)", () => {
 
   it("broad selection returns all qualifying reactors", () => {
     const result = matchReactors(
-      { ...empty, fuelElement: "u-235", xFactor: ["small"] },
+      { ...empty, fuelMaterial: "u-235", xFactor: ["small"] },
       reactors,
     );
     // U-235 + small: VOYGR, Xe-100, BWRX-300, KP-FHR (all U-235 and tagged 'small')
@@ -213,7 +213,7 @@ describe("matchReactors (schema v2)", () => {
 
   it("empty reactor list returns empty results", () => {
     const result = matchReactors(
-      { ...empty, fuelElement: "u-235" },
+      { ...empty, fuelMaterial: "u-235" },
       [],
     );
     expect(result.results).toHaveLength(0);

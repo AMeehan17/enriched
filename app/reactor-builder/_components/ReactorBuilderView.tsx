@@ -5,7 +5,7 @@ import { useQueryStates } from "nuqs";
 import type {
   ReactorTaxonomy,
   ReactorDesign,
-  FissileElementId,
+  FuelMaterialId,
   KickstarterId,
   FuelFormId,
   CoolantId,
@@ -56,7 +56,7 @@ export function ReactorBuilderView({
   });
 
   // Destructure with typed aliases for clarity
-  const fe: FissileElementId | null = state.fe;
+  const fe: FuelMaterialId | null = state.fe;
   const ks: KickstarterId | null = state.ks;
   const ff: FuelFormId | null = state.ff;
   const c: CoolantId[] = state.c;
@@ -66,7 +66,7 @@ export function ReactorBuilderView({
   const matchResult = useMemo(
     () =>
       matchReactors(
-        { fuelElement: fe, kickstarter: ks, fuelForm: ff, coolant: c, xFactor: x },
+        { fuelMaterial: fe, kickstarter: ks, fuelForm: ff, coolant: c, xFactor: x },
         reactors,
       ),
     [fe, ks, ff, c, x, reactors],
@@ -96,7 +96,7 @@ export function ReactorBuilderView({
 
   // Single-select handlers
   const selectFissile = (id: string) => {
-    const typedId = id as FissileElementId;
+    const typedId = id as FuelMaterialId;
     if (fe === typedId) {
       // Deselect, also clear downstream that depended on this
       void setState({ fe: null, ks: null, ff: null, c: [] });
@@ -205,12 +205,12 @@ export function ReactorBuilderView({
       {/* Two-column grid on desktop; stacks on mobile */}
       <div className="grid grid-cols-1 min-[880px]:grid-cols-[minmax(0,1fr)_360px] gap-[var(--spacing-12)] pt-[var(--spacing-8)] items-start">
         <div>
-          {/* Step 1: Fissile element */}
+          {/* Step 1: Fuel material */}
           <StepSection
             stepNumber={1}
-            title="Pick a fissile element"
-            intro="What atom is splitting? Uranium-235 is the workhorse of today's fleet. Thorium-232 breeds fissile U-233 but needs a kickstarter. Plutonium-239 comes from recycled spent fuel."
-            tags={taxonomy.fissileElementTags}
+            title="Choose a fuel"
+            intro="What's in the fuel? Uranium-235 is fissile — it splits directly and powers today's fleet. Thorium-232 is fertile — it can't split on its own but transmutes into fissile U-233 once the reactor is running. Plutonium-239 is fissile and comes from recycled spent fuel."
+            tags={taxonomy.fuelMaterialTags}
             selected={feSet}
             onToggle={selectFissile}
             onClear={fe !== null ? clearFissile : undefined}
@@ -281,7 +281,7 @@ export function ReactorBuilderView({
         {/* Right column: sticky spec card */}
         <SpecCard
           taxonomy={taxonomy}
-          fuelElement={fe}
+          fuelMaterial={fe}
           kickstarter={ks}
           fuelForm={ff}
           coolant={c}

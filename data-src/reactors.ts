@@ -3,12 +3,12 @@ import type { ReactorDesign } from "@/lib/reactor-types";
 /**
  * REACTORS — starting reactor designs for Module 2 v1.
  *
- * SCHEMA v2 (2026-04-20): fuel dimension split into fissileElement /
+ * SCHEMA v2 (2026-04-20): fuel dimension split into fuelMaterial /
  * fuelForm / (optional) kickstarter. Coolant expanded to 10 options.
  * Added reactorType derived field.
  *
  * Each design is tagged against the F/C/X taxonomy and carries:
- *   - Fuel: fissileElement + fuelForm (+ kickstarter when Th-232)
+ *   - Fuel: fuelMaterial + fuelForm (+ kickstarter when Th-232)
  *   - Coolant: one or more coolantTags
  *   - X-Factor: scale + capability tags
  *   - reactorType: derived from PRIS (PWR/BWR/PHWR/HTGR/SFR/LFR/MSR/other)
@@ -44,7 +44,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.westinghousenuclear.com/energy-systems/ap1000-pwr",
       },
     ],
-    fuelElement: "u-235",
+    fuelMaterial: "u-235",
     fuelForm: "ceramic-pellets",
     coolantTags: ["light-water"],
     xFactorTags: ["large", "first-of-kind-licensed"],
@@ -109,7 +109,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.nuscalepower.com/en/products/voygr-smr-plants",
       },
     ],
-    fuelElement: "u-235",
+    fuelMaterial: "u-235",
     fuelForm: "ceramic-pellets",
     coolantTags: ["light-water"],
     xFactorTags: ["small", "walk-away-safe", "first-of-kind-licensed"],
@@ -176,7 +176,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://x-energy.com/reactors/xe-100",
       },
     ],
-    fuelElement: "u-235",
+    fuelMaterial: "u-235",
     fuelForm: "triso",
     coolantTags: ["helium"],
     xFactorTags: ["small", "walk-away-safe", "process-heat"],
@@ -239,7 +239,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.gevernova.com/nuclear/bwrx-300",
       },
     ],
-    fuelElement: "u-235",
+    fuelMaterial: "u-235",
     fuelForm: "ceramic-pellets",
     coolantTags: ["light-water"],
     xFactorTags: ["small", "walk-away-safe"],
@@ -293,7 +293,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.terrapower.com/our-work/natriumpower/",
       },
     ],
-    fuelElement: "u-235",
+    fuelMaterial: "u-235",
     fuelForm: "metal",
     coolantTags: ["sodium"],
     xFactorTags: [
@@ -366,7 +366,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://kairospower.com/technology/",
       },
     ],
-    fuelElement: "u-235",
+    fuelMaterial: "u-235",
     fuelForm: "triso",
     coolantTags: ["flibe"],
     xFactorTags: ["small", "walk-away-safe", "process-heat"],
@@ -432,7 +432,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         url: "https://www.copenhagenatomics.com/technology/",
       },
     ],
-    fuelElement: "th-232",
+    fuelMaterial: "th-232",
     kickstarter: "u-235-kickstart",
     fuelForm: "molten-salt",
     coolantTags: ["flibe"],

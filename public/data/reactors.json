@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-04-20T16:55:59.914Z",
+  "lastUpdated": "2026-04-21T02:42:34.069Z",
   "schemaVersion": 2,
   "reactors": [
     {
@@ -12,7 +12,7 @@
           "url": "https://www.westinghousenuclear.com/energy-systems/ap1000-pwr"
         }
       ],
-      "fuelElement": "u-235",
+      "fuelMaterial": "u-235",
       "fuelForm": "ceramic-pellets",
       "coolantTags": [
         "light-water"
@@ -79,7 +79,7 @@
           "url": "https://www.nuscalepower.com/en/products/voygr-smr-plants"
         }
       ],
-      "fuelElement": "u-235",
+      "fuelMaterial": "u-235",
       "fuelForm": "ceramic-pellets",
       "coolantTags": [
         "light-water"
@@ -149,7 +149,7 @@
           "url": "https://x-energy.com/reactors/xe-100"
         }
       ],
-      "fuelElement": "u-235",
+      "fuelMaterial": "u-235",
       "fuelForm": "triso",
       "coolantTags": [
         "helium"
@@ -215,7 +215,7 @@
           "url": "https://www.gevernova.com/nuclear/bwrx-300"
         }
       ],
-      "fuelElement": "u-235",
+      "fuelMaterial": "u-235",
       "fuelForm": "ceramic-pellets",
       "coolantTags": [
         "light-water"
@@ -271,7 +271,7 @@
           "url": "https://www.terrapower.com/our-work/natriumpower/"
         }
       ],
-      "fuelElement": "u-235",
+      "fuelMaterial": "u-235",
       "fuelForm": "metal",
       "coolantTags": [
         "sodium"
@@ -343,7 +343,7 @@
           "url": "https://kairospower.com/technology/"
         }
       ],
-      "fuelElement": "u-235",
+      "fuelMaterial": "u-235",
       "fuelForm": "triso",
       "coolantTags": [
         "flibe"
@@ -412,7 +412,7 @@
           "url": "https://www.copenhagenatomics.com/technology/"
         }
       ],
-      "fuelElement": "th-232",
+      "fuelMaterial": "th-232",
       "kickstarter": "u-235-kickstart",
       "fuelForm": "molten-salt",
       "coolantTags": [

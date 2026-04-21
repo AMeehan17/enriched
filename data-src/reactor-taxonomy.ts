@@ -1,6 +1,6 @@
 import type {
   TaxonomyTag,
-  FissileElementId,
+  FuelMaterialId,
   KickstarterId,
   FuelFormId,
   CoolantId,
@@ -34,8 +34,8 @@ import type {
 
 // ─── FISSILE ELEMENT TAGS ───────────────────────────────────────────
 
-const fissileElementTags: ReadonlyArray<
-  TaxonomyTag & { id: FissileElementId }
+const fuelMaterialTags: ReadonlyArray<
+  TaxonomyTag & { id: FuelMaterialId }
 > = [
   {
     id: "u-235",
@@ -670,7 +670,7 @@ const xFactorTags: ReadonlyArray<
 // ─── Export ──────────────────────────────────────────────────────────
 
 export const reactorTaxonomy: ReactorTaxonomy = {
-  fissileElementTags,
+  fuelMaterialTags,
   kickstarterTags,
   fuelFormTags,
   coolantTags,

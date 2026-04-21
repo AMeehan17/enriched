@@ -1,7 +1,7 @@
 {
-  "lastUpdated": "2026-04-20T16:55:59.914Z",
+  "lastUpdated": "2026-04-21T02:42:34.069Z",
   "schemaVersion": 2,
-  "fissileElement": [
+  "fuelMaterial": [
     {
       "id": "u-235",
       "label": "Uranium-235",

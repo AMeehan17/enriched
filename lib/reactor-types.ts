@@ -22,9 +22,9 @@ import type { Citation } from "./data-types";
 
 // ─── Fissile element IDs ────────────────────────────────────────────
 // What atom is actually undergoing fission. Independent of physical form.
-export type FissileElementId = "u-235" | "th-232" | "pu-239";
+export type FuelMaterialId = "u-235" | "th-232" | "pu-239";
 
-export const FISSILE_ELEMENT_IDS: readonly FissileElementId[] = [
+export const FUEL_MATERIAL_IDS: readonly FuelMaterialId[] = [
   "u-235",
   "th-232",
   "pu-239",
@@ -176,7 +176,7 @@ export interface WhyChainStep {
   text: string;
   /** Optional tag ID this step references. */
   tagRef?:
-    | FissileElementId
+    | FuelMaterialId
     | FuelFormId
     | KickstarterId
     | CoolantId
@@ -189,9 +189,9 @@ export interface ReactorDesign {
   description: string;
   pursuedBy: ReadonlyArray<{ name: string; url: string }>;
   // Fuel dimension (v2 schema)
-  fuelElement: FissileElementId;
+  fuelMaterial: FuelMaterialId;
   fuelForm: FuelFormId;
-  /** Only set when fuelElement is "th-232". */
+  /** Only set when fuelMaterial is "th-232". */
   kickstarter?: KickstarterId;
   // Other dimensions
   coolantTags: CoolantId[];
@@ -206,7 +206,7 @@ export interface ReactorDesign {
 
 // ─── Taxonomy collections ───────────────────────────────────────────
 export interface ReactorTaxonomy {
-  fissileElementTags: ReadonlyArray<TaxonomyTag & { id: FissileElementId }>;
+  fuelMaterialTags: ReadonlyArray<TaxonomyTag & { id: FuelMaterialId }>;
   kickstarterTags: ReadonlyArray<TaxonomyTag & { id: KickstarterId }>;
   fuelFormTags: ReadonlyArray<TaxonomyTag & { id: FuelFormId }>;
   coolantTags: ReadonlyArray<TaxonomyTag & { id: CoolantId }>;
@@ -219,7 +219,7 @@ export interface ReactorTaxonomy {
 export interface TaxonomyJson {
   lastUpdated: string;
   schemaVersion: 2;
-  fissileElement: ReadonlyArray<TaxonomyTag>;
+  fuelMaterial: ReadonlyArray<TaxonomyTag>;
   kickstarter: ReadonlyArray<TaxonomyTag>;
   fuelForm: ReadonlyArray<TaxonomyTag>;
   coolant: ReadonlyArray<TaxonomyTag>;
