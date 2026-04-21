@@ -94,6 +94,20 @@ export function ReactorBuilderView({
     [saltOnly, taxonomy.coolantTags],
   );
 
+  // Reverse coupling: if any non-salt coolant is already selected, lock the
+  // molten-salt fuel form chip. Molten-salt fuel IS the coolant, so pairing
+  // it with helium / water / sodium is physically incoherent.
+  const hasNonSaltCoolant = c.some(
+    (cid) => !SALT_COOLANT_IDS.includes(cid),
+  );
+  const lockedForms = useMemo(
+    () =>
+      hasNonSaltCoolant
+        ? new Set<string>(["molten-salt"])
+        : new Set<string>(),
+    [hasNonSaltCoolant],
+  );
+
   // Single-select handlers
   const selectFissile = (id: string) => {
     const typedId = id as FuelMaterialId;
@@ -112,6 +126,7 @@ export function ReactorBuilderView({
   };
   const selectForm = (id: string) => {
     const typedId = id as FuelFormId;
+    if (lockedForms.has(typedId)) return; // guard
     if (ff === typedId) {
       // Deselect
       void setState({ ff: null, c: [] });
@@ -230,9 +245,14 @@ export function ReactorBuilderView({
           <StepSection
             stepNumber={2}
             title="Pick a fuel form"
-            intro="How is the fissile material packaged? The form determines everything downstream — pressure, temperature, safety envelope. Molten salt fuel is the coolant too."
+            intro={
+              hasNonSaltCoolant
+                ? "How is the fuel packaged? Molten-salt fuel is locked because you've picked a non-salt coolant — molten-salt fuel IS the coolant, so it can only pair with a salt chemistry."
+                : "How is the fuel packaged? The form determines everything downstream — pressure, temperature, safety envelope. Molten-salt fuel is the coolant too."
+            }
             tags={taxonomy.fuelFormTags}
             selected={ffSet}
+            lockedIds={lockedForms}
             onToggle={selectForm}
             onClear={ff !== null ? clearForm : undefined}
             dim={formDim}
