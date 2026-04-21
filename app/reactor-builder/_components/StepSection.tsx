@@ -4,7 +4,7 @@ import type { TaxonomyTag } from "@/lib/reactor-types";
 import { TagChip } from "./TagChip";
 
 interface StepSectionProps {
-  stepNumber: 1 | 2 | 3 | 4;
+  stepNumber: 1 | 2 | 3 | 4 | 5;
   /** Override the numeric label — used for sub-steps like "1a" (kickstarter). */
   subStepLabel?: string;
   title: string;

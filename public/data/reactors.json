@@ -1,6 +1,6 @@
 {
-  "lastUpdated": "2026-04-21T02:42:34.069Z",
-  "schemaVersion": 2,
+  "lastUpdated": "2026-04-21T03:36:03.827Z",
+  "schemaVersion": 3,
   "reactors": [
     {
       "id": "ap1000",
@@ -15,8 +15,9 @@
       "fuelMaterial": "u-235",
       "fuelForm": "ceramic-pellets",
       "coolantTags": [
-        "light-water"
+        "water"
       ],
+      "coolantChemistry": "light-water",
       "xFactorTags": [
         "large",
         "first-of-kind-licensed"
@@ -82,8 +83,9 @@
       "fuelMaterial": "u-235",
       "fuelForm": "ceramic-pellets",
       "coolantTags": [
-        "light-water"
+        "water"
       ],
+      "coolantChemistry": "light-water",
       "xFactorTags": [
         "small",
         "walk-away-safe",
@@ -218,10 +220,11 @@
       "fuelMaterial": "u-235",
       "fuelForm": "ceramic-pellets",
       "coolantTags": [
-        "light-water"
+        "water"
       ],
+      "coolantChemistry": "light-water",
       "xFactorTags": [
-        "small",
+        "mid",
         "walk-away-safe"
       ],
       "outletTempC": 287,
@@ -245,8 +248,8 @@
           "tagRef": "walk-away-safe"
         },
         {
-          "text": "At 300 MWe, it targets the SMR sweet spot: large enough for meaningful baseload contribution, small enough for factory fabrication of key components.",
-          "tagRef": "small"
+          "text": "At 300 MWe it sits in the mid-size band: large enough for meaningful baseload contribution, small enough to benefit from modular simplification, but too large to ship as a single factory-finished module the way a true SMR can.",
+          "tagRef": "mid"
         }
       ],
       "citations": [
@@ -346,8 +349,9 @@
       "fuelMaterial": "u-235",
       "fuelForm": "triso",
       "coolantTags": [
-        "flibe"
+        "molten-salt"
       ],
+      "coolantChemistry": "flibe",
       "xFactorTags": [
         "small",
         "walk-away-safe",
@@ -416,8 +420,9 @@
       "kickstarter": "u-235-kickstart",
       "fuelForm": "molten-salt",
       "coolantTags": [
-        "flibe"
+        "molten-salt"
       ],
+      "coolantChemistry": "flibe",
       "xFactorTags": [
         "small",
         "walk-away-safe",

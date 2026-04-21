@@ -8,6 +8,7 @@ import type {
   KickstarterId,
   FuelFormId,
   CoolantId,
+  CoolantChemistryId,
   XFactorId,
 } from "@/lib/reactor-types";
 
@@ -18,6 +19,7 @@ interface MatchCardProps {
   selectedKickstarter: KickstarterId | null;
   selectedFuelForm: FuelFormId | null;
   selectedCoolant: CoolantId[];
+  selectedCoolantChemistry: CoolantChemistryId[];
   selectedXFactor: XFactorId[];
 }
 
@@ -35,6 +37,7 @@ export function MatchCard({
   selectedKickstarter,
   selectedFuelForm,
   selectedCoolant,
+  selectedCoolantChemistry,
   selectedXFactor,
 }: MatchCardProps) {
   const [whyOpen, setWhyOpen] = useState(false);
@@ -47,10 +50,17 @@ export function MatchCard({
     : null;
   const ffTag = taxonomy.fuelFormTags.find((t) => t.id === reactor.fuelForm);
   const coolantTagMap = new Map(taxonomy.coolantTags.map((t) => [t.id, t]));
+  const chemistryTagMap = new Map(
+    taxonomy.coolantChemistryTags.map((t) => [t.id, t]),
+  );
   const xTagMap = new Map(taxonomy.xFactorTags.map((t) => [t.id, t]));
 
   const selectedCoolantSet = new Set<string>(selectedCoolant);
+  const selectedChemistrySet = new Set<string>(selectedCoolantChemistry);
   const selectedXSet = new Set<string>(selectedXFactor);
+  const chemistryTag = reactor.coolantChemistry
+    ? chemistryTagMap.get(reactor.coolantChemistry)
+    : null;
 
   const fuelMaterialMatched = selectedFuelElement === reactor.fuelMaterial;
   const kickstarterMatched =
@@ -113,6 +123,12 @@ export function MatchCard({
             />
           );
         })}
+        {chemistryTag ? (
+          <TagPill
+            label={chemistryTag.label}
+            matched={selectedChemistrySet.has(chemistryTag.id)}
+          />
+        ) : null}
         {reactor.xFactorTags.map((id) => {
           const tag = xTagMap.get(id);
           return (

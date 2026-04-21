@@ -3,6 +3,7 @@ import type {
   KickstarterId,
   FuelFormId,
   CoolantId,
+  CoolantChemistryId,
   XFactorId,
   ReactorDesign,
 } from "./reactor-types";
@@ -10,9 +11,10 @@ import type {
 /**
  * reactor-match.ts — pure matching function for the Reactor Builder.
  *
- * SCHEMA v2 (2026-04-20):
- *   Fuel is now 3 fields: fuelMaterial (single), kickstarter (single optional),
- *   fuelForm (single). Coolant and xFactor stay as arrays (multi-select).
+ * SCHEMA v3 (2026-04-20):
+ *   Coolant is now a two-step drill-down — parent coolant + optional
+ *   chemistry (water → light/heavy; molten-salt → FLiBe/FLiNaK/Chloride).
+ *   Chemistry is a multi-select array filter like coolant and xFactor.
  *
  * No React, no DOM, no side effects. Takes a user's configuration and
  * returns the qualifying reactor designs, ranked by relevance.
@@ -21,9 +23,11 @@ import type {
  *   - Single-value dimensions (fuelMaterial, kickstarter, fuelForm): a
  *     reactor matches if its value equals the config's value, OR the
  *     config's value is null (dimension unfiltered).
- *   - Array dimensions (coolant, xFactor): AND across dimensions, OR
- *     within a dimension. A reactor matches if, for every non-empty
- *     dimension, it has at least one matching tag.
+ *   - Array dimensions (coolant, coolantChemistry, xFactor): AND across
+ *     dimensions, OR within a dimension. A reactor matches if, for every
+ *     non-empty dimension, it has at least one matching tag. For coolant
+ *     chemistry the reactor's single coolantChemistry (if any) is wrapped
+ *     as a one-element array for the same matchesArray check.
  *   - noMatch = true when at least one dimension is filtered but zero
  *     reactors qualify.
  *
@@ -36,6 +40,7 @@ export interface MatchConfig {
   kickstarter: KickstarterId | null;
   fuelForm: FuelFormId | null;
   coolant: CoolantId[];
+  coolantChemistry: CoolantChemistryId[];
   xFactor: XFactorId[];
 }
 
@@ -90,30 +95,38 @@ export function matchReactors(
     config.kickstarter !== null ||
     config.fuelForm !== null ||
     config.coolant.length > 0 ||
+    config.coolantChemistry.length > 0 ||
     config.xFactor.length > 0;
 
-  const qualifying = allReactors.filter(
-    (r) =>
+  const qualifying = allReactors.filter((r) => {
+    const chemistryTags = r.coolantChemistry ? [r.coolantChemistry] : [];
+    return (
       matchesSingle(r.fuelMaterial, config.fuelMaterial) &&
       matchesSingle(r.kickstarter, config.kickstarter) &&
       matchesSingle(r.fuelForm, config.fuelForm) &&
       matchesArray(r.coolantTags, config.coolant) &&
-      matchesArray(r.xFactorTags, config.xFactor),
-  );
+      matchesArray(chemistryTags, config.coolantChemistry) &&
+      matchesArray(r.xFactorTags, config.xFactor)
+    );
+  });
 
   // Rank by total matched tags, alphabetical tiebreak.
   const ranked = [...qualifying].sort((a, b) => {
+    const aChem = a.coolantChemistry ? [a.coolantChemistry] : [];
+    const bChem = b.coolantChemistry ? [b.coolantChemistry] : [];
     const scoreA =
       (config.fuelMaterial !== null && a.fuelMaterial === config.fuelMaterial ? 1 : 0) +
       (config.kickstarter !== null && a.kickstarter === config.kickstarter ? 1 : 0) +
       (config.fuelForm !== null && a.fuelForm === config.fuelForm ? 1 : 0) +
       countArrayMatches(a.coolantTags, config.coolant) +
+      countArrayMatches(aChem, config.coolantChemistry) +
       countArrayMatches(a.xFactorTags, config.xFactor);
     const scoreB =
       (config.fuelMaterial !== null && b.fuelMaterial === config.fuelMaterial ? 1 : 0) +
       (config.kickstarter !== null && b.kickstarter === config.kickstarter ? 1 : 0) +
       (config.fuelForm !== null && b.fuelForm === config.fuelForm ? 1 : 0) +
       countArrayMatches(b.coolantTags, config.coolant) +
+      countArrayMatches(bChem, config.coolantChemistry) +
       countArrayMatches(b.xFactorTags, config.xFactor);
 
     if (scoreB !== scoreA) return scoreB - scoreA;

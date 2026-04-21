@@ -4,6 +4,7 @@ import type {
   KickstarterId,
   FuelFormId,
   CoolantId,
+  CoolantChemistryId,
   XFactorId,
   XFactorGroup,
   ReactorTaxonomy,
@@ -12,12 +13,13 @@ import type {
 /**
  * REACTOR TAXONOMY — the F/C/X controlled vocabulary for Module 2.
  *
- * SCHEMA v2 (2026-04-20):
- *   Fuel is now THREE dimensions: fissile element → optional kickstarter
- *   → fuel form. Coolant expanded: salt chemistries split into 3, liquid
- *   metal species split into 3. Water stays unified (PWR/BWR distinction
- *   is reactor architecture, not coolant chemistry — displayed on each
- *   match card as a derived reactorType field).
+ * SCHEMA v3 (2026-04-20):
+ *   Fuel: fuel material → optional kickstarter → fuel form.
+ *   Coolant: parent family (water, helium, molten-salt, sodium, lead,
+ *   lead-bismuth, heat-pipes) → optional chemistry (light-water /
+ *   heavy-water; flibe / flinak / chloride-salt).
+ *   Reactor architecture (PWR vs BWR, SFR vs LFR, etc.) is derived from
+ *   the reactorType field on each design, not a user-pickable dimension.
  *
  * Every chip in the Reactor Builder UI renders from one of these tags.
  * Each tag carries:
@@ -32,7 +34,7 @@ import type {
  *   - All citation hosts must be in lib/citation-allowlist.ts
  */
 
-// ─── FISSILE ELEMENT TAGS ───────────────────────────────────────────
+// ─── FUEL MATERIAL TAGS ─────────────────────────────────────────────
 
 const fuelMaterialTags: ReadonlyArray<
   TaxonomyTag & { id: FuelMaterialId }
@@ -230,42 +232,26 @@ const fuelFormTags: ReadonlyArray<TaxonomyTag & { id: FuelFormId }> = [
 ];
 
 // ─── COOLANT TAGS ───────────────────────────────────────────────────
+// v3: seven coolant families. Water and molten-salt drill into a chemistry
+// sub-dimension below. The other five (helium, sodium, lead, lead-bismuth,
+// heat-pipes) are single-species — the parent IS the specific coolant.
 
 const coolantTags: ReadonlyArray<TaxonomyTag & { id: CoolantId }> = [
   {
-    id: "light-water",
-    label: "Light water",
+    id: "water",
+    label: "Water",
     oneLineHook:
-      "Ordinary H₂O — the coolant and moderator for >90% of operating reactors. Used in both PWRs and BWRs.",
+      "H₂O — the coolant and moderator for >90% of operating reactors. Drills into light-water (PWR/BWR) vs heavy-water (CANDU).",
     popoverBody:
-      "Light water (H₂O) serves as both coolant and neutron moderator in pressurized water reactors (PWRs) and boiling water reactors (BWRs). Its moderation properties slow neutrons efficiently, enabling low-enriched uranium fuel. The trade-off: light-water systems require high pressure (155 bar in PWRs) to prevent boiling at operating temperatures, limiting outlet temperatures to ~320°C. The PWR/BWR distinction is an architecture choice (two loops vs one, pressurized vs boiling in core), not a coolant chemistry difference — both use the same water.",
+      "Water serves as both coolant and neutron moderator in the vast majority of operating reactors. Its moderation properties slow neutrons efficiently, enabling low-enriched or natural uranium fuel. The trade-off: water systems require high pressure (typically 155 bar in PWRs) to prevent boiling at operating temperatures, limiting outlet temperatures to ~320°C. Two chemistries exist: ordinary light water (H₂O) used in PWRs and BWRs, and heavy water (D₂O) used in pressurized heavy water reactors like CANDU. Architecture (PWR vs BWR vs PHWR) is a design choice downstream of the chemistry selection.",
     citations: [
       {
-        bibtex_key: "nrc2024reactortypes_light-water",
+        bibtex_key: "nrc2024reactortypes_water",
         author: "U.S. Nuclear Regulatory Commission",
         title: "Types of Nuclear Reactors",
         year: 2024,
         publisher: "NRC",
         url: "https://www.nrc.gov/reading-rm/basic-ref/students/reactors.html",
-        accessed: "2026-04-20",
-      },
-    ],
-  },
-  {
-    id: "heavy-water",
-    label: "Heavy water",
-    oneLineHook:
-      "Deuterium oxide (D₂O) — absorbs fewer neutrons than H₂O, enabling natural uranium fuel. CANDU reactors.",
-    popoverBody:
-      "Heavy water uses deuterium (hydrogen with one extra neutron) instead of ordinary hydrogen. D₂O absorbs far fewer neutrons during moderation, which means the reactor can sustain a chain reaction with natural uranium (0.7% U-235) instead of requiring enrichment. Canada's CANDU reactor fleet is the primary commercial application. The trade-off is that heavy water itself is expensive to produce and the reactor design requires a separate moderator circuit. Reactors using heavy water are typically classified PHWR (pressurized heavy water reactor).",
-    citations: [
-      {
-        bibtex_key: "iaea2002heavywater_heavy-water",
-        author: "International Atomic Energy Agency",
-        title: "Heavy Water Reactors: Status and Projected Development",
-        year: 2002,
-        publisher: "IAEA",
-        url: "https://www.iaea.org/publications/6390/heavy-water-reactors-status-and-projected-development",
         accessed: "2026-04-20",
       },
     ],
@@ -290,58 +276,20 @@ const coolantTags: ReadonlyArray<TaxonomyTag & { id: CoolantId }> = [
     ],
   },
   {
-    id: "flibe",
-    label: "FLiBe",
+    id: "molten-salt",
+    label: "Molten salt",
     oneLineHook:
-      "Lithium-beryllium fluoride salt — excellent heat transfer at atmospheric pressure with built-in neutron moderation.",
+      "Molten fluoride or chloride salt — atmospheric pressure, high outlet temperature, no phase changes. Drills into FLiBe / FLiNaK / Chloride.",
     popoverBody:
-      "FLiBe (2LiF-BeF₂) is a molten fluoride salt used as both coolant and fuel carrier in molten salt reactors, or as a coolant for solid-fuel FHRs. It operates at atmospheric pressure, has high volumetric heat capacity, and provides neutron moderation through lithium and beryllium. The low operating pressure eliminates heavy pressure vessels. FLiBe is transparent when pure, allowing visual fuel inspection. Used by Kairos Power's KP-FHR (as coolant), Flibe Energy's LFTR (as fuel carrier), and historically by Oak Ridge's MSRE. Beryllium is toxic — handling requires appropriate containment.",
+      "Molten salts operate at atmospheric pressure with high volumetric heat capacity and outlet temperatures well above water-cooled reactors. Fluoride salts (FLiBe, FLiNaK) provide neutron moderation and suit thermal-spectrum designs; chloride salts are heavier and preserve a fast neutron spectrum for breeding and transuranic waste burning. In molten-salt fuel reactors, the coolant IS the fuel carrier — dissolving the fissile material directly in the salt. In fluoride-salt-cooled high-temperature reactors (FHRs), the salt is the coolant and the fuel is a separate solid (typically TRISO).",
     citations: [
       {
-        bibtex_key: "ornl2006flibe_flibe",
-        author: "Oak Ridge National Laboratory",
-        title: "Thermophysical Properties of the LiF-BeF₂ Molten Salt",
-        year: 2006,
-        publisher: "ORNL",
-        url: "https://www.ornl.gov/publication/thermophysical-properties-lif-bef2-molten-salt",
-        accessed: "2026-04-20",
-      },
-    ],
-  },
-  {
-    id: "flinak",
-    label: "FLiNaK",
-    oneLineHook:
-      "Lithium-sodium-potassium fluoride — cheaper than FLiBe, no beryllium toxicity, used in some advanced MSRs.",
-    popoverBody:
-      "FLiNaK (LiF-NaF-KF, typically 46.5-11.5-42 mol%) is a eutectic fluoride salt mixture that avoids FLiBe's beryllium toxicity at the cost of slightly worse neutron economy (K and Na absorb more neutrons than Be). Operates at atmospheric pressure like FLiBe, with a lower melting point (~454°C vs FLiBe's 459°C) making it marginally easier to handle. Used in research reactors and proposed for some advanced molten salt designs where proliferation concerns around beryllium or cost are priorities.",
-    citations: [
-      {
-        bibtex_key: "ornl2009flinak_flinak",
-        author: "Oak Ridge National Laboratory",
-        title: "FLiNaK Salt Handling Technology and Thermophysical Properties",
-        year: 2009,
-        publisher: "ORNL",
-        url: "https://www.ornl.gov/publication/flinak-salt-handling",
-        accessed: "2026-04-20",
-      },
-    ],
-  },
-  {
-    id: "chloride-salt",
-    label: "Chloride salt",
-    oneLineHook:
-      "Chloride-based molten salt (NaCl-UCl₃, MgCl₂-KCl) — fast-spectrum, can burn transuranics.",
-    popoverBody:
-      "Chloride salts contain heavier atoms than fluoride salts, which means they don't moderate neutrons as effectively — making them well-suited for FAST-spectrum molten salt reactors. The fast spectrum enables breeding and transuranic waste burning. Common compositions include NaCl-UCl₃ (sodium chloride-uranium chloride) for the fuel salt and MgCl₂-KCl for coolant salt. TerraPower's molten chloride fast reactor (MCFR) and several other fast-spectrum MSR concepts use chloride chemistry. The trade-off is more complex corrosion chemistry than fluoride systems.",
-    citations: [
-      {
-        bibtex_key: "terrapower2024mcfr_chloride-salt",
-        author: "TerraPower",
-        title: "Molten Chloride Fast Reactor",
-        year: 2024,
-        publisher: "TerraPower",
-        url: "https://www.terrapower.com/our-work/molten-chloride-fast-reactor/",
+        bibtex_key: "iaea2021msr_coolant-molten-salt",
+        author: "International Atomic Energy Agency",
+        title: "Status of Molten Salt Reactor Technology",
+        year: 2021,
+        publisher: "IAEA",
+        url: "https://www.iaea.org/publications/15116/status-of-molten-salt-reactor-technology",
         accessed: "2026-04-20",
       },
     ],
@@ -424,7 +372,112 @@ const coolantTags: ReadonlyArray<TaxonomyTag & { id: CoolantId }> = [
   },
 ];
 
-// ─── X-FACTOR TAGS (unchanged from v1) ──────────────────────────────
+// ─── COOLANT CHEMISTRY TAGS ─────────────────────────────────────────
+// Only meaningful when the parent coolant is water or molten-salt.
+// Water drills into light / heavy; molten salt drills into FLiBe /
+// FLiNaK / Chloride.
+
+const coolantChemistryTags: ReadonlyArray<
+  TaxonomyTag & { id: CoolantChemistryId }
+> = [
+  {
+    id: "light-water",
+    label: "Light water",
+    oneLineHook:
+      "Ordinary H₂O — powers >90% of operating reactors. Moderates neutrons so well that LEU fuel sustains the chain reaction.",
+    popoverBody:
+      "Light water (H₂O) is the water variant used in PWRs and BWRs. Its moderation properties slow neutrons efficiently, enabling low-enriched uranium fuel (3–5% U-235). The trade-off: ordinary hydrogen absorbs some neutrons, so the reactor cannot run on natural uranium — enrichment is mandatory. The PWR/BWR distinction is an architecture choice downstream of chemistry (two loops vs one, pressurized vs boiling in core), not a coolant chemistry difference.",
+    citations: [
+      {
+        bibtex_key: "nrc2024reactortypes_light-water",
+        author: "U.S. Nuclear Regulatory Commission",
+        title: "Types of Nuclear Reactors",
+        year: 2024,
+        publisher: "NRC",
+        url: "https://www.nrc.gov/reading-rm/basic-ref/students/reactors.html",
+        accessed: "2026-04-20",
+      },
+    ],
+  },
+  {
+    id: "heavy-water",
+    label: "Heavy water",
+    oneLineHook:
+      "Deuterium oxide (D₂O) — absorbs fewer neutrons than H₂O, enabling natural uranium fuel. CANDU reactors.",
+    popoverBody:
+      "Heavy water uses deuterium (hydrogen with one extra neutron) instead of ordinary hydrogen. D₂O absorbs far fewer neutrons during moderation, which means the reactor can sustain a chain reaction with natural uranium (0.7% U-235) instead of requiring enrichment. Canada's CANDU reactor fleet is the primary commercial application. The trade-off is that heavy water itself is expensive to produce and the reactor design requires a separate moderator circuit. Reactors using heavy water are typically classified PHWR (pressurized heavy water reactor).",
+    citations: [
+      {
+        bibtex_key: "iaea2002heavywater_heavy-water",
+        author: "International Atomic Energy Agency",
+        title: "Heavy Water Reactors: Status and Projected Development",
+        year: 2002,
+        publisher: "IAEA",
+        url: "https://www.iaea.org/publications/6390/heavy-water-reactors-status-and-projected-development",
+        accessed: "2026-04-20",
+      },
+    ],
+  },
+  {
+    id: "flibe",
+    label: "FLiBe",
+    oneLineHook:
+      "Lithium-beryllium fluoride salt — excellent heat transfer at atmospheric pressure with built-in neutron moderation.",
+    popoverBody:
+      "FLiBe (2LiF-BeF₂) is a molten fluoride salt used as both coolant and fuel carrier in molten salt reactors, or as a coolant for solid-fuel FHRs. It operates at atmospheric pressure, has high volumetric heat capacity, and provides neutron moderation through lithium and beryllium. The low operating pressure eliminates heavy pressure vessels. FLiBe is transparent when pure, allowing visual fuel inspection. Used by Kairos Power's KP-FHR (as coolant), Flibe Energy's LFTR (as fuel carrier), and historically by Oak Ridge's MSRE. Beryllium is toxic — handling requires appropriate containment.",
+    citations: [
+      {
+        bibtex_key: "ornl2006flibe_flibe",
+        author: "Oak Ridge National Laboratory",
+        title: "Thermophysical Properties of the LiF-BeF₂ Molten Salt",
+        year: 2006,
+        publisher: "ORNL",
+        url: "https://www.ornl.gov/publication/thermophysical-properties-lif-bef2-molten-salt",
+        accessed: "2026-04-20",
+      },
+    ],
+  },
+  {
+    id: "flinak",
+    label: "FLiNaK",
+    oneLineHook:
+      "Lithium-sodium-potassium fluoride — cheaper than FLiBe, no beryllium toxicity, used in some advanced MSRs.",
+    popoverBody:
+      "FLiNaK (LiF-NaF-KF, typically 46.5-11.5-42 mol%) is a eutectic fluoride salt mixture that avoids FLiBe's beryllium toxicity at the cost of slightly worse neutron economy (K and Na absorb more neutrons than Be). Operates at atmospheric pressure like FLiBe, with a lower melting point (~454°C vs FLiBe's 459°C) making it marginally easier to handle. Used in research reactors and proposed for some advanced molten salt designs where proliferation concerns around beryllium or cost are priorities.",
+    citations: [
+      {
+        bibtex_key: "ornl2009flinak_flinak",
+        author: "Oak Ridge National Laboratory",
+        title: "FLiNaK Salt Handling Technology and Thermophysical Properties",
+        year: 2009,
+        publisher: "ORNL",
+        url: "https://www.ornl.gov/publication/flinak-salt-handling",
+        accessed: "2026-04-20",
+      },
+    ],
+  },
+  {
+    id: "chloride-salt",
+    label: "Chloride salt",
+    oneLineHook:
+      "Chloride-based molten salt (NaCl-UCl₃, MgCl₂-KCl) — fast-spectrum, can burn transuranics.",
+    popoverBody:
+      "Chloride salts contain heavier atoms than fluoride salts, which means they don't moderate neutrons as effectively — making them well-suited for FAST-spectrum molten salt reactors. The fast spectrum enables breeding and transuranic waste burning. Common compositions include NaCl-UCl₃ (sodium chloride-uranium chloride) for the fuel salt and MgCl₂-KCl for coolant salt. TerraPower's molten chloride fast reactor (MCFR) and several other fast-spectrum MSR concepts use chloride chemistry. The trade-off is more complex corrosion chemistry than fluoride systems.",
+    citations: [
+      {
+        bibtex_key: "terrapower2024mcfr_chloride-salt",
+        author: "TerraPower",
+        title: "Molten Chloride Fast Reactor",
+        year: 2024,
+        publisher: "TerraPower",
+        url: "https://www.terrapower.com/our-work/molten-chloride-fast-reactor/",
+        accessed: "2026-04-20",
+      },
+    ],
+  },
+];
+
+// ─── X-FACTOR TAGS ──────────────────────────────────────────────────
 
 const xFactorTags: ReadonlyArray<
   TaxonomyTag & { id: XFactorId; group: XFactorGroup }
@@ -452,9 +505,9 @@ const xFactorTags: ReadonlyArray<
     id: "small",
     label: "Small",
     group: "scale",
-    oneLineHook: "20–300 MWe — the SMR sweet spot: factory-built modules, shorter construction.",
+    oneLineHook: "20–200 MWe — factory-built modules, truck or rail transport, incremental siting.",
     popoverBody:
-      "Small modular reactors (SMRs) are defined by the IAEA as reactors with electrical output up to 300 MWe. The core proposition is factory fabrication of major components, reducing on-site construction time and cost uncertainty. Multiple modules can be co-located and added incrementally as demand grows. NuScale's VOYGR, GE Hitachi's BWRX-300, and X-energy's Xe-100 are among the leading SMR designs at various stages of licensing.",
+      "Small reactors (20–200 MWe) are the sweet spot for factory fabrication and modular deployment: large enough for meaningful grid or industrial contribution, small enough that most or all of the reactor can be shipped as a finished assembly. Multiple modules can be co-located and added incrementally as demand grows. NuScale's VOYGR (77 MWe per module) and X-energy's Xe-100 (80 MWe per module) sit squarely in this band. Note: the IAEA's SMR umbrella goes up to 300 MWe, but reactors in the 200–300 MWe range like BWRX-300 are classified here as mid-size because their physical scale and site infrastructure resemble larger plants more than truck-transportable modules.",
     citations: [
       {
         bibtex_key: "iaea2024smr_small",
@@ -471,9 +524,9 @@ const xFactorTags: ReadonlyArray<
     id: "mid",
     label: "Mid",
     group: "scale",
-    oneLineHook: "300–700 MWe — balancing unit economics with project risk.",
+    oneLineHook: "200–700 MWe — better unit economics than small, less megaproject risk than large.",
     popoverBody:
-      "Mid-scale reactors occupy the space between SMRs and traditional large plants. They offer better unit economics than small reactors (more MWe per dollar of fixed cost) while keeping total project capital lower than gigawatt-class builds. Some designs in this range (like TerraPower's Natrium at 345 MWe) pair the reactor with thermal energy storage to provide flexible output that can ramp with grid demand.",
+      "Mid-scale reactors (200–700 MWe) occupy the space between truly modular small designs and gigawatt-class megaprojects. They capture most of the economies of scale that drive nuclear's cost curve while keeping total project capital well below large-reactor builds. TerraPower's Natrium (345 MWe base, 500 MWe peak with thermal storage) and GE Hitachi's BWRX-300 (300 MWe) sit in this band. The classification matters honestly: BWRX-300 is often marketed as an SMR, but at 300 MWe its physical footprint, grid contribution, and site infrastructure are closer to mid-size than to a 77 MWe truck-transportable module.",
     citations: [
       {
         bibtex_key: "wna2024economics_mid",
@@ -674,5 +727,6 @@ export const reactorTaxonomy: ReactorTaxonomy = {
   kickstarterTags,
   fuelFormTags,
   coolantTags,
+  coolantChemistryTags,
   xFactorTags,
 };

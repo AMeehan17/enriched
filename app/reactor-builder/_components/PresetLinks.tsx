@@ -2,6 +2,7 @@
 
 import type {
   CoolantId,
+  CoolantChemistryId,
   FuelFormId,
   FuelMaterialId,
   KickstarterId,
@@ -13,6 +14,7 @@ export interface PresetConfig {
   ks: KickstarterId | null;
   ff: FuelFormId | null;
   c: CoolantId[];
+  cc: CoolantChemistryId[];
   x: XFactorId[];
 }
 
@@ -52,6 +54,7 @@ const PRESETS: readonly Preset[] = [
       ks: null,
       ff: "metal",
       c: ["sodium"],
+      cc: [],
       x: ["walk-away-safe"],
     },
     hint: "Passive safety as a coolant decision — the Natrium archetype",
@@ -63,6 +66,7 @@ const PRESETS: readonly Preset[] = [
       ks: null,
       ff: "triso",
       c: ["helium"],
+      cc: [],
       x: ["process-heat"],
     },
     hint: "Industrial heat, not just electricity — the Xe-100 archetype",
@@ -73,7 +77,8 @@ const PRESETS: readonly Preset[] = [
       fe: "th-232",
       ks: "u-235-kickstart",
       ff: "molten-salt",
-      c: ["flibe"],
+      c: ["molten-salt"],
+      cc: ["flibe"],
       x: ["fuel-breeder"],
     },
     hint: "Breeding fuel from fertile isotopes — the Copenhagen Atomics archetype",
@@ -84,7 +89,8 @@ const PRESETS: readonly Preset[] = [
       fe: "u-235",
       ks: null,
       ff: "ceramic-pellets",
-      c: ["light-water"],
+      c: ["water"],
+      cc: ["light-water"],
       x: ["small", "first-of-kind-licensed"],
     },
     hint: "The SMR path regulators already know — the VOYGR archetype",

@@ -14,14 +14,21 @@ import type { Citation } from "./data-types";
  * The validator (scripts/validate-data.ts) enforces schema correctness,
  * citation allowlist membership, plausibility bounds, and tag validity.
  *
- * SCHEMA v2 (2026-04-20): the fuel dimension split into fissile element,
- * (conditional) kickstarter, and fuel form. Coolant dimension expanded
- * to include specific salt chemistries and liquid metal species.
- * Added `reactorType` as a derived PRIS-sourced field on each design.
+ * SCHEMA v3 (2026-04-20): coolant is now a two-step drill-down. The
+ * parent coolant set is 7 families (water, helium, molten-salt, sodium,
+ * lead, lead-bismuth, heat-pipes). A conditional child dimension picks
+ * the specific chemistry when the parent is water (light vs heavy) or
+ * molten-salt (FLiBe / FLiNaK / Chloride). Mirrors the fuel material →
+ * fuel form pattern.
+ *
+ * Prior history:
+ *   v2 (2026-04-20): fuel dimension split into fissile element, optional
+ *     kickstarter, and fuel form. Added reactorType derived field.
  */
 
-// ─── Fissile element IDs ────────────────────────────────────────────
-// What atom is actually undergoing fission. Independent of physical form.
+// ─── Fuel material IDs ──────────────────────────────────────────────
+// What atom is actually undergoing fission (or transmuting into something
+// that does). Independent of physical form.
 export type FuelMaterialId = "u-235" | "th-232" | "pu-239";
 
 export const FUEL_MATERIAL_IDS: readonly FuelMaterialId[] = [
@@ -31,9 +38,9 @@ export const FUEL_MATERIAL_IDS: readonly FuelMaterialId[] = [
 ] as const;
 
 // ─── Kickstarter IDs ────────────────────────────────────────────────
-// Th-232 is not itself fissile — thorium reactors need a fissile starter
+// Th-232 is fertile, not fissile — thorium reactors need a fissile starter
 // to get the chain reaction going. This dimension is only meaningful
-// when fissile element = th-232.
+// when fuel material = th-232.
 export type KickstarterId = "u-235-kickstart" | "pu-239-kickstart";
 
 export const KICKSTARTER_IDS: readonly KickstarterId[] = [
@@ -62,38 +69,60 @@ export const FUEL_FORM_IDS: readonly FuelFormId[] = [
 ] as const;
 
 // ─── Coolant IDs ────────────────────────────────────────────────────
-// Expanded in schema v2: salt chemistries split into 3, liquid metal
-// split into 3. Water stays unified — BWR/PWR/PHWR distinction lives
-// on the reactorType field of each design, not in the coolant dimension.
+// v3: seven coolant families. Water and molten-salt are deliberately
+// unified here — the specific chemistry (light vs heavy water, FLiBe vs
+// FLiNaK vs Chloride) drills into the CoolantChemistryId dimension below,
+// which mirrors the fuel material → fuel form pattern.
+//
+// Reactor architecture (PWR vs BWR vs PHWR, SFR vs LFR, MSR vs FHR) is
+// NOT a coolant dimension — it's the derived `reactorType` shown on each
+// design's match card.
 export type CoolantId =
-  | "light-water"
-  | "heavy-water"
+  | "water"
   | "helium"
-  | "flibe"
-  | "flinak"
-  | "chloride-salt"
+  | "molten-salt"
   | "sodium"
   | "lead"
   | "lead-bismuth"
   | "heat-pipes";
 
 export const COOLANT_IDS: readonly CoolantId[] = [
-  "light-water",
-  "heavy-water",
+  "water",
   "helium",
-  "flibe",
-  "flinak",
-  "chloride-salt",
+  "molten-salt",
   "sodium",
   "lead",
   "lead-bismuth",
   "heat-pipes",
 ] as const;
 
-// Salt-family coolants — when fuel form = molten-salt, only these are
-// selectable. The UI dims non-salt coolants and the matching function
-// enforces the coupling.
-export const SALT_COOLANT_IDS: readonly CoolantId[] = [
+// ─── Coolant chemistry IDs ──────────────────────────────────────────
+// Sub-dimension for water and molten-salt coolants. Other coolants
+// (helium, sodium, lead, lead-bismuth, heat-pipes) need no chemistry
+// disambiguation — the parent IS the species.
+export type CoolantChemistryId =
+  | "light-water"
+  | "heavy-water"
+  | "flibe"
+  | "flinak"
+  | "chloride-salt";
+
+export const COOLANT_CHEMISTRY_IDS: readonly CoolantChemistryId[] = [
+  "light-water",
+  "heavy-water",
+  "flibe",
+  "flinak",
+  "chloride-salt",
+] as const;
+
+// Water-family chemistries: valid only when coolant includes "water".
+export const WATER_CHEMISTRY_IDS: readonly CoolantChemistryId[] = [
+  "light-water",
+  "heavy-water",
+] as const;
+
+// Salt-family chemistries: valid only when coolant includes "molten-salt".
+export const SALT_CHEMISTRY_IDS: readonly CoolantChemistryId[] = [
   "flibe",
   "flinak",
   "chloride-salt",
@@ -180,6 +209,7 @@ export interface WhyChainStep {
     | FuelFormId
     | KickstarterId
     | CoolantId
+    | CoolantChemistryId
     | XFactorId;
 }
 
@@ -193,8 +223,11 @@ export interface ReactorDesign {
   fuelForm: FuelFormId;
   /** Only set when fuelMaterial is "th-232". */
   kickstarter?: KickstarterId;
-  // Other dimensions
+  // Coolant dimension (v3 schema — parent + optional chemistry)
   coolantTags: CoolantId[];
+  /** Required when coolantTags includes "water" or "molten-salt". */
+  coolantChemistry?: CoolantChemistryId;
+  // Capability dimension (multi-tag, includes both scale and capability groups)
   xFactorTags: XFactorId[];
   outletTempC: number;
   spectrum: "thermal" | "fast" | "epithermal";
@@ -210,6 +243,9 @@ export interface ReactorTaxonomy {
   kickstarterTags: ReadonlyArray<TaxonomyTag & { id: KickstarterId }>;
   fuelFormTags: ReadonlyArray<TaxonomyTag & { id: FuelFormId }>;
   coolantTags: ReadonlyArray<TaxonomyTag & { id: CoolantId }>;
+  coolantChemistryTags: ReadonlyArray<
+    TaxonomyTag & { id: CoolantChemistryId }
+  >;
   xFactorTags: ReadonlyArray<
     TaxonomyTag & { id: XFactorId; group: XFactorGroup }
   >;
@@ -218,17 +254,18 @@ export interface ReactorTaxonomy {
 // ─── Output JSON shapes ─────────────────────────────────────────────
 export interface TaxonomyJson {
   lastUpdated: string;
-  schemaVersion: 2;
+  schemaVersion: 3;
   fuelMaterial: ReadonlyArray<TaxonomyTag>;
   kickstarter: ReadonlyArray<TaxonomyTag>;
   fuelForm: ReadonlyArray<TaxonomyTag>;
   coolant: ReadonlyArray<TaxonomyTag>;
+  coolantChemistry: ReadonlyArray<TaxonomyTag>;
   xFactor: ReadonlyArray<TaxonomyTag>;
 }
 
 export interface ReactorsJson {
   lastUpdated: string;
-  schemaVersion: 2;
+  schemaVersion: 3;
   reactors: ReadonlyArray<ReactorDesign>;
 }
 

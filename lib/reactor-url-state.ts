@@ -7,26 +7,29 @@ import {
   KICKSTARTER_IDS,
   FUEL_FORM_IDS,
   COOLANT_IDS,
+  COOLANT_CHEMISTRY_IDS,
   X_FACTOR_IDS,
   type CoolantId,
+  type CoolantChemistryId,
   type XFactorId,
 } from "./reactor-types";
 
 /**
- * URL state parsers for Module 2 (Reactor Builder) — SCHEMA v2.
+ * URL state parsers for Module 2 (Reactor Builder) — SCHEMA v3.
  *
  * URL schema:
  *   /reactor-builder
- *     ?fe=th-232                   (fissile element, single)
+ *     ?fe=th-232                   (fuel material, single)
  *     &ks=u-235-kickstart           (kickstarter, single, optional)
  *     &ff=molten-salt               (fuel form, single)
- *     &c=flibe,sodium               (coolant, array)
+ *     &c=molten-salt,helium         (coolant parent, array)
+ *     &cc=flibe,light-water         (coolant chemistry, array)
  *     &x=walk-away-safe,process-heat (x-factor, array)
  *
  * Single-value dimensions (fe, ks, ff) serialize as their raw string id
  * via parseAsStringLiteral. Default is null.
  *
- * Array dimensions (c, x) use parseAsArrayOf for multi-select filtering.
+ * Array dimensions (c, cc, x) use parseAsArrayOf for multi-select filtering.
  *
  * parseAsStringLiteral filters invalid values automatically — if someone
  * hits ?fe=banana, the value becomes null. Matches Module 1's robustness.
@@ -53,6 +56,12 @@ export const coolantParser = parseAsArrayOf(
   ",",
 ).withDefault([] as CoolantId[]);
 
+// ─── coolant chemistry (array) ──────────────────────────────────────
+export const coolantChemistryParser = parseAsArrayOf(
+  parseAsStringLiteral(COOLANT_CHEMISTRY_IDS),
+  ",",
+).withDefault([] as CoolantChemistryId[]);
+
 // ─── x-factor (array) ───────────────────────────────────────────────
 export const xFactorParser = parseAsArrayOf(
   parseAsStringLiteral(X_FACTOR_IDS),
@@ -65,5 +74,6 @@ export const REACTOR_BUILDER_SEARCH_PARAMS = {
   ks: kickstarterParser,
   ff: fuelFormParser,
   c: coolantParser,
+  cc: coolantChemistryParser,
   x: xFactorParser,
 } as const;

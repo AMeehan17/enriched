@@ -9,9 +9,10 @@ import type {
   KickstarterId,
   FuelFormId,
   CoolantId,
+  CoolantChemistryId,
   XFactorId,
 } from "@/lib/reactor-types";
-import { SALT_COOLANT_IDS } from "@/lib/reactor-types";
+import { WATER_CHEMISTRY_IDS, SALT_CHEMISTRY_IDS } from "@/lib/reactor-types";
 import { matchReactors } from "@/lib/reactor-match";
 import { REACTOR_BUILDER_SEARCH_PARAMS } from "@/lib/reactor-url-state";
 import { StepSection } from "./StepSection";
@@ -25,27 +26,26 @@ interface ReactorBuilderViewProps {
 }
 
 /**
- * ReactorBuilderView — the interactive Reactor Builder (schema v2).
+ * ReactorBuilderView — the interactive Reactor Builder (schema v3).
  *
- * 4 main steps (+ 1 conditional):
- *   Step 1  — Fissile element (single-select radio)
- *   Step 1a — Kickstarter     (single-select, renders only when Th-232)
- *   Step 2  — Fuel form       (single-select)
- *   Step 3  — Coolant         (multi-select, restricted to salts when
- *                              fuel form = molten-salt)
- *   Step 4  — X-Factor        (multi-select)
+ * Steps (conditional sub-steps in brackets):
+ *   Step 1  — Fuel material     (single-select)
+ *   [Step 1a — Kickstarter      (renders when Step 1 = th-232)]
+ *   Step 2  — Fuel form         (single-select)
+ *   Step 3  — Coolant           (multi-select, restricted to molten-salt
+ *                                when fuel form = molten-salt)
+ *   [Step 3a — Coolant chemistry (renders when coolant includes water
+ *                                 or molten-salt)]
+ *   Step 4  — Size              (multi-select, scale tags)
+ *   Step 5  — Capabilities      (multi-select, capability tags)
  *
  * Progressive dimming cascade:
  *   Step 1: always active
  *   Step 1a: only renders when Step 1 = th-232
  *   Step 2: dim until Step 1 has a selection (and kickstarter if Th-232)
  *   Step 3: dim until Step 2 has a selection
- *   Step 4: always active (preset links go here)
- *
- * Single-select behavior: clicking a chip sets state to that chip. Clicking
- * an already-selected chip deselects (sets state to null).
- *
- * Multi-select behavior: toggle add/remove from array.
+ *   Step 3a: only renders when coolant needs disambiguation
+ *   Step 4, 5: always active (preset links land here too)
  */
 export function ReactorBuilderView({
   taxonomy,
@@ -60,16 +60,24 @@ export function ReactorBuilderView({
   const ks: KickstarterId | null = state.ks;
   const ff: FuelFormId | null = state.ff;
   const c: CoolantId[] = state.c;
+  const cc: CoolantChemistryId[] = state.cc;
   const x: XFactorId[] = state.x;
 
   // Compute matches
   const matchResult = useMemo(
     () =>
       matchReactors(
-        { fuelMaterial: fe, kickstarter: ks, fuelForm: ff, coolant: c, xFactor: x },
+        {
+          fuelMaterial: fe,
+          kickstarter: ks,
+          fuelForm: ff,
+          coolant: c,
+          coolantChemistry: cc,
+          xFactor: x,
+        },
         reactors,
       ),
-    [fe, ks, ff, c, x, reactors],
+    [fe, ks, ff, c, cc, x, reactors],
   );
 
   // Progressive dim gates
@@ -80,26 +88,24 @@ export function ReactorBuilderView({
   const formMissing = ff === null;
   const coolantDim = formDim || formMissing;
 
-  // If molten-salt fuel form: only the 3 salt coolants selectable
-  const saltOnly = ff === "molten-salt";
+  // Fuel form ↔ coolant coupling: molten-salt fuel IS the coolant, so
+  // when ff=molten-salt the coolant step is locked to just molten-salt.
+  const saltFuel = ff === "molten-salt";
   const lockedCoolants = useMemo(
     () =>
-      saltOnly
+      saltFuel
         ? new Set<string>(
             taxonomy.coolantTags
-              .filter((t) => !SALT_COOLANT_IDS.includes(t.id))
+              .filter((t) => t.id !== "molten-salt")
               .map((t) => t.id),
           )
         : new Set<string>(),
-    [saltOnly, taxonomy.coolantTags],
+    [saltFuel, taxonomy.coolantTags],
   );
 
-  // Reverse coupling: if any non-salt coolant is already selected, lock the
-  // molten-salt fuel form chip. Molten-salt fuel IS the coolant, so pairing
-  // it with helium / water / sodium is physically incoherent.
-  const hasNonSaltCoolant = c.some(
-    (cid) => !SALT_COOLANT_IDS.includes(cid),
-  );
+  // Reverse coupling: if any non-molten-salt coolant is selected, lock the
+  // molten-salt fuel form chip.
+  const hasNonSaltCoolant = c.some((cid) => cid !== "molten-salt");
   const lockedForms = useMemo(
     () =>
       hasNonSaltCoolant
@@ -107,6 +113,25 @@ export function ReactorBuilderView({
         : new Set<string>(),
     [hasNonSaltCoolant],
   );
+
+  // Chemistry step visibility + tag pool.
+  const wantsWater = c.includes("water");
+  const wantsSalt = c.includes("molten-salt");
+  const chemistryNeeded = wantsWater || wantsSalt;
+  const chemistryTags = useMemo(() => {
+    if (!chemistryNeeded) return [];
+    const water = wantsWater
+      ? taxonomy.coolantChemistryTags.filter((t) =>
+          WATER_CHEMISTRY_IDS.includes(t.id),
+        )
+      : [];
+    const salt = wantsSalt
+      ? taxonomy.coolantChemistryTags.filter((t) =>
+          SALT_CHEMISTRY_IDS.includes(t.id),
+        )
+      : [];
+    return [...water, ...salt];
+  }, [chemistryNeeded, wantsWater, wantsSalt, taxonomy.coolantChemistryTags]);
 
   // Single-select handlers
   const selectFissile = (id: string) => {
@@ -129,24 +154,45 @@ export function ReactorBuilderView({
     if (lockedForms.has(typedId)) return; // guard
     if (ff === typedId) {
       // Deselect
-      void setState({ ff: null, c: [] });
+      void setState({ ff: null, c: [], cc: [] });
+    } else if (typedId === "molten-salt") {
+      // Switching TO molten-salt: collapse coolant to just molten-salt and
+      // drop any water chemistries that don't fit anymore.
+      const dropsWaterChem = cc.filter(
+        (chem) => !WATER_CHEMISTRY_IDS.includes(chem),
+      );
+      void setState({
+        ff: typedId,
+        c: ["molten-salt"],
+        cc: dropsWaterChem,
+      });
     } else {
-      // Switching TO molten-salt: clear any non-salt coolants
-      const newCoolants =
-        typedId === "molten-salt"
-          ? c.filter((cid) => SALT_COOLANT_IDS.includes(cid))
-          : c;
-      void setState({ ff: typedId, c: newCoolants });
+      void setState({ ff: typedId });
     }
   };
   // Multi-select handlers
   const toggleCoolant = (id: string) => {
     const typedId = id as CoolantId;
     if (lockedCoolants.has(typedId)) return; // guard
-    const next = c.includes(typedId)
-      ? c.filter((cid) => cid !== typedId)
-      : [...c, typedId];
-    void setState({ c: next });
+    const adding = !c.includes(typedId);
+    const next = adding ? [...c, typedId] : c.filter((cid) => cid !== typedId);
+    // When removing a parent coolant, drop any chemistry that no longer
+    // belongs to a still-selected parent.
+    const stillWantsWater = next.includes("water");
+    const stillWantsSalt = next.includes("molten-salt");
+    const nextCc = cc.filter((chem) => {
+      if (WATER_CHEMISTRY_IDS.includes(chem)) return stillWantsWater;
+      if (SALT_CHEMISTRY_IDS.includes(chem)) return stillWantsSalt;
+      return true;
+    });
+    void setState({ c: next, cc: nextCc });
+  };
+  const toggleChemistry = (id: string) => {
+    const typedId = id as CoolantChemistryId;
+    const next = cc.includes(typedId)
+      ? cc.filter((chem) => chem !== typedId)
+      : [...cc, typedId];
+    void setState({ cc: next });
   };
   const toggleXFactor = (id: string) => {
     const typedId = id as XFactorId;
@@ -158,12 +204,13 @@ export function ReactorBuilderView({
 
   // Clear handlers
   const clearAll = () =>
-    void setState({ fe: null, ks: null, ff: null, c: [], x: [] });
+    void setState({ fe: null, ks: null, ff: null, c: [], cc: [], x: [] });
   const clearFissile = () =>
-    void setState({ fe: null, ks: null, ff: null, c: [] });
+    void setState({ fe: null, ks: null, ff: null, c: [], cc: [] });
   const clearKickstarter = () => void setState({ ks: null });
-  const clearForm = () => void setState({ ff: null, c: [] });
-  const clearCoolant = () => void setState({ c: [] });
+  const clearForm = () => void setState({ ff: null, c: [], cc: [] });
+  const clearCoolant = () => void setState({ c: [], cc: [] });
+  const clearChemistry = () => void setState({ cc: [] });
   const clearXFactor = () => void setState({ x: [] });
 
   // Split X-Factor tags by group
@@ -190,13 +237,30 @@ export function ReactorBuilderView({
     [ff],
   );
   const cSet: ReadonlySet<string> = useMemo(() => new Set<string>(c), [c]);
+  const ccSet: ReadonlySet<string> = useMemo(() => new Set<string>(cc), [cc]);
   const xSet: ReadonlySet<string> = useMemo(() => new Set<string>(x), [x]);
+
+  const scaleIdSet = useMemo(
+    () => new Set<string>(scaleTags.map((t) => t.id)),
+    [scaleTags],
+  );
+  const capabilityIdSet = useMemo(
+    () => new Set<string>(capabilityTags.map((t) => t.id)),
+    [capabilityTags],
+  );
+  const hasScaleSelection = x.some((xid) => scaleIdSet.has(xid));
+  const hasCapabilitySelection = x.some((xid) => capabilityIdSet.has(xid));
+  const clearScale = () =>
+    void setState({ x: x.filter((xid) => !scaleIdSet.has(xid)) });
+  const clearCapability = () =>
+    void setState({ x: x.filter((xid) => !capabilityIdSet.has(xid)) });
 
   const hasAnySelection =
     fe !== null ||
     ks !== null ||
     ff !== null ||
     c.length > 0 ||
+    cc.length > 0 ||
     x.length > 0;
 
   return (
@@ -263,8 +327,8 @@ export function ReactorBuilderView({
             stepNumber={3}
             title="Pick a coolant"
             intro={
-              saltOnly
-                ? "Your fuel is dissolved in salt, so the coolant IS the fuel carrier. Pick which salt chemistry — non-salt coolants are physically impossible here."
+              saltFuel
+                ? "Your fuel is dissolved in salt, so the coolant IS the fuel carrier. Coolant is locked to molten-salt — everything else is physically impossible here."
                 : "Coolant defines outlet temperature and safety profile. It's the most consequential physical decision in a reactor."
             }
             tags={taxonomy.coolantTags}
@@ -275,20 +339,49 @@ export function ReactorBuilderView({
             dim={coolantDim}
           />
 
-          {/* Step 4: X-Factor */}
+          {/* Step 3a: Coolant chemistry — only when water or molten-salt. */}
+          {chemistryNeeded ? (
+            <StepSection
+              stepNumber={3}
+              subStepLabel="3a"
+              title="Pick a chemistry"
+              intro={
+                wantsWater && wantsSalt
+                  ? "Water and molten-salt both have specific chemistries that change the physics. Light vs heavy water sets enrichment needs; FLiBe vs FLiNaK vs Chloride sets moderation and spectrum."
+                  : wantsSalt
+                    ? "Which salt? FLiBe and FLiNaK moderate neutrons (thermal spectrum); Chloride does not (fast spectrum — enables breeding and waste burning)."
+                    : "Light water needs enriched fuel; heavy water absorbs fewer neutrons and can sustain a chain reaction with natural uranium."
+              }
+              tags={chemistryTags}
+              selected={ccSet}
+              onToggle={toggleChemistry}
+              onClear={cc.length > 0 ? clearChemistry : undefined}
+              dim={false}
+            />
+          ) : null}
+
+          {/* Step 4: Size (scale tags) */}
           <StepSection
             stepNumber={4}
-            title="Pick capabilities"
-            intro="What should this reactor be able to do? Scale (how big) and capability (what it unlocks). Multi-select — a reactor can have several."
-            tags={[]}
+            title="Choose a size"
+            intro="How big? Micro (<20 MWe) is truck-transportable. Small (20–200 MWe) is factory-modular. Mid (200–700 MWe) is the economics sweet spot. Large (>700 MWe) is the gigawatt-class baseload play."
+            tags={scaleTags}
             selected={xSet}
             onToggle={toggleXFactor}
-            onClear={x.length > 0 ? clearXFactor : undefined}
+            onClear={hasScaleSelection ? clearScale : undefined}
             dim={false}
-            subGroups={[
-              { label: "Scale", tags: scaleTags },
-              { label: "Capability", tags: capabilityTags },
-            ]}
+          />
+
+          {/* Step 5: Capabilities */}
+          <StepSection
+            stepNumber={5}
+            title="Pick capabilities"
+            intro="What should this reactor be able to do? Multi-select — a reactor can deliver several of these at once."
+            tags={capabilityTags}
+            selected={xSet}
+            onToggle={toggleXFactor}
+            onClear={hasCapabilitySelection ? clearCapability : undefined}
+            dim={false}
           />
         </div>
 
@@ -299,7 +392,9 @@ export function ReactorBuilderView({
           kickstarter={ks}
           fuelForm={ff}
           coolant={c}
+          coolantChemistry={cc}
           xFactor={x}
+          scaleIdSet={scaleIdSet}
           matchCount={matchResult.results.length}
           totalReactors={reactors.length}
           hasAnySelection={hasAnySelection}
@@ -313,6 +408,7 @@ export function ReactorBuilderView({
         selectedKickstarter={ks}
         selectedFuelForm={ff}
         selectedCoolant={c}
+        selectedCoolantChemistry={cc}
         selectedXFactor={x}
         result={matchResult}
         onClearAll={clearAll}

@@ -6,6 +6,7 @@ import type {
   KickstarterId,
   FuelFormId,
   CoolantId,
+  CoolantChemistryId,
   XFactorId,
 } from "@/lib/reactor-types";
 import { ShareButton } from "./ShareButton";
@@ -16,7 +17,10 @@ interface SpecCardProps {
   kickstarter: KickstarterId | null;
   fuelForm: FuelFormId | null;
   coolant: CoolantId[];
+  coolantChemistry: CoolantChemistryId[];
   xFactor: XFactorId[];
+  /** Used to split xFactor into Size vs Capability rows. */
+  scaleIdSet: ReadonlySet<string>;
   matchCount: number;
   totalReactors: number;
   hasAnySelection: boolean;
@@ -26,9 +30,10 @@ interface SpecCardProps {
 /**
  * SpecCard — sticky "your reactor" panel that updates live.
  *
- * Schema v2: shows the single-value dimensions (fissile, kickstarter,
- * fuel form) each as their own row, plus array dimensions (coolant,
- * x-factor) as pill lists.
+ * Schema v3: shows single-value dimensions (fuel, kickstarter, fuel form)
+ * as their own rows, plus array dimensions (coolant, chemistry, size,
+ * capability) as pill lists. Size and capability both live in the xFactor
+ * array — we partition using the scale tag set passed down from the view.
  *
  * role="status" + aria-live="polite" so screen readers announce updates.
  */
@@ -38,7 +43,9 @@ export function SpecCard({
   kickstarter,
   fuelForm,
   coolant,
+  coolantChemistry,
   xFactor,
+  scaleIdSet,
   matchCount,
   totalReactors,
   hasAnySelection,
@@ -58,9 +65,16 @@ export function SpecCard({
   const coolantLabels = coolant.map(
     (id) => taxonomy.coolantTags.find((t) => t.id === id)?.label ?? id,
   );
-  const xFactorLabels = xFactor.map(
-    (id) => taxonomy.xFactorTags.find((t) => t.id === id)?.label ?? id,
+  const chemistryLabels = coolantChemistry.map(
+    (id) =>
+      taxonomy.coolantChemistryTags.find((t) => t.id === id)?.label ?? id,
   );
+  const sizeLabels = xFactor
+    .filter((id) => scaleIdSet.has(id))
+    .map((id) => taxonomy.xFactorTags.find((t) => t.id === id)?.label ?? id);
+  const capabilityLabels = xFactor
+    .filter((id) => !scaleIdSet.has(id))
+    .map((id) => taxonomy.xFactorTags.find((t) => t.id === id)?.label ?? id);
 
   const displayedMatchCount = hasAnySelection ? matchCount : totalReactors;
 
@@ -91,7 +105,11 @@ export function SpecCard({
       ) : null}
       <SingleRow label="Fuel form" value={ffLabel} />
       <MultiRow label="Coolant" values={coolantLabels} />
-      <MultiRow label="X-Factor" values={xFactorLabels} />
+      {chemistryLabels.length > 0 ? (
+        <MultiRow label="Chemistry" values={chemistryLabels} />
+      ) : null}
+      <MultiRow label="Size" values={sizeLabels} />
+      <MultiRow label="Capability" values={capabilityLabels} />
 
       <footer className="mt-[var(--spacing-4)] pt-[var(--spacing-4)] border-t border-[var(--color-rule)]">
         <p className="font-[family-name:var(--font-body)] text-[length:var(--text-sm)] text-[var(--color-text-muted)] m-0 leading-[1.5]">

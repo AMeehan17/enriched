@@ -3,9 +3,9 @@ import type { ReactorDesign } from "@/lib/reactor-types";
 /**
  * REACTORS — starting reactor designs for Module 2 v1.
  *
- * SCHEMA v2 (2026-04-20): fuel dimension split into fuelMaterial /
- * fuelForm / (optional) kickstarter. Coolant expanded to 10 options.
- * Added reactorType derived field.
+ * SCHEMA v3 (2026-04-20): coolant is now a two-step drill-down —
+ * parent coolant (7 families) + optional chemistry when the parent is
+ * water or molten-salt.
  *
  * Each design is tagged against the F/C/X taxonomy and carries:
  *   - Fuel: fuelMaterial + fuelForm (+ kickstarter when Th-232)
@@ -46,7 +46,8 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
     ],
     fuelMaterial: "u-235",
     fuelForm: "ceramic-pellets",
-    coolantTags: ["light-water"],
+    coolantTags: ["water"],
+    coolantChemistry: "light-water",
     xFactorTags: ["large", "first-of-kind-licensed"],
     outletTempC: 321,
     spectrum: "thermal",
@@ -111,7 +112,8 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
     ],
     fuelMaterial: "u-235",
     fuelForm: "ceramic-pellets",
-    coolantTags: ["light-water"],
+    coolantTags: ["water"],
+    coolantChemistry: "light-water",
     xFactorTags: ["small", "walk-away-safe", "first-of-kind-licensed"],
     outletTempC: 316,
     spectrum: "thermal",
@@ -241,8 +243,9 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
     ],
     fuelMaterial: "u-235",
     fuelForm: "ceramic-pellets",
-    coolantTags: ["light-water"],
-    xFactorTags: ["small", "walk-away-safe"],
+    coolantTags: ["water"],
+    coolantChemistry: "light-water",
+    xFactorTags: ["mid", "walk-away-safe"],
     outletTempC: 287,
     spectrum: "thermal",
     reactorType: "BWR",
@@ -264,8 +267,8 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         tagRef: "walk-away-safe",
       },
       {
-        text: "At 300 MWe, it targets the SMR sweet spot: large enough for meaningful baseload contribution, small enough for factory fabrication of key components.",
-        tagRef: "small",
+        text: "At 300 MWe it sits in the mid-size band: large enough for meaningful baseload contribution, small enough to benefit from modular simplification, but too large to ship as a single factory-finished module the way a true SMR can.",
+        tagRef: "mid",
       },
     ],
     citations: [
@@ -368,7 +371,8 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
     ],
     fuelMaterial: "u-235",
     fuelForm: "triso",
-    coolantTags: ["flibe"],
+    coolantTags: ["molten-salt"],
+    coolantChemistry: "flibe",
     xFactorTags: ["small", "walk-away-safe", "process-heat"],
     outletTempC: 650,
     spectrum: "thermal",
@@ -435,7 +439,8 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
     fuelMaterial: "th-232",
     kickstarter: "u-235-kickstart",
     fuelForm: "molten-salt",
-    coolantTags: ["flibe"],
+    coolantTags: ["molten-salt"],
+    coolantChemistry: "flibe",
     xFactorTags: ["small", "walk-away-safe", "fuel-breeder", "non-proliferative"],
     outletTempC: 600,
     spectrum: "thermal",

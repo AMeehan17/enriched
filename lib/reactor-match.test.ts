@@ -3,20 +3,20 @@ import { matchReactors, type MatchConfig } from "./reactor-match";
 import { reactors } from "../data-src/reactors";
 
 /**
- * Tests for matchReactors — schema v2.
+ * Tests for matchReactors — schema v3.
  *
- * Uses the real reactor data from data-src/reactors.ts (7 designs after
- * Copenhagen Atomics addition) so tests stay grounded in actual content.
+ * Uses the real reactor data from data-src/reactors.ts so tests stay
+ * grounded in actual content.
  *
- * Schema v2 starting set:
- *   AP1000         u-235 / ceramic-pellets / light-water / PWR / large, FOAK
- *   VOYGR          u-235 / ceramic-pellets / light-water / PWR / small, walk-away-safe, FOAK
+ * Schema v3 starting set (coolant parent / chemistry):
+ *   AP1000         u-235 / ceramic-pellets / water+light-water / PWR / large, FOAK
+ *   VOYGR          u-235 / ceramic-pellets / water+light-water / PWR / small, walk-away-safe, FOAK
  *   Xe-100         u-235 / triso / helium / HTGR / small, walk-away-safe, process-heat
- *   BWRX-300       u-235 / ceramic-pellets / light-water / BWR / small, walk-away-safe
+ *   BWRX-300       u-235 / ceramic-pellets / water+light-water / BWR / mid, walk-away-safe
  *   Natrium        u-235 / metal / sodium / SFR / mid, walk-away-safe, load-following,
  *                  thermal-storage, waste-burner
- *   KP-FHR         u-235 / triso / flibe / other / small, walk-away-safe, process-heat
- *   Copenhagen     th-232 + u-235-kickstart / molten-salt / flibe / MSR / small,
+ *   KP-FHR         u-235 / triso / molten-salt+flibe / other / small, walk-away-safe, process-heat
+ *   Copenhagen     th-232 + u-235-kickstart / molten-salt / molten-salt+flibe / MSR / small,
  *                  walk-away-safe, fuel-breeder, non-proliferative
  */
 
@@ -25,10 +25,11 @@ const empty: MatchConfig = {
   kickstarter: null,
   fuelForm: null,
   coolant: [],
+  coolantChemistry: [],
   xFactor: [],
 };
 
-describe("matchReactors (schema v2)", () => {
+describe("matchReactors (schema v3)", () => {
   it("returns all reactors when no filters are set", () => {
     const result = matchReactors(empty, reactors);
     expect(result.results).toHaveLength(7);
@@ -173,6 +174,7 @@ describe("matchReactors (schema v2)", () => {
         kickstarter: null,
         fuelForm: "metal",
         coolant: ["sodium"],
+        coolantChemistry: [],
         xFactor: ["thermal-storage"],
       },
       reactors,
@@ -187,7 +189,8 @@ describe("matchReactors (schema v2)", () => {
         fuelMaterial: "th-232",
         kickstarter: "u-235-kickstart",
         fuelForm: "molten-salt",
-        coolant: ["flibe"],
+        coolant: ["molten-salt"],
+        coolantChemistry: ["flibe"],
         xFactor: [],
       },
       reactors,
@@ -201,13 +204,43 @@ describe("matchReactors (schema v2)", () => {
       { ...empty, fuelMaterial: "u-235", xFactor: ["small"] },
       reactors,
     );
-    // U-235 + small: VOYGR, Xe-100, BWRX-300, KP-FHR (all U-235 and tagged 'small')
-    expect(result.results).toHaveLength(4);
+    // U-235 + small (v3: BWRX-300 reclassified to mid) → VOYGR, Xe-100, KP-FHR
+    expect(result.results).toHaveLength(3);
     expect(result.results.map((r) => r.id).sort()).toEqual([
-      "bwrx-300",
       "kp-fhr",
       "voygr",
       "xe-100",
+    ]);
+  });
+
+  it("filters by coolant chemistry (light-water)", () => {
+    const result = matchReactors(
+      { ...empty, coolantChemistry: ["light-water"] },
+      reactors,
+    );
+    // AP1000, VOYGR, BWRX-300 all use water + light-water chemistry
+    expect(result.results).toHaveLength(3);
+    expect(result.results.map((r) => r.id).sort()).toEqual([
+      "ap1000",
+      "bwrx-300",
+      "voygr",
+    ]);
+  });
+
+  it("filters by coolant parent + chemistry AND", () => {
+    const result = matchReactors(
+      {
+        ...empty,
+        coolant: ["molten-salt"],
+        coolantChemistry: ["flibe"],
+      },
+      reactors,
+    );
+    // KP-FHR and Copenhagen both use molten-salt+flibe
+    expect(result.results).toHaveLength(2);
+    expect(result.results.map((r) => r.id).sort()).toEqual([
+      "copenhagen-atomics",
+      "kp-fhr",
     ]);
   });
 

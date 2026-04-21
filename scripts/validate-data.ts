@@ -36,6 +36,9 @@ import {
   KICKSTARTER_IDS,
   FUEL_FORM_IDS,
   COOLANT_IDS,
+  COOLANT_CHEMISTRY_IDS,
+  WATER_CHEMISTRY_IDS,
+  SALT_CHEMISTRY_IDS,
   X_FACTOR_IDS,
   REACTOR_TYPES,
   REACTOR_PLAUSIBILITY_BOUNDS,
@@ -201,12 +204,14 @@ function validateBibKeyUniqueness(): void {
     }
   }
 
-  // Module 2: taxonomy tags (schema v2: fissile + kickstarter + form + coolant + x-factor)
+  // Module 2: taxonomy tags (schema v3: fuel material + kickstarter + fuel form
+  // + coolant + coolant chemistry + x-factor)
   const {
     fuelMaterialTags,
     kickstarterTags,
     fuelFormTags,
     coolantTags,
+    coolantChemistryTags,
     xFactorTags,
   } = reactorTaxonomy;
   const allTags = [
@@ -223,6 +228,10 @@ function validateBibKeyUniqueness(): void {
       path: `taxonomy.fuelForm[${i}]`,
     })),
     ...coolantTags.map((t, i) => ({ tag: t, path: `taxonomy.coolant[${i}]` })),
+    ...coolantChemistryTags.map((t, i) => ({
+      tag: t,
+      path: `taxonomy.coolantChemistry[${i}]`,
+    })),
     ...xFactorTags.map((t, i) => ({ tag: t, path: `taxonomy.xFactor[${i}]` })),
   ];
   for (const { tag, path } of allTags) {
@@ -285,6 +294,7 @@ function validateTaxonomy(): void {
     kickstarterTags,
     fuelFormTags,
     coolantTags,
+    coolantChemistryTags,
     xFactorTags,
   } = reactorTaxonomy;
 
@@ -317,6 +327,11 @@ function validateTaxonomy(): void {
   validateDimension("kickstarter", kickstarterTags, [...KICKSTARTER_IDS]);
   validateDimension("fuelForm", fuelFormTags, [...FUEL_FORM_IDS]);
   validateDimension("coolant", coolantTags, [...COOLANT_IDS]);
+  validateDimension(
+    "coolantChemistry",
+    coolantChemistryTags,
+    [...COOLANT_CHEMISTRY_IDS],
+  );
 
   // X-Factor has additional group validation
   const xIdSet = new Set<string>();
@@ -343,10 +358,13 @@ function validateTaxonomy(): void {
 // ─── Module 2: Reactor design validation ────────────────────────────
 
 function validateReactors(): void {
-  const fissileSet = new Set<string>(FUEL_MATERIAL_IDS);
+  const fuelMaterialSet = new Set<string>(FUEL_MATERIAL_IDS);
   const kickstarterSet = new Set<string>(KICKSTARTER_IDS);
   const fuelFormSet = new Set<string>(FUEL_FORM_IDS);
   const coolantSet = new Set<string>(COOLANT_IDS);
+  const coolantChemistrySet = new Set<string>(COOLANT_CHEMISTRY_IDS);
+  const waterChemistrySet = new Set<string>(WATER_CHEMISTRY_IDS);
+  const saltChemistrySet = new Set<string>(SALT_CHEMISTRY_IDS);
   const xSet = new Set<string>(X_FACTOR_IDS);
   const reactorTypeSet = new Set<string>(REACTOR_TYPES);
   const idSet = new Set<string>();
@@ -385,9 +403,9 @@ function validateReactors(): void {
       }
     }
 
-    // Fuel dimension (schema v2)
-    if (!fissileSet.has(r.fuelMaterial)) {
-      err(`${path}.fuelMaterial`, `unknown fissile element "${r.fuelMaterial}"`);
+    // Fuel dimension
+    if (!fuelMaterialSet.has(r.fuelMaterial)) {
+      err(`${path}.fuelMaterial`, `unknown fuel material "${r.fuelMaterial}"`);
     }
     if (!fuelFormSet.has(r.fuelForm)) {
       err(`${path}.fuelForm`, `unknown fuel form "${r.fuelForm}"`);
@@ -397,7 +415,7 @@ function validateReactors(): void {
       if (!r.kickstarter) {
         err(
           `${path}.kickstarter`,
-          "required when fuelMaterial is 'th-232' (thorium needs a fissile kickstarter)",
+          "required when fuelMaterial is 'th-232' (thorium is fertile, not fissile — needs a fissile kickstarter)",
         );
       } else if (!kickstarterSet.has(r.kickstarter)) {
         err(`${path}.kickstarter`, `unknown kickstarter "${r.kickstarter}"`);
@@ -408,14 +426,14 @@ function validateReactors(): void {
         `kickstarter only allowed when fuelMaterial is 'th-232', got fuelMaterial='${r.fuelMaterial}'`,
       );
     }
-    // Coolant coupling: fuelForm = 'molten-salt' restricts coolants to salt chemistries
-    const SALT_COOLANTS = new Set(["flibe", "flinak", "chloride-salt"]);
+    // Fuel form ↔ coolant coupling: molten-salt fuel form requires the coolant
+    // to be molten-salt too (fuel IS the coolant in MSR).
     if (r.fuelForm === "molten-salt") {
       for (const c of r.coolantTags) {
-        if (!SALT_COOLANTS.has(c)) {
+        if (c !== "molten-salt") {
           err(
             `${path}.coolantTags`,
-            `coolant '${c}' not allowed with fuelForm='molten-salt' (fuel is dissolved in salt, so coolant must be a salt chemistry)`,
+            `coolant '${c}' not allowed with fuelForm='molten-salt' (fuel is dissolved in salt, so coolant must be molten-salt)`,
           );
         }
       }
@@ -424,6 +442,46 @@ function validateReactors(): void {
     for (const t of r.coolantTags) {
       if (!coolantSet.has(t))
         err(`${path}.coolantTags`, `unknown coolant tag "${t}"`);
+    }
+    // Coolant ↔ chemistry coupling: water and molten-salt require chemistry;
+    // everything else forbids it. Chemistry family must match the parent.
+    const coolantsRequiringChemistry = r.coolantTags.filter(
+      (c) => c === "water" || c === "molten-salt",
+    );
+    if (coolantsRequiringChemistry.length > 0) {
+      if (!r.coolantChemistry) {
+        err(
+          `${path}.coolantChemistry`,
+          `required when coolantTags includes water or molten-salt (got coolantTags=${JSON.stringify(r.coolantTags)})`,
+        );
+      } else if (!coolantChemistrySet.has(r.coolantChemistry)) {
+        err(
+          `${path}.coolantChemistry`,
+          `unknown chemistry "${r.coolantChemistry}"`,
+        );
+      } else {
+        const wantsWater = r.coolantTags.includes("water");
+        const wantsSalt = r.coolantTags.includes("molten-salt");
+        const isWaterChem = waterChemistrySet.has(r.coolantChemistry);
+        const isSaltChem = saltChemistrySet.has(r.coolantChemistry);
+        if (wantsWater && !wantsSalt && !isWaterChem) {
+          err(
+            `${path}.coolantChemistry`,
+            `water coolant requires a water chemistry (light-water or heavy-water), got "${r.coolantChemistry}"`,
+          );
+        }
+        if (wantsSalt && !wantsWater && !isSaltChem) {
+          err(
+            `${path}.coolantChemistry`,
+            `molten-salt coolant requires a salt chemistry (flibe, flinak, or chloride-salt), got "${r.coolantChemistry}"`,
+          );
+        }
+      }
+    } else if (r.coolantChemistry) {
+      err(
+        `${path}.coolantChemistry`,
+        `chemistry only allowed when coolantTags includes water or molten-salt (got coolantTags=${JSON.stringify(r.coolantTags)})`,
+      );
     }
     // X-Factor tag validity
     for (const t of r.xFactorTags) {
@@ -462,10 +520,11 @@ function validateReactors(): void {
         // tagRef validity (optional field — can reference any dimension)
         if (step.tagRef) {
           const valid =
-            fissileSet.has(step.tagRef) ||
+            fuelMaterialSet.has(step.tagRef) ||
             kickstarterSet.has(step.tagRef) ||
             fuelFormSet.has(step.tagRef) ||
             coolantSet.has(step.tagRef) ||
+            coolantChemistrySet.has(step.tagRef) ||
             xSet.has(step.tagRef);
           if (!valid) {
             err(
@@ -572,9 +631,11 @@ function main(): void {
     kickstarterTags: kt,
     fuelFormTags: ffT,
     coolantTags: ct,
+    coolantChemistryTags: cct,
     xFactorTags: xt,
   } = reactorTaxonomy;
-  const tagCount = ft.length + kt.length + ffT.length + ct.length + xt.length;
+  const tagCount =
+    ft.length + kt.length + ffT.length + ct.length + cct.length + xt.length;
   console.log(
     `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${tagCount} taxonomy tags, ${reactors.length} reactor designs, all citations unique and within plausibility bounds.`,
   );
