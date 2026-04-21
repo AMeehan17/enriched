@@ -1,54 +1,93 @@
 "use client";
 
-import type { XFactorId } from "@/lib/reactor-types";
+import type {
+  CoolantId,
+  FuelFormId,
+  FuelMaterialId,
+  KickstarterId,
+  XFactorId,
+} from "@/lib/reactor-types";
+
+export interface PresetConfig {
+  fe: FuelMaterialId | null;
+  ks: KickstarterId | null;
+  ff: FuelFormId | null;
+  c: CoolantId[];
+  x: XFactorId[];
+}
 
 interface PresetLinksProps {
-  onPreset: (xFactor: XFactorId[]) => void;
+  onPreset: (config: PresetConfig) => void;
 }
 
 /**
  * PresetLinks — 4 curated entry points into the reactor builder.
  *
- * Each preset clears fuel + coolant selections and sets a specific
- * X-Factor capability tag. The accompanying match list then surfaces
- * the real-world designs that fit that single capability.
+ * Each preset pre-fills a complete reactor recipe (fuel + form + coolant +
+ * x-factor) so the match list shows a concrete design when clicked. The
+ * user iterates from there by toggling chips.
  *
- * Per the CEO review: each preset frames a different teaching story.
- * - walk-away-safe: the safety reframe (modern passive safety is a
- *   coolant decision, not a bolt-on safety system)
- * - process-heat: the application reframe (nuclear isn't just
- *   electricity — it's industrial heat for hydrogen, steel, cement)
- * - micro: the scale reframe (reactors can be truck-sized)
- * - fuel-breeder: the fuel-cycle reframe (breeding multiplies
- *   effective fuel supply)
+ * Each preset frames a different teaching story:
+ *   - walk-away-safe sodium fast reactor → Natrium archetype
+ *     (passive safety as a coolant decision)
+ *   - process-heat pebble bed → Xe-100 / KP-FHR archetype
+ *     (nuclear for industrial heat)
+ *   - thorium molten-salt breeder → Copenhagen Atomics archetype
+ *     (breeding multiplies fuel from fertile isotopes)
+ *   - licensed small modular LWR → VOYGR archetype
+ *     (the SMR path regulators already know)
  */
 
 interface Preset {
   label: string;
-  xFactor: XFactorId;
+  config: PresetConfig;
   hint: string;
 }
 
 const PRESETS: readonly Preset[] = [
   {
-    label: "Walk-away-safe reactors",
-    xFactor: "walk-away-safe",
-    hint: "Why passive safety is a coolant decision",
+    label: "Walk-away-safe fast reactor",
+    config: {
+      fe: "u-235",
+      ks: null,
+      ff: "metal",
+      c: ["sodium"],
+      x: ["walk-away-safe"],
+    },
+    hint: "Passive safety as a coolant decision — the Natrium archetype",
   },
   {
-    label: "Process heat reactors",
-    xFactor: "process-heat",
-    hint: "Nuclear for industrial heat, not just electricity",
+    label: "Process-heat pebble bed",
+    config: {
+      fe: "u-235",
+      ks: null,
+      ff: "triso",
+      c: ["helium"],
+      x: ["process-heat"],
+    },
+    hint: "Industrial heat, not just electricity — the Xe-100 archetype",
   },
   {
-    label: "Micro reactors",
-    xFactor: "micro",
-    hint: "Truck-sized, factory-built, remote-deployable",
+    label: "Thorium molten-salt breeder",
+    config: {
+      fe: "th-232",
+      ks: "u-235-kickstart",
+      ff: "molten-salt",
+      c: ["flibe"],
+      x: ["fuel-breeder"],
+    },
+    hint: "Breeding fuel from fertile isotopes — the Copenhagen Atomics archetype",
   },
   {
-    label: "Fuel breeders",
-    xFactor: "fuel-breeder",
-    hint: "Multiplying fuel supply from fertile isotopes",
+    label: "Licensed small modular LWR",
+    config: {
+      fe: "u-235",
+      ks: null,
+      ff: "ceramic-pellets",
+      c: ["light-water"],
+      x: ["small", "first-of-kind-licensed"],
+    },
+    hint: "The SMR path regulators already know — the VOYGR archetype",
   },
 ] as const;
 
@@ -60,9 +99,9 @@ export function PresetLinks({ onPreset }: PresetLinksProps) {
       </p>
       <ul className="flex flex-wrap gap-x-[var(--spacing-6)] gap-y-[var(--spacing-2)] list-none m-0 p-0">
         {PRESETS.map((preset) => (
-          <li key={preset.xFactor}>
+          <li key={preset.label}>
             <button
-              onClick={() => onPreset([preset.xFactor])}
+              onClick={() => onPreset(preset.config)}
               className="font-[family-name:var(--font-body)] text-[length:var(--text-base)] text-[var(--color-accent-text)] hover:text-[var(--color-accent)] hover:underline transition-colors duration-[var(--duration-fast)] text-left cursor-pointer"
               title={preset.hint}
             >

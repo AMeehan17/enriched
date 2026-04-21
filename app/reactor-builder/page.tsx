@@ -83,7 +83,8 @@ export default function ReactorBuilderPage() {
           id="page-title"
           className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] sm:text-[length:var(--text-3xl)] lg:text-[length:var(--text-4xl)] font-medium tracking-[-0.025em] leading-[1.05] mb-[var(--spacing-4)] sm:mb-[var(--spacing-6)] max-w-[900px]"
         >
-          Build a reactor. Learn what the choices mean.
+          <span className="block">Build a reactor.</span>
+          <span className="block">Learn what the choices mean.</span>
         </h1>
         <p className="font-[family-name:var(--font-body)] text-[length:var(--text-base)] sm:text-[length:var(--text-lg)] leading-[1.55] text-[var(--color-text-muted)] max-w-[640px]">
           Pick a fuel, a coolant, and a capability. See which real-world

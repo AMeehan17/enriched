@@ -191,14 +191,8 @@ export function ReactorBuilderView({
       </h2>
 
       <PresetLinks
-        onPreset={(preset) => {
-          void setState({
-            fe: null,
-            ks: null,
-            ff: null,
-            c: [],
-            x: preset,
-          });
+        onPreset={(config) => {
+          void setState(config);
         }}
       />
 
