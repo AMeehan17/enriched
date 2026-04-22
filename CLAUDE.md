@@ -9,8 +9,8 @@ Enriched is a **technical and educational tool** about how nuclear reactors work
 The product arc is roughly:
 
 - **Module 1 — Energy Source Comparison** (shipped). Compare energy sources across eight dimensions.
-- **Module 2 — Reactor Builder** (future). Interactive configurator for reactor design. Pick a fuel / coolant / X-factor combination and learn what it means, what trade-offs you're making, what physics constraints apply, what in-development or historical reactors match. Teaching tool, not a database. The companies are an output, not the point.
-- **Module 3 — Reference Library** (future). Deep-dive articles on reactor science, fuel cycles, safety physics, waste, regulation, history. Feeds the Reactor Builder with "click to learn more" links.
+- **Module 2 — Reactor Builder** (shelved 2026-04-21, see `docs/MODULE_2_SHELVED.md`). Schema v4 is live at `/reactor-builder` but is de-linked from the top nav. A chip-picking constraint-satisfier doesn't teach the way a curious outsider needs; Module 3 articles are the better shape for that work. Do not iterate on the Reactor Builder without re-reading the shelving doc and re-asking the product question first.
+- **Module 3 — Reference Library** (next). Deep-dive articles on reactor science, fuel cycles, safety physics, waste, regulation, history. The teaching layer Module 2 couldn't be. Articles can later cite the Reactor Builder as an interactive appendix.
 
 **Enriched does NOT cover:**
 

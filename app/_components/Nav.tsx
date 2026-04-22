@@ -29,9 +29,12 @@ interface NavLink {
   label: string;
 }
 
+// Module 2 (Reactor Builder) is shelved pending the Module 3 (reference
+// library) pivot — see docs/MODULE_2_SHELVED.md. The route stays live
+// for anyone with the URL, but isn't discoverable from the nav. To
+// re-enable, add: `{ href: "/reactor-builder", label: "Reactor Builder" }`.
 const LINKS: readonly NavLink[] = [
   { href: "/compare", label: "Compare" },
-  { href: "/reactor-builder", label: "Reactor Builder" },
 ] as const;
 
 export function Nav() {
