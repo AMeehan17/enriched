@@ -1,10 +1,11 @@
 "use client";
 
-import type { TaxonomyTag } from "@/lib/reactor-types";
+import type { StepExplainer, TaxonomyTag } from "@/lib/reactor-types";
 import { TagChip } from "./TagChip";
+import { StepWhy } from "./StepWhy";
 
 interface StepSectionProps {
-  stepNumber: 1 | 2 | 3 | 4 | 5;
+  stepNumber: 1 | 2 | 3 | 4 | 5 | 6;
   /** Override the numeric label — used for sub-steps like "1a" (kickstarter). */
   subStepLabel?: string;
   title: string;
@@ -18,7 +19,12 @@ interface StepSectionProps {
   onToggle: (id: string) => void;
   onClear: (() => void) | undefined;
   dim: boolean;
-  /** Optional sub-groups (used by Step 4 for Scale + Capability rows). */
+  /** Optional `(?)` header affordance with a "why this decision matters"
+      popover. Content comes from the taxonomy's stepExplainers. `undefined`
+      is accepted so callers can pass the result of `Map.get()` directly. */
+  explainer?: StepExplainer | undefined;
+  /** Optional sub-groups (kept for compatibility, not currently used
+      post-v3 since size and capability are split into separate steps). */
   subGroups?: ReadonlyArray<{
     label: string;
     tags: ReadonlyArray<TaxonomyTag>;
@@ -36,6 +42,7 @@ export function StepSection({
   onToggle,
   onClear,
   dim,
+  explainer,
   subGroups,
 }: StepSectionProps) {
   const label = subStepLabel ?? String(stepNumber).padStart(2, "0");
@@ -57,6 +64,11 @@ export function StepSection({
         <h3 className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] sm:text-[length:var(--text-2xl)] font-medium tracking-[-0.02em] leading-[1.1] m-0 flex-1">
           {title}
         </h3>
+        {explainer ? (
+          <div className="relative self-center">
+            <StepWhy explainer={explainer} />
+          </div>
+        ) : null}
       </header>
       <p className="font-[family-name:var(--font-body)] text-[length:var(--text-base)] text-[var(--color-text-muted)] max-w-[560px] mb-[var(--spacing-6)]">
         {intro}

@@ -4,6 +4,7 @@ import type {
   FuelFormId,
   CoolantId,
   CoolantChemistryId,
+  SpectrumId,
   XFactorId,
   ReactorDesign,
 } from "./reactor-types";
@@ -11,18 +12,22 @@ import type {
 /**
  * reactor-match.ts — pure matching function for the Reactor Builder.
  *
- * SCHEMA v3 (2026-04-20):
- *   Coolant is now a two-step drill-down — parent coolant + optional
- *   chemistry (water → light/heavy; molten-salt → FLiBe/FLiNaK/Chloride).
- *   Chemistry is a multi-select array filter like coolant and xFactor.
+ * SCHEMA v4 (2026-04-21):
+ *   Added spectrum as a single-value filter dimension between coolant
+ *   chemistry and xFactor. Thermal / fast / epithermal, surfaced as
+ *   its own step in the UI with physics coupling to coolant and
+ *   capabilities.
+ *
+ * Prior history:
+ *   v3: coolant drill-down (parent + chemistry).
  *
  * No React, no DOM, no side effects. Takes a user's configuration and
  * returns the qualifying reactor designs, ranked by relevance.
  *
  * Semantics:
- *   - Single-value dimensions (fuelMaterial, kickstarter, fuelForm): a
- *     reactor matches if its value equals the config's value, OR the
- *     config's value is null (dimension unfiltered).
+ *   - Single-value dimensions (fuelMaterial, kickstarter, fuelForm,
+ *     spectrum): a reactor matches if its value equals the config's
+ *     value, OR the config's value is null (dimension unfiltered).
  *   - Array dimensions (coolant, coolantChemistry, xFactor): AND across
  *     dimensions, OR within a dimension. A reactor matches if, for every
  *     non-empty dimension, it has at least one matching tag. For coolant
@@ -41,6 +46,7 @@ export interface MatchConfig {
   fuelForm: FuelFormId | null;
   coolant: CoolantId[];
   coolantChemistry: CoolantChemistryId[];
+  spectrum: SpectrumId | null;
   xFactor: XFactorId[];
 }
 
@@ -96,6 +102,7 @@ export function matchReactors(
     config.fuelForm !== null ||
     config.coolant.length > 0 ||
     config.coolantChemistry.length > 0 ||
+    config.spectrum !== null ||
     config.xFactor.length > 0;
 
   const qualifying = allReactors.filter((r) => {
@@ -106,6 +113,7 @@ export function matchReactors(
       matchesSingle(r.fuelForm, config.fuelForm) &&
       matchesArray(r.coolantTags, config.coolant) &&
       matchesArray(chemistryTags, config.coolantChemistry) &&
+      matchesSingle(r.spectrum, config.spectrum) &&
       matchesArray(r.xFactorTags, config.xFactor)
     );
   });
@@ -120,6 +128,7 @@ export function matchReactors(
       (config.fuelForm !== null && a.fuelForm === config.fuelForm ? 1 : 0) +
       countArrayMatches(a.coolantTags, config.coolant) +
       countArrayMatches(aChem, config.coolantChemistry) +
+      (config.spectrum !== null && a.spectrum === config.spectrum ? 1 : 0) +
       countArrayMatches(a.xFactorTags, config.xFactor);
     const scoreB =
       (config.fuelMaterial !== null && b.fuelMaterial === config.fuelMaterial ? 1 : 0) +
@@ -127,6 +136,7 @@ export function matchReactors(
       (config.fuelForm !== null && b.fuelForm === config.fuelForm ? 1 : 0) +
       countArrayMatches(b.coolantTags, config.coolant) +
       countArrayMatches(bChem, config.coolantChemistry) +
+      (config.spectrum !== null && b.spectrum === config.spectrum ? 1 : 0) +
       countArrayMatches(b.xFactorTags, config.xFactor);
 
     if (scoreB !== scoreA) return scoreB - scoreA;

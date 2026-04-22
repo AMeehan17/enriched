@@ -39,9 +39,12 @@ import {
   COOLANT_CHEMISTRY_IDS,
   WATER_CHEMISTRY_IDS,
   SALT_CHEMISTRY_IDS,
+  SPECTRUM_IDS,
   X_FACTOR_IDS,
   REACTOR_TYPES,
   REACTOR_PLAUSIBILITY_BOUNDS,
+  type StepExplainer,
+  type StepExplainerKey,
   type TaxonomyTag,
 } from "../lib/reactor-types";
 import { isAllowedCitationHost } from "../lib/citation-allowlist";
@@ -204,14 +207,16 @@ function validateBibKeyUniqueness(): void {
     }
   }
 
-  // Module 2: taxonomy tags (schema v3: fuel material + kickstarter + fuel form
-  // + coolant + coolant chemistry + x-factor)
+  // Module 2: taxonomy tags (schema v4: fuel material + kickstarter + fuel
+  // form + coolant + coolant chemistry + spectrum + x-factor + step
+  // explainers)
   const {
     fuelMaterialTags,
     kickstarterTags,
     fuelFormTags,
     coolantTags,
     coolantChemistryTags,
+    spectrumTags,
     xFactorTags,
   } = reactorTaxonomy;
   const allTags = [
@@ -232,12 +237,27 @@ function validateBibKeyUniqueness(): void {
       tag: t,
       path: `taxonomy.coolantChemistry[${i}]`,
     })),
+    ...spectrumTags.map((t, i) => ({
+      tag: t,
+      path: `taxonomy.spectrum[${i}]`,
+    })),
     ...xFactorTags.map((t, i) => ({ tag: t, path: `taxonomy.xFactor[${i}]` })),
   ];
   for (const { tag, path } of allTags) {
     for (const [ci, c] of tag.citations.entries()) {
       if (c.bibtex_key) {
         check(c.bibtex_key, `${path}.citations[${ci}]`);
+      }
+    }
+  }
+  // Step explainers carry their own citations
+  for (const [i, e] of reactorTaxonomy.stepExplainers.entries()) {
+    for (const [ci, c] of e.citations.entries()) {
+      if (c.bibtex_key) {
+        check(
+          c.bibtex_key,
+          `taxonomy.stepExplainers[${i}].citations[${ci}]`,
+        );
       }
     }
   }
@@ -288,6 +308,31 @@ function validateTaxonomyTag(
   }
 }
 
+function validateStepExplainer(
+  path: string,
+  e: StepExplainer,
+  validKeys: ReadonlySet<StepExplainerKey>,
+): void {
+  if (!validKeys.has(e.key)) {
+    err(`${path}.key`, `unknown stepExplainer key "${e.key}"`);
+  }
+  if (!e.title) err(`${path}.title`, "missing");
+  if (!e.body) err(`${path}.body`, "missing");
+  if (!e.citations || e.citations.length === 0) {
+    err(`${path}.citations`, "must have ≥1 citation");
+  } else {
+    for (const [i, c] of e.citations.entries()) {
+      validateCitation(`${path}.citations[${i}]`, c);
+      if (c.url && !isAllowedCitationHost(c.url)) {
+        err(
+          `${path}.citations[${i}].url`,
+          `host not in citation allowlist: "${c.url}"`,
+        );
+      }
+    }
+  }
+}
+
 function validateTaxonomy(): void {
   const {
     fuelMaterialTags,
@@ -295,7 +340,9 @@ function validateTaxonomy(): void {
     fuelFormTags,
     coolantTags,
     coolantChemistryTags,
+    spectrumTags,
     xFactorTags,
+    stepExplainers,
   } = reactorTaxonomy;
 
   // Generic validator for a taxonomy dimension: check every tag, dedupe IDs,
@@ -332,6 +379,7 @@ function validateTaxonomy(): void {
     coolantChemistryTags,
     [...COOLANT_CHEMISTRY_IDS],
   );
+  validateDimension("spectrum", spectrumTags, [...SPECTRUM_IDS]);
 
   // X-Factor has additional group validation
   const xIdSet = new Set<string>();
@@ -353,6 +401,40 @@ function validateTaxonomy(): void {
       err("taxonomy.xFactor", `missing tag for X-Factor ID "${id}"`);
     }
   }
+
+  // Step explainers — one per step key, all keys represented.
+  const validExplainerKeys: ReadonlySet<StepExplainerKey> = new Set<
+    StepExplainerKey
+  >([
+    "fuelMaterial",
+    "kickstarter",
+    "fuelForm",
+    "coolant",
+    "coolantChemistry",
+    "spectrum",
+    "size",
+    "capabilities",
+  ]);
+  const seenExplainerKeys = new Set<string>();
+  for (const [i, e] of stepExplainers.entries()) {
+    validateStepExplainer(
+      `taxonomy.stepExplainers[${i}]`,
+      e,
+      validExplainerKeys,
+    );
+    if (seenExplainerKeys.has(e.key)) {
+      err(
+        `taxonomy.stepExplainers[${i}].key`,
+        `duplicate stepExplainer key "${e.key}"`,
+      );
+    }
+    seenExplainerKeys.add(e.key);
+  }
+  for (const k of validExplainerKeys) {
+    if (!seenExplainerKeys.has(k)) {
+      err("taxonomy.stepExplainers", `missing explainer for key "${k}"`);
+    }
+  }
 }
 
 // ─── Module 2: Reactor design validation ────────────────────────────
@@ -365,6 +447,7 @@ function validateReactors(): void {
   const coolantChemistrySet = new Set<string>(COOLANT_CHEMISTRY_IDS);
   const waterChemistrySet = new Set<string>(WATER_CHEMISTRY_IDS);
   const saltChemistrySet = new Set<string>(SALT_CHEMISTRY_IDS);
+  const spectrumSet = new Set<string>(SPECTRUM_IDS);
   const xSet = new Set<string>(X_FACTOR_IDS);
   const reactorTypeSet = new Set<string>(REACTOR_TYPES);
   const idSet = new Set<string>();
@@ -525,6 +608,7 @@ function validateReactors(): void {
             fuelFormSet.has(step.tagRef) ||
             coolantSet.has(step.tagRef) ||
             coolantChemistrySet.has(step.tagRef) ||
+            spectrumSet.has(step.tagRef) ||
             xSet.has(step.tagRef);
           if (!valid) {
             err(
@@ -632,12 +716,20 @@ function main(): void {
     fuelFormTags: ffT,
     coolantTags: ct,
     coolantChemistryTags: cct,
+    spectrumTags: st,
     xFactorTags: xt,
+    stepExplainers: se,
   } = reactorTaxonomy;
   const tagCount =
-    ft.length + kt.length + ffT.length + ct.length + cct.length + xt.length;
+    ft.length +
+    kt.length +
+    ffT.length +
+    ct.length +
+    cct.length +
+    st.length +
+    xt.length;
   console.log(
-    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${tagCount} taxonomy tags, ${reactors.length} reactor designs, all citations unique and within plausibility bounds.`,
+    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${tagCount} taxonomy tags, ${se.length} step explainers, ${reactors.length} reactor designs, all citations unique and within plausibility bounds.`,
   );
 }
 

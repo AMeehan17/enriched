@@ -48,7 +48,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
     fuelForm: "ceramic-pellets",
     coolantTags: ["water"],
     coolantChemistry: "light-water",
-    xFactorTags: ["large", "first-of-kind-licensed"],
+    xFactorTags: ["large"],
     outletTempC: 321,
     spectrum: "thermal",
     reactorType: "PWR",
@@ -114,7 +114,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
     fuelForm: "ceramic-pellets",
     coolantTags: ["water"],
     coolantChemistry: "light-water",
-    xFactorTags: ["small", "walk-away-safe", "first-of-kind-licensed"],
+    xFactorTags: ["small", "walk-away-safe"],
     outletTempC: 316,
     spectrum: "thermal",
     reactorType: "PWR",
@@ -140,8 +140,7 @@ export const reactors: ReadonlyArray<ReactorDesign> = [
         tagRef: "walk-away-safe",
       },
       {
-        text: "First SMR to receive NRC Standard Design Approval (2023), proving the regulatory pathway for small modular designs.",
-        tagRef: "first-of-kind-licensed",
+        text: "First SMR to receive NRC Standard Design Approval (2023) — but that regulatory status is a milestone, not a design capability, and lives outside the chip taxonomy.",
       },
     ],
     citations: [

@@ -7,6 +7,7 @@ import type {
   FuelFormId,
   CoolantId,
   CoolantChemistryId,
+  SpectrumId,
   XFactorId,
 } from "@/lib/reactor-types";
 import type { MatchResult } from "@/lib/reactor-match";
@@ -19,6 +20,7 @@ interface MatchListProps {
   selectedFuelForm: FuelFormId | null;
   selectedCoolant: CoolantId[];
   selectedCoolantChemistry: CoolantChemistryId[];
+  selectedSpectrum: SpectrumId | null;
   selectedXFactor: XFactorId[];
   result: MatchResult;
   onClearAll: () => void;
@@ -31,6 +33,7 @@ export function MatchList({
   selectedFuelForm,
   selectedCoolant,
   selectedCoolantChemistry,
+  selectedSpectrum,
   selectedXFactor,
   result,
   onClearAll,
@@ -83,6 +86,7 @@ export function MatchList({
                 selectedFuelForm={selectedFuelForm}
                 selectedCoolant={selectedCoolant}
                 selectedCoolantChemistry={selectedCoolantChemistry}
+                selectedSpectrum={selectedSpectrum}
                 selectedXFactor={selectedXFactor}
               />
             </li>

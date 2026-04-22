@@ -7,6 +7,7 @@ import type {
   FuelFormId,
   CoolantId,
   CoolantChemistryId,
+  SpectrumId,
   XFactorId,
 } from "@/lib/reactor-types";
 import { ShareButton } from "./ShareButton";
@@ -18,6 +19,7 @@ interface SpecCardProps {
   fuelForm: FuelFormId | null;
   coolant: CoolantId[];
   coolantChemistry: CoolantChemistryId[];
+  spectrum: SpectrumId | null;
   xFactor: XFactorId[];
   /** Used to split xFactor into Size vs Capability rows. */
   scaleIdSet: ReadonlySet<string>;
@@ -44,6 +46,7 @@ export function SpecCard({
   fuelForm,
   coolant,
   coolantChemistry,
+  spectrum,
   xFactor,
   scaleIdSet,
   matchCount,
@@ -69,6 +72,9 @@ export function SpecCard({
     (id) =>
       taxonomy.coolantChemistryTags.find((t) => t.id === id)?.label ?? id,
   );
+  const spectrumLabel = spectrum
+    ? taxonomy.spectrumTags.find((t) => t.id === spectrum)?.label ?? spectrum
+    : null;
   const sizeLabels = xFactor
     .filter((id) => scaleIdSet.has(id))
     .map((id) => taxonomy.xFactorTags.find((t) => t.id === id)?.label ?? id);
@@ -108,6 +114,7 @@ export function SpecCard({
       {chemistryLabels.length > 0 ? (
         <MultiRow label="Chemistry" values={chemistryLabels} />
       ) : null}
+      <SingleRow label="Spectrum" value={spectrumLabel} />
       <MultiRow label="Size" values={sizeLabels} />
       <MultiRow label="Capability" values={capabilityLabels} />
 

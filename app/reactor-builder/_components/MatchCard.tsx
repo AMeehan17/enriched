@@ -9,6 +9,7 @@ import type {
   FuelFormId,
   CoolantId,
   CoolantChemistryId,
+  SpectrumId,
   XFactorId,
 } from "@/lib/reactor-types";
 
@@ -20,6 +21,7 @@ interface MatchCardProps {
   selectedFuelForm: FuelFormId | null;
   selectedCoolant: CoolantId[];
   selectedCoolantChemistry: CoolantChemistryId[];
+  selectedSpectrum: SpectrumId | null;
   selectedXFactor: XFactorId[];
 }
 
@@ -38,6 +40,7 @@ export function MatchCard({
   selectedFuelForm,
   selectedCoolant,
   selectedCoolantChemistry,
+  selectedSpectrum,
   selectedXFactor,
 }: MatchCardProps) {
   const [whyOpen, setWhyOpen] = useState(false);
@@ -53,6 +56,9 @@ export function MatchCard({
   const chemistryTagMap = new Map(
     taxonomy.coolantChemistryTags.map((t) => [t.id, t]),
   );
+  const spectrumTag = taxonomy.spectrumTags.find(
+    (t) => t.id === reactor.spectrum,
+  );
   const xTagMap = new Map(taxonomy.xFactorTags.map((t) => [t.id, t]));
 
   const selectedCoolantSet = new Set<string>(selectedCoolant);
@@ -66,6 +72,8 @@ export function MatchCard({
   const kickstarterMatched =
     selectedKickstarter !== null && selectedKickstarter === reactor.kickstarter;
   const fuelFormMatched = selectedFuelForm === reactor.fuelForm;
+  const spectrumMatched =
+    selectedSpectrum !== null && selectedSpectrum === reactor.spectrum;
 
   return (
     <article className="border-t border-[var(--color-rule)] py-[var(--spacing-8)] last:border-b last:border-[var(--color-rule)] grid grid-cols-1 gap-[var(--spacing-6)]">
@@ -128,6 +136,9 @@ export function MatchCard({
             label={chemistryTag.label}
             matched={selectedChemistrySet.has(chemistryTag.id)}
           />
+        ) : null}
+        {spectrumTag ? (
+          <TagPill label={spectrumTag.label} matched={spectrumMatched} />
         ) : null}
         {reactor.xFactorTags.map((id) => {
           const tag = xTagMap.get(id);

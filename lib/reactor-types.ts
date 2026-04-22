@@ -14,14 +14,17 @@ import type { Citation } from "./data-types";
  * The validator (scripts/validate-data.ts) enforces schema correctness,
  * citation allowlist membership, plausibility bounds, and tag validity.
  *
- * SCHEMA v3 (2026-04-20): coolant is now a two-step drill-down. The
- * parent coolant set is 7 families (water, helium, molten-salt, sodium,
- * lead, lead-bismuth, heat-pipes). A conditional child dimension picks
- * the specific chemistry when the parent is water (light vs heavy) or
- * molten-salt (FLiBe / FLiNaK / Chloride). Mirrors the fuel material →
- * fuel form pattern.
+ * SCHEMA v4 (2026-04-21): added neutron spectrum as a user-pickable
+ * dimension between coolant chemistry and size. Single-select. Physics
+ * coupling: coolant choice and capability choices (fuel-breeder,
+ * waste-burner) bidirectionally lock spectrum, surfacing the Thorium
+ * thermal-breeding exception as a teaching moment. Also added
+ * stepExplainers — per-step "why this decision has massive ramifications"
+ * content rendered via a `(?)` header affordance on every step.
  *
  * Prior history:
+ *   v3 (2026-04-20): coolant split into parent family + optional chemistry
+ *     drill-down (water → light/heavy; molten-salt → FLiBe/FLiNaK/Chloride).
  *   v2 (2026-04-20): fuel dimension split into fissile element, optional
  *     kickstarter, and fuel form. Added reactorType derived field.
  */
@@ -128,6 +131,19 @@ export const SALT_CHEMISTRY_IDS: readonly CoolantChemistryId[] = [
   "chloride-salt",
 ] as const;
 
+// ─── Spectrum IDs (v4) ──────────────────────────────────────────────
+// Neutron spectrum is what the reactor is *for*. Thermal spectrum makes
+// cheap electricity; fast spectrum enables breeding and actinide
+// burning. Thorium is the exception that breeds in thermal — the whole
+// reason this dimension is worth a dedicated step.
+export type SpectrumId = "thermal" | "fast" | "epithermal";
+
+export const SPECTRUM_IDS: readonly SpectrumId[] = [
+  "thermal",
+  "fast",
+  "epithermal",
+] as const;
+
 // ─── X-Factor IDs (unchanged from v1) ───────────────────────────────
 export type XFactorId =
   | "micro"
@@ -138,7 +154,6 @@ export type XFactorId =
   | "load-following"
   | "process-heat"
   | "thermal-storage"
-  | "first-of-kind-licensed"
   | "fuel-breeder"
   | "waste-burner"
   | "non-proliferative";
@@ -152,7 +167,6 @@ export const X_FACTOR_IDS: readonly XFactorId[] = [
   "load-following",
   "process-heat",
   "thermal-storage",
-  "first-of-kind-licensed",
   "fuel-breeder",
   "waste-burner",
   "non-proliferative",
@@ -210,6 +224,7 @@ export interface WhyChainStep {
     | KickstarterId
     | CoolantId
     | CoolantChemistryId
+    | SpectrumId
     | XFactorId;
 }
 
@@ -237,6 +252,31 @@ export interface ReactorDesign {
   citations: Citation[];
 }
 
+// ─── Step explainer (v4) ─────────────────────────────────────────────
+// Per-step "why this decision has massive ramifications" content. Shown
+// in a popover triggered by a `(?)` affordance next to the step header.
+// Keyed by step to keep content co-located in data-src alongside tags.
+export type StepExplainerKey =
+  | "fuelMaterial"
+  | "kickstarter"
+  | "fuelForm"
+  | "coolant"
+  | "coolantChemistry"
+  | "spectrum"
+  | "size"
+  | "capabilities";
+
+export interface StepExplainer {
+  key: StepExplainerKey;
+  /** Short title used in the popover header. */
+  title: string;
+  /** 2–4 sentences about the *consequence* space (not mechanism). */
+  body: string;
+  /** ≥1 citation per explainer — keeps Enriched's "data does the
+      talking" discipline at the step level too. */
+  citations: Citation[];
+}
+
 // ─── Taxonomy collections ───────────────────────────────────────────
 export interface ReactorTaxonomy {
   fuelMaterialTags: ReadonlyArray<TaxonomyTag & { id: FuelMaterialId }>;
@@ -246,26 +286,30 @@ export interface ReactorTaxonomy {
   coolantChemistryTags: ReadonlyArray<
     TaxonomyTag & { id: CoolantChemistryId }
   >;
+  spectrumTags: ReadonlyArray<TaxonomyTag & { id: SpectrumId }>;
   xFactorTags: ReadonlyArray<
     TaxonomyTag & { id: XFactorId; group: XFactorGroup }
   >;
+  stepExplainers: ReadonlyArray<StepExplainer>;
 }
 
 // ─── Output JSON shapes ─────────────────────────────────────────────
 export interface TaxonomyJson {
   lastUpdated: string;
-  schemaVersion: 3;
+  schemaVersion: 4;
   fuelMaterial: ReadonlyArray<TaxonomyTag>;
   kickstarter: ReadonlyArray<TaxonomyTag>;
   fuelForm: ReadonlyArray<TaxonomyTag>;
   coolant: ReadonlyArray<TaxonomyTag>;
   coolantChemistry: ReadonlyArray<TaxonomyTag>;
+  spectrum: ReadonlyArray<TaxonomyTag>;
   xFactor: ReadonlyArray<TaxonomyTag>;
+  stepExplainers: ReadonlyArray<StepExplainer>;
 }
 
 export interface ReactorsJson {
   lastUpdated: string;
-  schemaVersion: 3;
+  schemaVersion: 4;
   reactors: ReadonlyArray<ReactorDesign>;
 }
 

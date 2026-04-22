@@ -5,6 +5,8 @@ import type {
   FuelFormId,
   CoolantId,
   CoolantChemistryId,
+  SpectrumId,
+  StepExplainer,
   XFactorId,
   XFactorGroup,
   ReactorTaxonomy,
@@ -13,7 +15,13 @@ import type {
 /**
  * REACTOR TAXONOMY — the F/C/X controlled vocabulary for Module 2.
  *
- * SCHEMA v3 (2026-04-20):
+ * SCHEMA v4 (2026-04-21):
+ *   Added neutron spectrum as a single-select filter dimension between
+ *   chemistry and size. Added stepExplainers — per-step "why this
+ *   decision has massive ramifications" content rendered via a `(?)`
+ *   header affordance.
+ *
+ * Prior schema v3 (2026-04-20):
  *   Fuel: fuel material → optional kickstarter → fuel form.
  *   Coolant: parent family (water, helium, molten-salt, sodium, lead,
  *   lead-bismuth, heat-pipes) → optional chemistry (light-water /
@@ -477,6 +485,217 @@ const coolantChemistryTags: ReadonlyArray<
   },
 ];
 
+// ─── SPECTRUM TAGS (v4) ─────────────────────────────────────────────
+// Thermal / fast / epithermal. The big physics lever — thermal is for
+// cheap electricity, fast unlocks breeding and waste burning, and
+// thorium in thermal is the exception that keeps this step open.
+
+const spectrumTags: ReadonlyArray<TaxonomyTag & { id: SpectrumId }> = [
+  {
+    id: "thermal",
+    label: "Thermal",
+    oneLineHook:
+      "Slowed neutrons, cheap LEU fuel, >90% of operating reactors. Cannot fission U-238 or most transuranics.",
+    popoverBody:
+      "A thermal-spectrum reactor moderates its neutrons down from fission energies (~2 MeV) to thermal energies (~0.025 eV), where U-235's fission cross-section is roughly 500× higher than in the fast range. This enables low-enriched fuel and a simpler, cheaper reactor. The trade-off: thermal neutrons can't efficiently fission U-238 or minor actinides, so thermal reactors can't breed (except on the thorium cycle) and can't burn long-lived waste. All current operating commercial reactors are thermal; so are most in-development SMRs.",
+    citations: [
+      {
+        bibtex_key: "wna2024nuclearreactors_thermal",
+        author: "World Nuclear Association",
+        title: "Nuclear Power Reactors",
+        year: 2024,
+        publisher: "World Nuclear Association",
+        url: "https://world-nuclear.org/information-library/nuclear-fuel-cycle/nuclear-power-reactors/nuclear-power-reactors",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    id: "fast",
+    label: "Fast",
+    oneLineHook:
+      "Unmoderated neutrons. Breeds fuel from U-238, fissions long-lived actinides, needs HALEU or Pu-239.",
+    popoverBody:
+      "A fast-spectrum reactor keeps its neutrons at or near fission energies. Fissile cross-sections are far lower than in a thermal reactor, so the core must be more compact and the fuel more concentrated (typically HALEU >15% U-235, or plutonium). The payoff: fast neutrons efficiently fission U-238 (breeding Pu-239) and the long-lived minor actinides (Np, Am, Cm) that make spent fuel hazardous for hundreds of thousands of years. Fast reactors are the only path to dramatic fuel-supply extension (60× more energy per unit of mined uranium) and to transmuting the worst of nuclear waste. Over 400 reactor-years of operating experience worldwide, led by the Soviet/Russian BN series.",
+    citations: [
+      {
+        bibtex_key: "wna2024fastreactors_fast",
+        author: "World Nuclear Association",
+        title: "Fast Neutron Reactors",
+        year: 2024,
+        publisher: "World Nuclear Association",
+        url: "https://world-nuclear.org/information-library/current-and-future-generation/fast-neutron-reactors",
+        accessed: "2026-04-21",
+      },
+      {
+        bibtex_key: "iaea2024fastreactors_fast",
+        author: "International Atomic Energy Agency",
+        title: "Fast Reactors",
+        year: 2024,
+        publisher: "IAEA",
+        url: "https://www.iaea.org/topics/fast-reactors",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    id: "epithermal",
+    label: "Epithermal",
+    oneLineHook:
+      "Intermediate spectrum — partial moderation. Rare in power reactors; seen in some research and hybrid designs.",
+    popoverBody:
+      "Epithermal reactors operate between the thermal and fast spectrums, with partial moderation. The neutron energy distribution lands in the resonance region where many nuclides have sharp absorption peaks, which can be exploited for specific fuel-cycle or isotope-production goals. Almost unused in commercial power reactors. Some research reactors and a handful of hybrid advanced concepts target this regime. Included here for completeness — expect few or zero matches against current in-development commercial designs.",
+    citations: [
+      {
+        bibtex_key: "oecd2020nuclearphysics_epithermal",
+        author: "OECD Nuclear Energy Agency",
+        title: "Nuclear Science and Data",
+        year: 2020,
+        publisher: "OECD/NEA",
+        url: "https://www.oecd-nea.org/jcms/pl_14932/nuclear-science-and-data",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+];
+
+// ─── STEP EXPLAINERS (v4) ───────────────────────────────────────────
+// Per-step "why this decision has massive ramifications" content.
+// Rendered as a `(?)` header affordance on every step. Sits on top of
+// the existing per-tag popovers so the user can learn both what a
+// specific chip means AND why this class of choice matters.
+
+const stepExplainers: ReadonlyArray<StepExplainer> = [
+  {
+    key: "fuelMaterial",
+    title: "Your fissile isotope decides what physics is even possible.",
+    body: "U-235 is the only naturally fissile material you can mine, and even then you need enrichment — a licensed, multi-billion-dollar industrial process with serious proliferation implications. Th-232 is 3–4× more abundant than uranium but isn't fissile at all: it's fertile, and only becomes U-233 after transmutation. Pu-239 doesn't exist in nature — it's bred inside operating reactors. Enrichment cost, waste profile, proliferation risk, and the entire downstream fuel cycle all hang off this first choice.",
+    citations: [
+      {
+        bibtex_key: "wna2024enrichment_stepfuelmaterial",
+        author: "World Nuclear Association",
+        title: "Uranium Enrichment",
+        year: 2024,
+        publisher: "World Nuclear Association",
+        url: "https://world-nuclear.org/information-library/nuclear-fuel-cycle/conversion-enrichment-and-fabrication/uranium-enrichment",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    key: "kickstarter",
+    title: "A thorium reactor cannot start itself.",
+    body: "Th-232 absorbs a neutron and transmutes (via protactinium-233) into fissile U-233. That takes ~27 days and a source of free neutrons — which means a thorium reactor always needs a fissile kickstarter to light the first chain reaction. The choice of kickstarter (enriched U-235 or recycled Pu-239) decides which existing fuel supply chain the design depends on, and whether the reactor is also a waste-burner for spent LWR plutonium.",
+    citations: [
+      {
+        bibtex_key: "iaea2005thorium_stepkickstarter",
+        author: "International Atomic Energy Agency",
+        title: "Thorium Fuel Cycle — Potential Benefits and Challenges",
+        year: 2005,
+        publisher: "IAEA",
+        url: "https://www.iaea.org/publications/7192/thorium-fuel-cycle-potential-benefits-and-challenges",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    key: "fuelForm",
+    title: "Form decides pressure, temperature, safety envelope, and supply chain.",
+    body: "Ceramic pellets are the workhorse — 50 years of operating experience, supply chain in place, and physics everyone in the industry understands. TRISO particles retain fission products up to 1600°C, so the reactor physically cannot melt under credible conditions. Metallic fuel expands reactivity-negative when hot, making the reactor inherently safe against loss-of-flow. Molten-salt fuel eliminates solid fuel fabrication entirely — but locks coolant to a salt chemistry. Each form closes doors on the rest of the design.",
+    citations: [
+      {
+        bibtex_key: "wna2024fuel_stepfuelform",
+        author: "World Nuclear Association",
+        title: "Nuclear Fuel",
+        year: 2024,
+        publisher: "World Nuclear Association",
+        url: "https://world-nuclear.org/information-library/nuclear-fuel-cycle/nuclear-power-reactors/nuclear-fuel",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    key: "coolant",
+    title: "Coolant defines outlet temperature, pressure, and the entire safety envelope.",
+    body: "A water reactor at 320°C and 155 bar, a sodium reactor at 530°C and atmospheric pressure, and a helium reactor at 750°C are different industries. Each has its own materials science, supply chain, licensing history, failure modes, and economics. Coolant choice also silently determines neutron spectrum: water moderates, sodium doesn't, molten-salt depends on chemistry. This is the most consequential physical decision in the reactor.",
+    citations: [
+      {
+        bibtex_key: "nrc2024reactortypes_stepcoolant",
+        author: "U.S. Nuclear Regulatory Commission",
+        title: "Types of Nuclear Reactors",
+        year: 2024,
+        publisher: "NRC",
+        url: "https://www.nrc.gov/reading-rm/basic-ref/students/reactors.html",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    key: "coolantChemistry",
+    title: "One line on a P&ID changes what reactor you've built.",
+    body: "Light water vs heavy water sets the enrichment floor: heavy water (D₂O) absorbs so few neutrons that natural uranium can sustain a chain reaction, eliminating the enrichment step entirely. FLiBe and FLiNaK fluoride salts moderate neutrons and suit thermal-spectrum designs. Chloride salt doesn't moderate — it's a fast-spectrum salt, which is how TerraPower's MCFR can be both a molten-salt reactor and a waste-burner. Same coolant category, opposite physics.",
+    citations: [
+      {
+        bibtex_key: "iaea2002heavywater_stepchemistry",
+        author: "International Atomic Energy Agency",
+        title: "Heavy Water Reactors: Status and Projected Development",
+        year: 2002,
+        publisher: "IAEA",
+        url: "https://www.iaea.org/publications/6390/heavy-water-reactors-status-and-projected-development",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    key: "spectrum",
+    title: "Thermal vs fast decides what your reactor is for.",
+    body: "Thermal spectrum is for cheap electricity from cheap LEU fuel — the whole operating global fleet. Fast spectrum unlocks breeding (60× more energy from the same mined uranium) and waste burning (transmuting long-lived actinides into short-lived fission products). Most fuel cycles force this choice on you via coolant physics. Thorium is the exception that keeps this decision interesting: Th-232 breeds in a thermal spectrum where U-238 cannot, which is the entire reason thorium MSRs exist as a credible path.",
+    citations: [
+      {
+        bibtex_key: "wna2024fastreactors_stepspectrum",
+        author: "World Nuclear Association",
+        title: "Fast Neutron Reactors",
+        year: 2024,
+        publisher: "World Nuclear Association",
+        url: "https://world-nuclear.org/information-library/current-and-future-generation/fast-neutron-reactors",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    key: "size",
+    title: "Scale is economics, not physics.",
+    body: "Micro (<20 MWe) is truck-transportable and siteable anywhere — remote mines, military bases, disaster zones. Small (20–200 MWe) is factory-manufactured in volume, shipped and assembled on site. Mid (200–700 MWe) hits the unit-economics sweet spot for grid baseload. Large (>700 MWe) delivers the cheapest MWh at steady state — if you can finance the megaproject and finish it on schedule. Vogtle 3 and 4 took 15 years and $35B; VOYGR modules ship from a factory in months.",
+    citations: [
+      {
+        bibtex_key: "iaea2024smr_stepsize",
+        author: "International Atomic Energy Agency",
+        title: "Small Modular Reactors",
+        year: 2024,
+        publisher: "IAEA",
+        url: "https://www.iaea.org/topics/small-modular-reactors",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+  {
+    key: "capabilities",
+    title: "Capabilities are not free. Each one closes doors.",
+    body: "Waste-burner demands fast spectrum. Process heat demands outlet temperatures above 500°C, which demands a non-water coolant. Thermal storage demands a coolant compatible with a molten-salt TES loop. Walk-away-safe is a property of the physics (fuel + coolant + core geometry), not a system you bolt on afterward. The more capabilities you stack, the narrower the set of compatible designs — usually to zero.",
+    citations: [
+      {
+        bibtex_key: "wna2024economics_stepcapabilities",
+        author: "World Nuclear Association",
+        title: "Economics of Nuclear Power",
+        year: 2024,
+        publisher: "World Nuclear Association",
+        url: "https://world-nuclear.org/information-library/economic-aspects/economics-of-nuclear-power",
+        accessed: "2026-04-21",
+      },
+    ],
+  },
+];
+
 // ─── X-FACTOR TAGS ──────────────────────────────────────────────────
 
 const xFactorTags: ReadonlyArray<
@@ -639,26 +858,6 @@ const xFactorTags: ReadonlyArray<
     ],
   },
   {
-    id: "first-of-kind-licensed",
-    label: "First-of-Kind Licensed",
-    group: "capability",
-    oneLineHook:
-      "Has received or is in active NRC/regulatory review for construction or operation.",
-    popoverBody:
-      "A first-of-a-kind (FOAK) licensed reactor has passed through the regulatory review process that proves the design is safe enough to build and operate. In the US, this means NRC design certification or a combined construction and operating license (COL). Only a handful of advanced reactor designs have reached this milestone: NuScale's VOYGR received NRC design certification in 2023. The NRC is currently reviewing applications from X-energy (Xe-100), Kairos Power (KP-FHR), and others under various licensing pathways.",
-    citations: [
-      {
-        bibtex_key: "nrc2024advreactors_first-of-kind-licensed",
-        author: "U.S. Nuclear Regulatory Commission",
-        title: "Advanced Reactors (non-LWR)",
-        year: 2024,
-        publisher: "NRC",
-        url: "https://www.nrc.gov/reactors/new-reactors/advanced.html",
-        accessed: "2026-04-20",
-      },
-    ],
-  },
-  {
     id: "fuel-breeder",
     label: "Fuel Breeder",
     group: "capability",
@@ -728,5 +927,7 @@ export const reactorTaxonomy: ReactorTaxonomy = {
   fuelFormTags,
   coolantTags,
   coolantChemistryTags,
+  spectrumTags,
   xFactorTags,
+  stepExplainers,
 };

@@ -6,6 +6,7 @@ import type {
   FuelFormId,
   FuelMaterialId,
   KickstarterId,
+  SpectrumId,
   XFactorId,
 } from "@/lib/reactor-types";
 
@@ -15,6 +16,7 @@ export interface PresetConfig {
   ff: FuelFormId | null;
   c: CoolantId[];
   cc: CoolantChemistryId[];
+  s: SpectrumId | null;
   x: XFactorId[];
 }
 
@@ -55,6 +57,7 @@ const PRESETS: readonly Preset[] = [
       ff: "metal",
       c: ["sodium"],
       cc: [],
+      s: "fast",
       x: ["walk-away-safe"],
     },
     hint: "Passive safety as a coolant decision — the Natrium archetype",
@@ -67,6 +70,7 @@ const PRESETS: readonly Preset[] = [
       ff: "triso",
       c: ["helium"],
       cc: [],
+      s: "thermal",
       x: ["process-heat"],
     },
     hint: "Industrial heat, not just electricity — the Xe-100 archetype",
@@ -79,19 +83,21 @@ const PRESETS: readonly Preset[] = [
       ff: "molten-salt",
       c: ["molten-salt"],
       cc: ["flibe"],
+      s: "thermal",
       x: ["fuel-breeder"],
     },
     hint: "Breeding fuel from fertile isotopes — the Copenhagen Atomics archetype",
   },
   {
-    label: "Licensed small modular LWR",
+    label: "Walk-away-safe small modular LWR",
     config: {
       fe: "u-235",
       ks: null,
       ff: "ceramic-pellets",
       c: ["water"],
       cc: ["light-water"],
-      x: ["small", "first-of-kind-licensed"],
+      s: "thermal",
+      x: ["small", "walk-away-safe"],
     },
     hint: "The SMR path regulators already know — the VOYGR archetype",
   },

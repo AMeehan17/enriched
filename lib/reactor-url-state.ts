@@ -8,6 +8,7 @@ import {
   FUEL_FORM_IDS,
   COOLANT_IDS,
   COOLANT_CHEMISTRY_IDS,
+  SPECTRUM_IDS,
   X_FACTOR_IDS,
   type CoolantId,
   type CoolantChemistryId,
@@ -17,16 +18,17 @@ import {
 /**
  * URL state parsers for Module 2 (Reactor Builder) — SCHEMA v3.
  *
- * URL schema:
+ * URL schema (v4):
  *   /reactor-builder
  *     ?fe=th-232                   (fuel material, single)
  *     &ks=u-235-kickstart           (kickstarter, single, optional)
  *     &ff=molten-salt               (fuel form, single)
  *     &c=molten-salt,helium         (coolant parent, array)
  *     &cc=flibe,light-water         (coolant chemistry, array)
+ *     &s=thermal                    (spectrum, single — v4)
  *     &x=walk-away-safe,process-heat (x-factor, array)
  *
- * Single-value dimensions (fe, ks, ff) serialize as their raw string id
+ * Single-value dimensions (fe, ks, ff, s) serialize as their raw string id
  * via parseAsStringLiteral. Default is null.
  *
  * Array dimensions (c, cc, x) use parseAsArrayOf for multi-select filtering.
@@ -62,6 +64,11 @@ export const coolantChemistryParser = parseAsArrayOf(
   ",",
 ).withDefault([] as CoolantChemistryId[]);
 
+// ─── spectrum (single, nullable) — v4 ───────────────────────────────
+export const spectrumParser = parseAsStringLiteral(
+  SPECTRUM_IDS,
+).withDefault(null as never).withOptions({ clearOnDefault: true });
+
 // ─── x-factor (array) ───────────────────────────────────────────────
 export const xFactorParser = parseAsArrayOf(
   parseAsStringLiteral(X_FACTOR_IDS),
@@ -75,5 +82,6 @@ export const REACTOR_BUILDER_SEARCH_PARAMS = {
   ff: fuelFormParser,
   c: coolantParser,
   cc: coolantChemistryParser,
+  s: spectrumParser,
   x: xFactorParser,
 } as const;

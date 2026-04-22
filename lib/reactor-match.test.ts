@@ -3,21 +3,23 @@ import { matchReactors, type MatchConfig } from "./reactor-match";
 import { reactors } from "../data-src/reactors";
 
 /**
- * Tests for matchReactors — schema v3.
+ * Tests for matchReactors — schema v4.
  *
  * Uses the real reactor data from data-src/reactors.ts so tests stay
  * grounded in actual content.
  *
- * Schema v3 starting set (coolant parent / chemistry):
- *   AP1000         u-235 / ceramic-pellets / water+light-water / PWR / large, FOAK
- *   VOYGR          u-235 / ceramic-pellets / water+light-water / PWR / small, walk-away-safe, FOAK
- *   Xe-100         u-235 / triso / helium / HTGR / small, walk-away-safe, process-heat
- *   BWRX-300       u-235 / ceramic-pellets / water+light-water / BWR / mid, walk-away-safe
- *   Natrium        u-235 / metal / sodium / SFR / mid, walk-away-safe, load-following,
+ * Schema v4 adds spectrum as a user-pickable filter dimension.
+ *
+ * Reactor set with spectrum annotation:
+ *   AP1000         u-235 / ceramic-pellets / water+light-water / thermal / large, FOAK
+ *   VOYGR          u-235 / ceramic-pellets / water+light-water / thermal / small, walk-away-safe, FOAK
+ *   Xe-100         u-235 / triso / helium / thermal / small, walk-away-safe, process-heat
+ *   BWRX-300       u-235 / ceramic-pellets / water+light-water / thermal / mid, walk-away-safe
+ *   Natrium        u-235 / metal / sodium / fast / mid, walk-away-safe, load-following,
  *                  thermal-storage, waste-burner
- *   KP-FHR         u-235 / triso / molten-salt+flibe / other / small, walk-away-safe, process-heat
- *   Copenhagen     th-232 + u-235-kickstart / molten-salt / molten-salt+flibe / MSR / small,
- *                  walk-away-safe, fuel-breeder, non-proliferative
+ *   KP-FHR         u-235 / triso / molten-salt+flibe / thermal / small, walk-away-safe, process-heat
+ *   Copenhagen     th-232 + u-235-kickstart / molten-salt+flibe / thermal (thorium!) /
+ *                  small, walk-away-safe, fuel-breeder, non-proliferative
  */
 
 const empty: MatchConfig = {
@@ -26,10 +28,11 @@ const empty: MatchConfig = {
   fuelForm: null,
   coolant: [],
   coolantChemistry: [],
+  spectrum: null,
   xFactor: [],
 };
 
-describe("matchReactors (schema v3)", () => {
+describe("matchReactors (schema v4)", () => {
   it("returns all reactors when no filters are set", () => {
     const result = matchReactors(empty, reactors);
     expect(result.results).toHaveLength(7);
@@ -175,6 +178,7 @@ describe("matchReactors (schema v3)", () => {
         fuelForm: "metal",
         coolant: ["sodium"],
         coolantChemistry: [],
+        spectrum: null,
         xFactor: ["thermal-storage"],
       },
       reactors,
@@ -191,6 +195,7 @@ describe("matchReactors (schema v3)", () => {
         fuelForm: "molten-salt",
         coolant: ["molten-salt"],
         coolantChemistry: ["flibe"],
+        spectrum: null,
         xFactor: [],
       },
       reactors,
@@ -244,7 +249,74 @@ describe("matchReactors (schema v3)", () => {
     ]);
   });
 
-  it("empty reactor list returns empty results", () => {
+  // ─── v4: spectrum dimension ──────────────────────────────────────
+
+  it("filters by spectrum thermal (6 of 7 reactors are thermal)", () => {
+    const result = matchReactors({ ...empty, spectrum: "thermal" }, reactors);
+    expect(result.results).toHaveLength(6);
+    expect(result.results.map((r) => r.id)).not.toContain("natrium");
+  });
+
+  it("filters by spectrum fast (Natrium is the only fast reactor)", () => {
+    const result = matchReactors({ ...empty, spectrum: "fast" }, reactors);
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]?.id).toBe("natrium");
+  });
+
+  it("thorium + thermal + fuel-breeder matches Copenhagen (thermal breeder)", () => {
+    // The thorium teaching moment: breeding in the thermal spectrum is
+    // normally impossible, but Th-232 → U-233 does it.
+    const result = matchReactors(
+      {
+        ...empty,
+        fuelMaterial: "th-232",
+        spectrum: "thermal",
+        xFactor: ["fuel-breeder"],
+      },
+      reactors,
+    );
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]?.id).toBe("copenhagen-atomics");
+  });
+
+  it("u-235 + thermal + fuel-breeder yields zero (U cannot thermally breed)", () => {
+    const result = matchReactors(
+      {
+        ...empty,
+        fuelMaterial: "u-235",
+        spectrum: "thermal",
+        xFactor: ["fuel-breeder"],
+      },
+      reactors,
+    );
+    // No current U-235 design is a thermal breeder.
+    expect(result.results).toHaveLength(0);
+    expect(result.noMatch).toBe(true);
+  });
+
+  it("waste-burner + thermal is an impossible combination", () => {
+    const result = matchReactors(
+      {
+        ...empty,
+        spectrum: "thermal",
+        xFactor: ["waste-burner"],
+      },
+      reactors,
+    );
+    expect(result.results).toHaveLength(0);
+    expect(result.noMatch).toBe(true);
+  });
+
+  it("spectrum + coolant AND narrows to one reactor", () => {
+    const result = matchReactors(
+      { ...empty, spectrum: "fast", coolant: ["sodium"] },
+      reactors,
+    );
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]?.id).toBe("natrium");
+  });
+
+  it("empty reactor list returns empty filter", () => {
     const result = matchReactors(
       { ...empty, fuelMaterial: "u-235" },
       [],
