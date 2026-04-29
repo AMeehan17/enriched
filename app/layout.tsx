@@ -35,12 +35,15 @@ export const metadata: Metadata = {
   title: "Enriched — Interactive Nuclear Energy Education",
   description:
     "Open-source interactive nuclear energy education. Beautiful, neutral, data-first. Toggle sources, normalize comparisons, watch the data tell the story.",
-  metadataBase: new URL("https://enriched.xyz"),
+  // The enriched.xyz domain isn't owned yet — canonical site is the
+  // Vercel preview alias. Update both metadataBase and openGraph.url
+  // here when the apex domain is registered + pointed at the project.
+  metadataBase: new URL("https://enriched-delta.vercel.app"),
   openGraph: {
     title: "Enriched — Interactive Nuclear Energy Education",
     description:
       "Compare energy sources across eight dimensions. Every number cited. Draw your own conclusions.",
-    url: "https://enriched.xyz",
+    url: "https://enriched-delta.vercel.app",
     siteName: "Enriched",
     locale: "en_US",
     type: "website",
