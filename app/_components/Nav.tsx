@@ -33,8 +33,12 @@ interface NavLink {
 // library) pivot — see docs/MODULE_2_SHELVED.md. The route stays live
 // for anyone with the URL, but isn't discoverable from the nav. To
 // re-enable, add: `{ href: "/reactor-builder", label: "Reactor Builder" }`.
+//
+// The Reference link deep-links to the first article (spectrum) for now —
+// a future /reference index page will replace this when article 2+ ships.
 const LINKS: readonly NavLink[] = [
   { href: "/compare", label: "Compare" },
+  { href: "/reference/spectrum", label: "Reference" },
 ] as const;
 
 export function Nav() {

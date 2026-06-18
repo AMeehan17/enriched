@@ -1,9 +1,20 @@
 import type { NextConfig } from "next";
+import createMDX from "@next/mdx";
+
+const withMDX = createMDX({
+  // Remark/rehype plugins (e.g., auto-linked headings or math) can be wired
+  // here later if Module 3 prose demands it. Empty for the stub.
+});
 
 const config: NextConfig = {
   // Strict mode is on by default in Next.js 16
   // We are not using image optimization in Ship 1 (no images)
   // We are not using i18n in Ship 1 (English only)
+
+  // Module 3 articles dynamic-import MDX from content/reference/<slug>.mdx
+  // rather than file-based MDX routes, but extending pageExtensions keeps
+  // future MDX-as-route experiments config-free.
+  pageExtensions: ["ts", "tsx", "md", "mdx"],
 
   // Pin the workspace root explicitly. Without this, Next.js scans upward
   // and may pick a stray lockfile in a parent directory as the root.
@@ -30,4 +41,4 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+export default withMDX(config);
