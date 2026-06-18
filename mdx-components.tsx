@@ -21,14 +21,25 @@ import { Cite } from "./lib/cells/Cite";
 import { Bibliography } from "./lib/cells/Bibliography";
 import { CellPlaceholder } from "./lib/cells/CellPlaceholder";
 import { MaxwellBoltzmannSlider } from "./lib/cells/MaxwellBoltzmannSlider";
+import { ChainReactionViz } from "./lib/cells/ChainReactionViz";
+import { ArticleLink } from "./lib/cells/ArticleLink";
 
 const mdxComponents: MDXComponents = {
-  // Citation system — available globally in every MDX file.
+  // Citation system + article cross-links — available globally in every MDX file.
   Cite,
   Bibliography,
+  ArticleLink,
 
-  // Module 3 article 1 cells — real component for M-B; placeholders elsewhere.
+  // Module 3 cells — real components for shipping cells; placeholders for
+  // cells that haven't landed yet. Both compose into MDX without an import.
   MaxwellBoltzmannSlider,
+  ChainReactionViz,
+  NuDistributionChart: () => (
+    <CellPlaceholder
+      title="ν probability distribution — U-235 thermal fission"
+      note="Shows the discrete probabilities of releasing 0, 1, 2, ... neutrons per fission. Coming next."
+    />
+  ),
   CrossSectionPlot: () => (
     <CellPlaceholder
       title="Cross-section log-log plot"

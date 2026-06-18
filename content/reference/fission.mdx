@@ -1,0 +1,59 @@
+export const metadata = {
+  title: "Fission and the Chain Reaction",
+  description:
+    "Every reactor needs a starter. The first neutron comes from a small lump of americium and beryllium; everything else — the chain reaction, the multiplication factor, the operator at the control panel — follows from there.",
+  publishedDate: "2026-06-18",
+  updatedDate: "2026-06-18",
+  author: "Enriched",
+  slug: "fission",
+};
+
+# Fission and the Chain Reaction
+
+A nuclear reactor is a controlled neutron population. The control is what makes it a reactor; the population is what makes it nuclear. To understand either, you have to start one generation earlier than most explanations bother to: with the first neutron.
+
+There is always a first neutron. It does not come from the uranium. It comes from somewhere else — usually a small sealed cylinder of americium and beryllium that an operator installs in the core before fuel is ever loaded. From that one neutron, a chain reaction either grows, holds steady, or dies, depending on a single number called the multiplication factor. This article is about where the first neutron comes from, what happens after it hits something, and why operators spend their careers thinking about that one number.
+
+## Where the first neutron comes from
+
+You can't bootstrap a chain reaction from zero neutrons. You can run a reactor for years without thinking about the start-up source again, but the first time you bring a freshly fueled core to criticality, you need a known intense supply of neutrons so the operators' instruments have something to measure. Without one, the approach to criticality is invisible — you can't see what the multiplication factor is doing until it's already done it<Cite id="iaea2005rrtechniques_fission" />.
+
+The standard solution is an **(α,n) source**: an alpha-emitting isotope mixed intimately with a light element, in a sealed metal capsule. The canonical choice is americium-241 and beryllium-9. Am-241 emits alpha particles as it decays (half-life 432 years, so the source lasts decades). When one of those alphas strikes a Be-9 nucleus, it fuses briefly to form C-12 and ejects a neutron in the process. One alpha in, one neutron out, give or take<Cite id="knoll2010radiation_fission" />.
+
+A typical Am-Be source emits 2–3 million neutrons per second from a few grams of material. That's not many — a running reactor produces 10²⁰ neutrons per second — but it's enough that an operator with a sensitive detector can watch the neutron count rise as control rods withdraw, and infer how close the core is to self-sustaining. The (α,n) source is the candle you light to see whether the room is full of gasoline.
+
+## What happens when the first neutron hits
+
+Now imagine that first neutron strikes a U-235 nucleus inside the fuel. With about a 6-in-7 chance, U-235 splits. The nucleus deforms, then snaps into two roughly equal fragments — typical pairs are krypton-92 and barium-141, or strontium-94 and xenon-140 — along with a burst of energy (≈ 200 MeV per event, the source of all the heat the reactor will ever produce) and a small number of free neutrons<Cite id="stacey2007physics_fission" />.
+
+That small number is the entire point. Per fission, U-235 releases on average **ν ≈ 2.43** prompt neutrons when struck by a slow neutron. The exact number varies fission to fission — sometimes zero, sometimes six — but the distribution is well-measured and the average is robust.
+
+<NuDistributionChart />
+
+The fact that ν is greater than one is the structural reason a chain reaction is possible at all. If U-235 released exactly one neutron per fission on average, you could maybe sustain a chain reaction at unity but you could never amplify or attenuate it; the reactor would be a fragile knife-edge with no margin for control. Because ν is roughly 2.4, you have a budget. You can afford to lose neutrons — to leakage, to absorption in materials that aren't fuel, to capture in U-238 — and still come out with enough survivors per generation to keep the chain alive.
+
+## From one neutron to many: the multiplication factor
+
+Imagine the population of neutrons inside the core, generation by generation. A "generation" is one cycle through the neutron lifecycle: born in a fission, scatter around, eventually either cause another fission or get absorbed without one. In a thermal reactor that whole cycle takes about 10⁻⁴ seconds.
+
+Define **k** as the ratio of fissions in generation n+1 to fissions in generation n. If k = 1, the number of fissions per second is constant — the reactor is operating at steady power. If k > 1, the fission rate (and the power) grows. If k < 1, it falls.
+
+<ChainReactionViz />
+
+Try the slider above. At k = 0.95 the population falls to about a third of its starting value in twenty generations — the chain reaction is shutting itself off. At k = 1.05 the population grows by a factor of about 2.65 in the same window — the reactor is running away. Twenty generations sounds like a lot until you remember the timescale: roughly two milliseconds in a thermal reactor. The window in which a designer or an operator can correct a misjudged k is short enough that the entire engineering apparatus of a reactor — control rods, coolant flow rates, instrumentation latencies, safety system response times — has to be designed around it.
+
+The multiplication factor itself decomposes into four physical quantities — the so-called four-factor formula relating fast-fission gain, resonance escape probability, thermal utilization, and the reproduction factor — each capturing one of the ways a generation can win or lose neutrons<Cite id="doe1993handbook_fission" />. We won't walk through the algebra here; the takeaway is that **k is a designed number**. Every choice a reactor designer makes — fuel enrichment, fuel geometry, moderator type, neutron poison concentration — is in service of holding k at exactly 1.000 during steady operation and providing the operator with controllable knobs to nudge it up or down on demand.
+
+## What operators actually do
+
+A reactor operator does not think in terms of individual neutrons. They think in terms of neutron flux — the population-level rate of neutron passage through a detector — and the rate at which that flux is changing. The detector is the population-view instrument; the flux trace on the panel is what a stable k looks like in practice.
+
+The operator's controls are physical things that change k. Inserting a control rod stuffs the core with a strong neutron absorber, lowering k. Withdrawing one raises k. Boron concentration in the coolant raises absorption uniformly across the core, lowering k. Temperature feedback — fuel and moderator both expand slightly as they warm, which usually reduces k in a thermal reactor — is the passive backstop that makes a well-designed reactor inherently stable against rapid power excursions<Cite id="nrc_reactor_concepts_fission" />.
+
+Everything an operator does, in steady-state operation, is in service of holding k at 1.000. Everything an operator does during startup is in service of bringing k from below 1.0 to exactly 1.0 in a controlled, instrumented way. Everything a designer does is in service of giving the operator enough margin in either direction to do that job safely.
+
+## What's next
+
+A chain reaction is one neutron causing the next. But the neutrons in that chain are not all the same. The energy of each neutron — measured in electron-volts, ranging across nine orders of magnitude — determines how likely it is to cause another fission, how far it travels before it does, and what materials it can or can't interact with on the way. The chain reaction works, but only if you decide what energies the neutrons in it should have. That's the next article: <ArticleLink slug="spectrum">Spectrum: Thermal or Fast</ArticleLink>.
+
+<Bibliography />

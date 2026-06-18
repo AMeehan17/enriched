@@ -21,16 +21,7 @@ import { sources } from "../data-src/sources";
 import { presets } from "../data-src/presets";
 import { reactorTaxonomy } from "../data-src/reactor-taxonomy";
 import { reactors } from "../data-src/reactors";
-import { citations as spectrumCitations } from "../data-src/reference/spectrum.citations";
-
-// ─── Module 3: Reference articles registry ──────────────────────────
-// One entry per published reference article. The validator walks each
-// article's citations alongside Module 1 + 2 data. Add new articles here
-// when they ship — the registry keeps the validator declarative.
-const REFERENCE_ARTICLES: ReadonlyArray<{
-  slug: string;
-  citations: ReadonlyArray<Citation>;
-}> = [{ slug: "spectrum", citations: spectrumCitations }];
+import { REFERENCE_ARTICLES } from "../data-src/reference/articles";
 import {
   ALL_DIMENSION_IDS,
   CATEGORICAL_DIMENSION_IDS,

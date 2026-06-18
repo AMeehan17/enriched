@@ -1,23 +1,20 @@
 /**
- * /reference/spectrum — Module 3, article 1.
+ * /reference/fission — Module 3, article 1.
  *
- * Renders the MDX article from content/reference/spectrum.mdx, wrapped in
- * a CitationsProvider so <Cite> and <Bibliography> can resolve against
- * the per-article citations array. Cells (slider, plots) live as MDX
- * components registered globally in mdx-components.tsx.
- *
- * Server Component — the MDX content renders server-side; the citations
- * provider is the only client island in the article tree.
+ * Renders content/reference/fission.mdx wrapped in a CitationsProvider
+ * so <Cite> and <Bibliography> resolve against fission citations from
+ * the article manifest. <ArticleLink> resolves against the manifest at
+ * render time too — no client-side state on either.
  */
 
 import type { Metadata } from "next";
-import SpectrumArticle, {
+import FissionArticle, {
   metadata as articleMetadata,
-} from "@/content/reference/spectrum.mdx";
+} from "@/content/reference/fission.mdx";
 import { getArticle } from "@/data-src/reference/articles";
 import { CitationsProvider } from "@/lib/cells/citations-context";
 
-const article = getArticle("spectrum");
+const article = getArticle("fission");
 
 export const metadata: Metadata = {
   title: `${articleMetadata.title} — Enriched`,
@@ -36,7 +33,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SpectrumPage() {
+export default function FissionPage() {
   return (
     <main id="main-content">
       <article
@@ -47,7 +44,7 @@ export default function SpectrumPage() {
         }}
       >
         <CitationsProvider citations={article.citations}>
-          <SpectrumArticle />
+          <FissionArticle />
         </CitationsProvider>
       </article>
     </main>

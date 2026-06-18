@@ -197,8 +197,8 @@ export function MaxwellBoltzmannSlider() {
         {DECADE_TICKS.map((tick) => (
           <line
             key={`grid-${tick.E_eV}`}
-            x1={xCoord(tick.E_eV)}
-            x2={xCoord(tick.E_eV)}
+            x1={xCoord(tick.E_eV).toFixed(2)}
+            x2={xCoord(tick.E_eV).toFixed(2)}
             y1={MARGIN.top}
             y2={MARGIN.top + INNER_H}
             stroke="var(--color-rule)"
@@ -222,7 +222,7 @@ export function MaxwellBoltzmannSlider() {
         {DECADE_TICKS.map((tick) => (
           <text
             key={`tick-${tick.E_eV}`}
-            x={xCoord(tick.E_eV)}
+            x={xCoord(tick.E_eV).toFixed(2)}
             y={MARGIN.top + INNER_H + 16}
             textAnchor="middle"
             fontFamily="var(--font-mono)"
@@ -247,8 +247,8 @@ export function MaxwellBoltzmannSlider() {
 
         {/* Reference markers — thermal */}
         <line
-          x1={xCoord(THERMAL_REFERENCE_EV)}
-          x2={xCoord(THERMAL_REFERENCE_EV)}
+          x1={xCoord(THERMAL_REFERENCE_EV).toFixed(2)}
+          x2={xCoord(THERMAL_REFERENCE_EV).toFixed(2)}
           y1={MARGIN.top}
           y2={MARGIN.top + INNER_H}
           stroke="var(--color-rule-strong)"
@@ -256,7 +256,7 @@ export function MaxwellBoltzmannSlider() {
           strokeWidth={1}
         />
         <text
-          x={xCoord(THERMAL_REFERENCE_EV) + 4}
+          x={(xCoord(THERMAL_REFERENCE_EV) + 4).toFixed(2)}
           y={MARGIN.top + 12}
           fontFamily="var(--font-display)"
           fontSize="10"
@@ -268,8 +268,8 @@ export function MaxwellBoltzmannSlider() {
 
         {/* Reference markers — fast */}
         <line
-          x1={xCoord(FAST_REFERENCE_EV)}
-          x2={xCoord(FAST_REFERENCE_EV)}
+          x1={xCoord(FAST_REFERENCE_EV).toFixed(2)}
+          x2={xCoord(FAST_REFERENCE_EV).toFixed(2)}
           y1={MARGIN.top}
           y2={MARGIN.top + INNER_H}
           stroke="var(--color-rule-strong)"
@@ -277,7 +277,7 @@ export function MaxwellBoltzmannSlider() {
           strokeWidth={1}
         />
         <text
-          x={xCoord(FAST_REFERENCE_EV) - 4}
+          x={(xCoord(FAST_REFERENCE_EV) - 4).toFixed(2)}
           y={MARGIN.top + 12}
           textAnchor="end"
           fontFamily="var(--font-display)"

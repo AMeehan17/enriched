@@ -34,11 +34,11 @@ interface NavLink {
 // for anyone with the URL, but isn't discoverable from the nav. To
 // re-enable, add: `{ href: "/reactor-builder", label: "Reactor Builder" }`.
 //
-// The Reference link deep-links to the first article (spectrum) for now —
-// a future /reference index page will replace this when article 2+ ships.
+// Reference deep-links to the first article in curriculum order. When a
+// real /reference index page lands (article 3+), switch this to "/reference".
 const LINKS: readonly NavLink[] = [
   { href: "/compare", label: "Compare" },
-  { href: "/reference/spectrum", label: "Reference" },
+  { href: "/reference/fission", label: "Reference" },
 ] as const;
 
 export function Nav() {
