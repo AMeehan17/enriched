@@ -22,6 +22,7 @@ import { Bibliography } from "./lib/cells/Bibliography";
 import { CellPlaceholder } from "./lib/cells/CellPlaceholder";
 import { MaxwellBoltzmannSlider } from "./lib/cells/MaxwellBoltzmannSlider";
 import { ChainReactionViz } from "./lib/cells/ChainReactionViz";
+import { FissionAnimation } from "./lib/cells/FissionAnimation";
 import { ArticleLink } from "./lib/cells/ArticleLink";
 
 const mdxComponents: MDXComponents = {
@@ -34,6 +35,7 @@ const mdxComponents: MDXComponents = {
   // cells that haven't landed yet. Both compose into MDX without an import.
   MaxwellBoltzmannSlider,
   ChainReactionViz,
+  FissionAnimation,
   NuDistributionChart: () => (
     <CellPlaceholder
       title="ν probability distribution — U-235 thermal fission"
