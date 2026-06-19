@@ -8,28 +8,32 @@
  * protons and neutrons visible as individual spheres in a cluster.
  *
  * UX:
- *   - Auto-plays once on mount (5 seconds total).
+ *   - Auto-plays once on mount (5 seconds of animation real-time,
+ *     mapped onto the physical timescale of the fission process).
  *   - The user can scrub the timeline with a range slider, or click a
  *     stage chip to jump to a representative moment.
- *   - Replay rewinds to t = 0 and resumes auto-play.
- *   - After auto-play completes (or as soon as the user interacts),
- *     the camera unlocks for drag-to-rotate.
+ *   - The displayed time value tracks the actual physical timescale
+ *     of fission events: approach (variable), capture (t = 0),
+ *     deformation (10⁻¹⁸ → 10⁻¹⁴ s), scission, settle (10⁻¹⁴ → 10⁻¹²
+ *     s). The slider itself is mechanically 0 → 5000 ms (animation
+ *     time); the readout is real physics time.
+ *   - Replay rewinds, picks a different daughter pair from the
+ *     fission-pair table, and resumes auto-play.
  *
  * Architecture:
- *   - This component owns `currentTimeMs` as the single source of
- *     truth. Caption text, active stage chip, and the 3D positions
- *     all derive from it.
- *   - The 3D canvas in FissionScene.tsx receives `currentTimeMs` as
- *     a prop and animates positions from it. The canvas is
- *     dynamic-imported with ssr: false so three.js stays off other
- *     routes.
- *   - Auto-play is a requestAnimationFrame loop that advances
- *     `currentTimeMs`; user interaction (slider or chip) cancels
- *     auto-play and lets the user own the cursor.
+ *   - currentTimeMs is the single source of truth (the animation
+ *     cursor in ms). Caption, active stage chip, real-time readout,
+ *     and 3D positions all derive from it.
+ *   - The selected fission pair is derived from playKey via
+ *     pairForCycle(); successive replays rotate through the table
+ *     deterministically.
+ *   - The 3D canvas in FissionScene.tsx is dynamic-imported with
+ *     ssr: false so three.js stays off other routes.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { pairForCycle } from "./fission-pairs";
 
 const TOTAL_DURATION_MS = 5000;
 
@@ -41,13 +45,13 @@ const PHASE_CAPTIONS: ReadonlyArray<string> = [
   "A free neutron approaches a U-235 nucleus.",
   "Capture. The compound nucleus U-236* is excited and unstable.",
   "Within ~10⁻¹⁴ s, the nucleus deforms.",
-  "Scission. The nucleus snaps into two fragments; 2–3 prompt neutrons fly free.",
+  "Scission. The nucleus snaps into two fragments; 2–4 prompt neutrons fly free.",
   "Result: two fission products plus a small population of free neutrons. Each is a candidate to cause another fission.",
 ];
 
 interface Stage {
   label: string;
-  /** Representative moment within the stage, in ms. Slider jumps here. */
+  /** Representative moment within the stage, in animation ms. Slider jumps here. */
   midpointMs: number;
 }
 
@@ -64,6 +68,55 @@ function phaseFromTime(timeMs: number): number {
     if (timeMs < PHASE_BOUNDARIES_MS[i]!) return i;
   }
   return PHASE_BOUNDARIES_MS.length;
+}
+
+/**
+ * Map animation cursor (ms) → physical time label. Fission timescales
+ * span many orders of magnitude; we lay them onto the linear slider
+ * via a piecewise mapping:
+ *
+ *   Approach (0–1200 ms)  → "approach" (neutron flight time is variable)
+ *   Capture  (1200–1500)  → "t ≈ 0"
+ *   Deform   (1500–2000)  → 10⁻¹⁸ s → 10⁻¹⁴ s on a log axis
+ *   Scission (2000–2300)  → "scission (~10 fs)"
+ *   Settle   (2300–5000)  → 10⁻¹⁴ s → 10⁻¹² s on a log axis
+ */
+function physicalTimeLabel(animTimeMs: number): string {
+  if (animTimeMs < PHASE_BOUNDARIES_MS[0]) return "neutron in flight";
+  if (animTimeMs < PHASE_BOUNDARIES_MS[1]) return "t ≈ 0 (capture)";
+
+  if (animTimeMs < PHASE_BOUNDARIES_MS[2]) {
+    const u = (animTimeMs - PHASE_BOUNDARIES_MS[1]) /
+      (PHASE_BOUNDARIES_MS[2] - PHASE_BOUNDARIES_MS[1]);
+    const logS = -18 + u * 4; // log10(seconds), -18 → -14
+    return formatPhysicalTime(Math.pow(10, logS));
+  }
+
+  if (animTimeMs < PHASE_BOUNDARIES_MS[3]) return "scission (~10 fs)";
+
+  const u = (animTimeMs - PHASE_BOUNDARIES_MS[3]) /
+    (TOTAL_DURATION_MS - PHASE_BOUNDARIES_MS[3]);
+  const logS = -14 + u * 2; // log10(seconds), -14 → -12
+  return formatPhysicalTime(Math.pow(10, logS));
+}
+
+function formatPhysicalTime(seconds: number): string {
+  if (seconds < 1e-15) {
+    const as = seconds * 1e18;
+    if (as < 10) return `${as.toFixed(2)} as`;
+    return `${as.toFixed(1)} as`;
+  }
+  if (seconds < 1e-12) {
+    const fs = seconds * 1e15;
+    if (fs < 10) return `${fs.toFixed(2)} fs`;
+    return `${fs.toFixed(1)} fs`;
+  }
+  if (seconds < 1e-9) {
+    const ps = seconds * 1e12;
+    if (ps < 10) return `${ps.toFixed(2)} ps`;
+    return `${ps.toFixed(1)} ps`;
+  }
+  return `${(seconds * 1e9).toFixed(2)} ns`;
 }
 
 // three.js is heavy (~150 KB) and pulls in WebGL bindings; keep it off
@@ -90,10 +143,6 @@ const FissionScene = dynamic(() => import("./FissionScene"), {
   ),
 });
 
-function formatSeconds(ms: number): string {
-  return (ms / 1000).toFixed(2) + " s";
-}
-
 export function FissionAnimation() {
   const [playKey, setPlayKey] = useState(0);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
@@ -102,6 +151,7 @@ export function FissionAnimation() {
 
   const phase = phaseFromTime(currentTimeMs);
   const cameraUnlocked = hasInteracted || currentTimeMs >= TOTAL_DURATION_MS;
+  const pair = useMemo(() => pairForCycle(playKey), [playKey]);
 
   // Auto-play loop: drive currentTimeMs forward via rAF. Stops when the
   // user scrubs or when the cursor reaches the total duration.
@@ -138,8 +188,6 @@ export function FissionAnimation() {
         rafRef.current = null;
       }
     };
-    // We intentionally do not depend on currentTimeMs — the loop captures
-    // its current value on first tick and advances from there.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAutoPlay, playKey]);
 
@@ -200,14 +248,13 @@ export function FissionAnimation() {
             background: "transparent",
             color: "var(--color-text)",
             cursor: "pointer",
-            transition: "opacity 0.2s ease",
           }}
         >
           ↻ Replay
         </button>
       </div>
 
-      {/* 3D canvas container — fixed 16:9, light bg matches DESIGN.md surface */}
+      {/* 3D canvas container */}
       <div
         style={{
           position: "relative",
@@ -222,6 +269,7 @@ export function FissionAnimation() {
           playKey={playKey}
           currentTimeMs={currentTimeMs}
           cameraUnlocked={cameraUnlocked}
+          pair={pair}
         />
         {cameraUnlocked ? (
           <div
@@ -241,7 +289,8 @@ export function FissionAnimation() {
         ) : null}
       </div>
 
-      {/* Timeline scrubber */}
+      {/* Timeline scrubber — slider position is animation time;
+          readout is real physical time of the fission process. */}
       <div
         style={{
           marginTop: "var(--spacing-4)",
@@ -271,9 +320,7 @@ export function FissionAnimation() {
           step={20}
           value={Math.round(currentTimeMs)}
           onChange={(e) => handleScrub(Number(e.target.value))}
-          aria-valuetext={`${formatSeconds(currentTimeMs)} of ${formatSeconds(TOTAL_DURATION_MS)}; stage ${phase + 1}: ${STAGES[phase]?.label ?? "complete"}`}
-          // Browser extensions inject caret-color/style attributes on inputs;
-          // React 19 strict hydration flags the resulting diff. Benign.
+          aria-valuetext={`Stage ${phase + 1}: ${STAGES[phase]?.label ?? "complete"}; ${physicalTimeLabel(currentTimeMs)}`}
           suppressHydrationWarning
           style={{
             width: "100%",
@@ -286,15 +333,15 @@ export function FissionAnimation() {
             fontSize: "var(--text-sm)",
             fontVariantNumeric: "tabular-nums",
             color: "var(--color-text)",
-            minWidth: "5.5ch",
+            minWidth: "11ch",
             textAlign: "right",
           }}
         >
-          {formatSeconds(currentTimeMs)}
+          {physicalTimeLabel(currentTimeMs)}
         </span>
       </div>
 
-      {/* Stage chips — click to jump to that stage */}
+      {/* Stage chips */}
       <div
         style={{
           marginTop: "var(--spacing-3)",
@@ -332,7 +379,7 @@ export function FissionAnimation() {
         })}
       </div>
 
-      {/* Phase caption */}
+      {/* Phase caption + current daughter pair line */}
       <figcaption
         style={{
           marginTop: "var(--spacing-4)",
@@ -346,6 +393,18 @@ export function FissionAnimation() {
         aria-live="polite"
       >
         {PHASE_CAPTIONS[phase]}
+        {phase >= 3 ? (
+          <>
+            {" "}
+            <strong style={{ color: "var(--color-text)", fontWeight: 500 }}>
+              U-235 + n → {pair.heavyName} + {pair.lightName} + {pair.freeN}n
+            </strong>{" "}
+            <span style={{ color: "var(--color-text-muted)" }}>
+              ({pair.blurb})
+            </span>
+            .
+          </>
+        ) : null}
       </figcaption>
     </figure>
   );
