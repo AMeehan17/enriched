@@ -3,28 +3,39 @@
 /**
  * <FissionAnimation />
  *
- * The opening visual of Module 3 article 1. A schematic, geometric
- * animation of a single fission event: an incoming neutron captures
- * into a U-235 nucleus, the resulting compound nucleus deforms,
- * then snaps into two fragments and a small population of free
- * neutrons. Plays once on mount; a replay button runs it again.
+ * The opening visual of Module 3 article 1. A 3D schematic of a
+ * single fission event — chemistry-class molecular model style, with
+ * protons and neutrons visible as individual spheres in a cluster.
  *
- * This is a schematic. Real fission happens in ~10⁻¹⁴ s and nuclei
- * are not hard spheres with crisp edges. The cell trades accuracy
- * for legibility — the reader's first encounter with fission should
- * be visual before it's analytical.
+ * UX:
+ *   - Auto-plays once on mount (5 seconds total).
+ *   - The user can scrub the timeline with a range slider, or click a
+ *     stage chip to jump to a representative moment.
+ *   - Replay rewinds to t = 0 and resumes auto-play.
+ *   - After auto-play completes (or as soon as the user interacts),
+ *     the camera unlocks for drag-to-rotate.
  *
- * Animation is driven by CSS keyframes (set up in the inline style
- * block below). React owns the phase index for caption text and the
- * `key` prop on the wrapper that resets the animation on replay.
+ * Architecture:
+ *   - This component owns `currentTimeMs` as the single source of
+ *     truth. Caption text, active stage chip, and the 3D positions
+ *     all derive from it.
+ *   - The 3D canvas in FissionScene.tsx receives `currentTimeMs` as
+ *     a prop and animates positions from it. The canvas is
+ *     dynamic-imported with ssr: false so three.js stays off other
+ *     routes.
+ *   - Auto-play is a requestAnimationFrame loop that advances
+ *     `currentTimeMs`; user interaction (slider or chip) cancels
+ *     auto-play and lets the user own the cursor.
  */
 
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 
-// Total animation duration, ms. Phase durations sum to this — the
-// CSS @keyframes percentages below mirror these timings.
 const TOTAL_DURATION_MS = 5000;
-const PHASE_DURATIONS_MS = [1200, 300, 500, 300, 2700];
+
+// Phase boundaries — mirrors the timing constants inside FissionScene
+// so caption text and 3D state never drift apart.
+const PHASE_BOUNDARIES_MS = [1200, 1500, 2000, 2300] as const;
 
 const PHASE_CAPTIONS: ReadonlyArray<string> = [
   "A free neutron approaches a U-235 nucleus.",
@@ -34,32 +45,116 @@ const PHASE_CAPTIONS: ReadonlyArray<string> = [
   "Result: two fission products plus a small population of free neutrons. Each is a candidate to cause another fission.",
 ];
 
+interface Stage {
+  label: string;
+  /** Representative moment within the stage, in ms. Slider jumps here. */
+  midpointMs: number;
+}
+
+const STAGES: ReadonlyArray<Stage> = [
+  { label: "Approach", midpointMs: 600 },
+  { label: "Capture", midpointMs: 1350 },
+  { label: "Deform", midpointMs: 1750 },
+  { label: "Scission", midpointMs: 2150 },
+  { label: "Settle", midpointMs: 4500 },
+];
+
+function phaseFromTime(timeMs: number): number {
+  for (let i = 0; i < PHASE_BOUNDARIES_MS.length; i++) {
+    if (timeMs < PHASE_BOUNDARIES_MS[i]!) return i;
+  }
+  return PHASE_BOUNDARIES_MS.length;
+}
+
+// three.js is heavy (~150 KB) and pulls in WebGL bindings; keep it off
+// the SSR path and out of bundles for pages that don't render this cell.
+const FissionScene = dynamic(() => import("./FissionScene"), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "var(--font-display)",
+        fontSize: "var(--text-xs)",
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        color: "var(--color-text-faint)",
+      }}
+    >
+      Loading scene…
+    </div>
+  ),
+});
+
+function formatSeconds(ms: number): string {
+  return (ms / 1000).toFixed(2) + " s";
+}
+
 export function FissionAnimation() {
   const [playKey, setPlayKey] = useState(0);
-  const [phase, setPhase] = useState<number>(0);
-  const [done, setDone] = useState(false);
-  const id = useId();
+  const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
-  // Drive the caption advance through phases. The CSS animation runs
-  // independently; this effect just steps `phase` so the caption text
-  // tracks what the user sees.
+  const phase = phaseFromTime(currentTimeMs);
+  const cameraUnlocked = hasInteracted || currentTimeMs >= TOTAL_DURATION_MS;
+
+  // Auto-play loop: drive currentTimeMs forward via rAF. Stops when the
+  // user scrubs or when the cursor reaches the total duration.
+  const rafRef = useRef<number | null>(null);
   useEffect(() => {
-    setPhase(0);
-    setDone(false);
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    let elapsed = 0;
-    for (let i = 1; i < PHASE_DURATIONS_MS.length; i++) {
-      elapsed += PHASE_DURATIONS_MS[i - 1]!;
-      const idx = i;
-      timers.push(
-        setTimeout(() => setPhase(idx), elapsed),
-      );
+    if (!isAutoPlay) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      return;
     }
-    timers.push(setTimeout(() => setDone(true), TOTAL_DURATION_MS));
-    return () => {
-      for (const t of timers) clearTimeout(t);
+    let startWall = 0;
+    let startCursor = 0;
+    const tick = (now: number) => {
+      if (startWall === 0) {
+        startWall = now;
+        startCursor = currentTimeMs;
+      }
+      const elapsed = now - startWall;
+      const next = startCursor + elapsed;
+      if (next >= TOTAL_DURATION_MS) {
+        setCurrentTimeMs(TOTAL_DURATION_MS);
+        setIsAutoPlay(false);
+        return;
+      }
+      setCurrentTimeMs(next);
+      rafRef.current = requestAnimationFrame(tick);
     };
-  }, [playKey]);
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+    // We intentionally do not depend on currentTimeMs — the loop captures
+    // its current value on first tick and advances from there.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAutoPlay, playKey]);
+
+  const handleReplay = useCallback(() => {
+    setCurrentTimeMs(0);
+    setIsAutoPlay(true);
+    setHasInteracted(false);
+    setPlayKey((k) => k + 1);
+  }, []);
+
+  const handleScrub = useCallback((nextMs: number) => {
+    setIsAutoPlay(false);
+    setHasInteracted(true);
+    setCurrentTimeMs(nextMs);
+  }, []);
 
   return (
     <figure
@@ -71,82 +166,6 @@ export function FissionAnimation() {
         background: "var(--color-surface)",
       }}
     >
-      {/* Scoped keyframes. React 19 hoists <style> to <head> and de-dupes
-          across instances, so the rules live with the component but only
-          ship once per page. */}
-      <style>{`
-        @keyframes fa-${id}-neutron-in {
-          0% { transform: translate(-200px, 0); opacity: 1; }
-          24% { transform: translate(0, 0); opacity: 1; }
-          26% { transform: translate(0, 0); opacity: 0; }
-          100% { transform: translate(0, 0); opacity: 0; }
-        }
-        @keyframes fa-${id}-nucleus {
-          0% { transform: scale(1, 1); opacity: 1; }
-          24% { transform: scale(1, 1); opacity: 1; }
-          27% { transform: scale(1.18, 1.18); opacity: 1; }
-          30% { transform: scale(1.08, 1.08); opacity: 1; }
-          40% { transform: scale(1.55, 0.78); opacity: 1; }
-          43% { transform: scale(1.65, 0.72); opacity: 1; }
-          46% { transform: scale(1, 1); opacity: 0; }
-          100% { transform: scale(1, 1); opacity: 0; }
-        }
-        @keyframes fa-${id}-label-u235 {
-          0% { opacity: 1; }
-          24% { opacity: 1; }
-          26% { opacity: 0; }
-          100% { opacity: 0; }
-        }
-        @keyframes fa-${id}-label-u236 {
-          0% { opacity: 0; }
-          26% { opacity: 0; }
-          28% { opacity: 1; }
-          40% { opacity: 1; }
-          44% { opacity: 0; }
-          100% { opacity: 0; }
-        }
-        @keyframes fa-${id}-fragment-1 {
-          0%, 46% { transform: translate(0, 0); opacity: 0; }
-          47% { transform: translate(0, 0); opacity: 1; }
-          100% { transform: translate(-160px, -12px); opacity: 1; }
-        }
-        @keyframes fa-${id}-fragment-2 {
-          0%, 46% { transform: translate(0, 0); opacity: 0; }
-          47% { transform: translate(0, 0); opacity: 1; }
-          100% { transform: translate(140px, 14px); opacity: 1; }
-        }
-        @keyframes fa-${id}-nout-1 {
-          0%, 46% { transform: translate(0, 0); opacity: 0; }
-          47% { transform: translate(0, 0); opacity: 1; }
-          100% { transform: translate(-60px, -90px); opacity: 1; }
-        }
-        @keyframes fa-${id}-nout-2 {
-          0%, 46% { transform: translate(0, 0); opacity: 0; }
-          47% { transform: translate(0, 0); opacity: 1; }
-          100% { transform: translate(80px, 100px); opacity: 1; }
-        }
-        @keyframes fa-${id}-nout-3 {
-          0%, 46% { transform: translate(0, 0); opacity: 0; }
-          47% { transform: translate(0, 0); opacity: 1; }
-          100% { transform: translate(170px, -80px); opacity: 1; }
-        }
-        @keyframes fa-${id}-flash {
-          0%, 44% { opacity: 0; r: 0; }
-          46% { opacity: 0.55; r: 70; }
-          54% { opacity: 0; r: 110; }
-          100% { opacity: 0; r: 110; }
-        }
-        @keyframes fa-${id}-energy {
-          0%, 46% { opacity: 0; }
-          50% { opacity: 1; }
-          100% { opacity: 0.85; }
-        }
-        .fa-${id}-anim {
-          transform-box: fill-box;
-          transform-origin: center;
-        }
-      `}</style>
-
       {/* Header */}
       <div
         style={{
@@ -169,8 +188,7 @@ export function FissionAnimation() {
         </span>
         <button
           type="button"
-          onClick={() => setPlayKey((k) => k + 1)}
-          disabled={!done}
+          onClick={handleReplay}
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "var(--text-xs)",
@@ -178,11 +196,10 @@ export function FissionAnimation() {
             letterSpacing: "0.04em",
             padding: "4px 10px",
             borderRadius: "var(--radius-pill)",
-            border: `1px solid ${done ? "var(--color-rule-strong)" : "var(--color-rule)"}`,
+            border: "1px solid var(--color-rule-strong)",
             background: "transparent",
-            color: done ? "var(--color-text)" : "var(--color-text-faint)",
-            cursor: done ? "pointer" : "default",
-            opacity: done ? 1 : 0.5,
+            color: "var(--color-text)",
+            cursor: "pointer",
             transition: "opacity 0.2s ease",
           }}
         >
@@ -190,216 +207,130 @@ export function FissionAnimation() {
         </button>
       </div>
 
-      {/* SVG stage. `key={playKey}` remounts the SVG on replay, restarting
-          the CSS animations from frame 0. */}
-      <svg
-        key={playKey}
-        viewBox="0 0 800 300"
-        role="img"
-        aria-labelledby={`${id}-title`}
+      {/* 3D canvas container — fixed 16:9, light bg matches DESIGN.md surface */}
+      <div
         style={{
+          position: "relative",
           width: "100%",
-          height: "auto",
-          display: "block",
+          aspectRatio: "16 / 9",
           background: "var(--color-bg)",
           borderRadius: "var(--radius-sm)",
+          overflow: "hidden",
         }}
       >
-        <title id={`${id}-title`}>
-          Schematic of a uranium-235 fission event: a neutron is captured,
-          the nucleus deforms, then splits into two fragments plus
-          additional free neutrons.
-        </title>
+        <FissionScene
+          playKey={playKey}
+          currentTimeMs={currentTimeMs}
+          cameraUnlocked={cameraUnlocked}
+        />
+        {cameraUnlocked ? (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "var(--spacing-2)",
+              right: "var(--spacing-3)",
+              fontFamily: "var(--font-display)",
+              fontSize: "var(--text-xs)",
+              letterSpacing: "0.06em",
+              color: "var(--color-text-faint)",
+              pointerEvents: "none",
+            }}
+          >
+            drag to rotate
+          </div>
+        ) : null}
+      </div>
 
-        {/* Flash at scission point — rust energy release */}
-        <circle
-          cx={400}
-          cy={150}
-          r={0}
-          fill="var(--color-accent)"
+      {/* Timeline scrubber */}
+      <div
+        style={{
+          marginTop: "var(--spacing-4)",
+          display: "grid",
+          gridTemplateColumns: "auto 1fr auto",
+          gap: "var(--spacing-3)",
+          alignItems: "center",
+        }}
+      >
+        <label
+          htmlFor="fission-anim-scrub"
           style={{
-            animation: `fa-${id}-flash ${TOTAL_DURATION_MS}ms linear forwards`,
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--text-xs)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "var(--color-text-muted)",
+          }}
+        >
+          Time
+        </label>
+        <input
+          id="fission-anim-scrub"
+          type="range"
+          min={0}
+          max={TOTAL_DURATION_MS}
+          step={20}
+          value={Math.round(currentTimeMs)}
+          onChange={(e) => handleScrub(Number(e.target.value))}
+          aria-valuetext={`${formatSeconds(currentTimeMs)} of ${formatSeconds(TOTAL_DURATION_MS)}; stage ${phase + 1}: ${STAGES[phase]?.label ?? "complete"}`}
+          // Browser extensions inject caret-color/style attributes on inputs;
+          // React 19 strict hydration flags the resulting diff. Benign.
+          suppressHydrationWarning
+          style={{
+            width: "100%",
+            accentColor: "var(--color-accent)",
           }}
         />
-
-        {/* Main nucleus (U-235 / U-236*) — centered at (400, 150).
-            The class sets transform-box: fill-box + transform-origin: center,
-            so scale transforms pivot around the nucleus's own center. */}
-        <g
-          className={`fa-${id}-anim`}
+        <span
           style={{
-            animation: `fa-${id}-nucleus ${TOTAL_DURATION_MS}ms linear forwards`,
-          }}
-        >
-          <circle cx={400} cy={150} r={42} fill="var(--color-data-2)" />
-          <circle
-            cx={400}
-            cy={150}
-            r={42}
-            fill="none"
-            stroke="var(--color-text)"
-            strokeOpacity={0.35}
-            strokeWidth={1}
-          />
-        </g>
-
-        {/* U-235 label — visible until capture */}
-        <text
-          x={400}
-          y={155}
-          textAnchor="middle"
-          fontFamily="var(--font-mono)"
-          fontSize="14"
-          fontWeight={500}
-          fill="var(--color-text)"
-          style={{
-            animation: `fa-${id}-label-u235 ${TOTAL_DURATION_MS}ms linear forwards`,
-          }}
-        >
-          U-235
-        </text>
-
-        {/* U-236* label — visible during capture and deformation */}
-        <text
-          x={400}
-          y={155}
-          textAnchor="middle"
-          fontFamily="var(--font-mono)"
-          fontSize="14"
-          fontWeight={500}
-          fill="var(--color-accent-text)"
-          style={{
-            animation: `fa-${id}-label-u236 ${TOTAL_DURATION_MS}ms linear forwards`,
-          }}
-        >
-          U-236*
-        </text>
-
-        {/* Incoming neutron — flies in from the left to (400, 150) */}
-        <g
-          style={{
-            animation: `fa-${id}-neutron-in ${TOTAL_DURATION_MS}ms linear forwards`,
-            transformBox: "fill-box",
-          }}
-        >
-          <circle cx={400} cy={150} r={8} fill="var(--color-accent)" />
-          <text
-            x={400}
-            y={154}
-            textAnchor="middle"
-            fontFamily="var(--font-mono)"
-            fontSize="10"
-            fill="var(--color-bg)"
-            fontWeight={600}
-          >
-            n
-          </text>
-        </g>
-
-        {/* Fragment 1 — Ba-141 (larger, flies left) */}
-        <g
-          style={{
-            animation: `fa-${id}-fragment-1 ${TOTAL_DURATION_MS}ms cubic-bezier(0.2, 0.6, 0.4, 1) forwards`,
-            transformBox: "fill-box",
-          }}
-        >
-          <circle cx={400} cy={150} r={30} fill="var(--color-data-2)" />
-          <circle
-            cx={400}
-            cy={150}
-            r={30}
-            fill="none"
-            stroke="var(--color-text)"
-            strokeOpacity={0.35}
-            strokeWidth={1}
-          />
-          <text
-            x={400}
-            y={155}
-            textAnchor="middle"
-            fontFamily="var(--font-mono)"
-            fontSize="11"
-            fill="var(--color-text)"
-            fontWeight={500}
-          >
-            Ba-141
-          </text>
-        </g>
-
-        {/* Fragment 2 — Kr-92 (smaller, flies right) */}
-        <g
-          style={{
-            animation: `fa-${id}-fragment-2 ${TOTAL_DURATION_MS}ms cubic-bezier(0.2, 0.6, 0.4, 1) forwards`,
-            transformBox: "fill-box",
-          }}
-        >
-          <circle cx={400} cy={150} r={24} fill="var(--color-data-2)" />
-          <circle
-            cx={400}
-            cy={150}
-            r={24}
-            fill="none"
-            stroke="var(--color-text)"
-            strokeOpacity={0.35}
-            strokeWidth={1}
-          />
-          <text
-            x={400}
-            y={154}
-            textAnchor="middle"
-            fontFamily="var(--font-mono)"
-            fontSize="10"
-            fill="var(--color-text)"
-            fontWeight={500}
-          >
-            Kr-92
-          </text>
-        </g>
-
-        {/* Three prompt neutrons radiate from scission point */}
-        <g
-          style={{
-            animation: `fa-${id}-nout-1 ${TOTAL_DURATION_MS}ms cubic-bezier(0.2, 0.6, 0.4, 1) forwards`,
-            transformBox: "fill-box",
-          }}
-        >
-          <circle cx={400} cy={150} r={6} fill="var(--color-accent)" />
-        </g>
-        <g
-          style={{
-            animation: `fa-${id}-nout-2 ${TOTAL_DURATION_MS}ms cubic-bezier(0.2, 0.6, 0.4, 1) forwards`,
-            transformBox: "fill-box",
-          }}
-        >
-          <circle cx={400} cy={150} r={6} fill="var(--color-accent)" />
-        </g>
-        <g
-          style={{
-            animation: `fa-${id}-nout-3 ${TOTAL_DURATION_MS}ms cubic-bezier(0.2, 0.6, 0.4, 1) forwards`,
-            transformBox: "fill-box",
-          }}
-        >
-          <circle cx={400} cy={150} r={6} fill="var(--color-accent)" />
-        </g>
-
-        {/* Energy callout — appears at scission */}
-        <text
-          x={400}
-          y={50}
-          textAnchor="middle"
-          fontFamily="var(--font-display)"
-          fontSize="14"
-          fontWeight={500}
-          letterSpacing="0.04em"
-          fill="var(--color-accent-text)"
-          style={{
-            animation: `fa-${id}-energy ${TOTAL_DURATION_MS}ms linear forwards`,
+            fontFamily: "var(--font-mono)",
+            fontSize: "var(--text-sm)",
             fontVariantNumeric: "tabular-nums",
+            color: "var(--color-text)",
+            minWidth: "5.5ch",
+            textAlign: "right",
           }}
         >
-          ≈ 200 MeV
-        </text>
-      </svg>
+          {formatSeconds(currentTimeMs)}
+        </span>
+      </div>
+
+      {/* Stage chips — click to jump to that stage */}
+      <div
+        style={{
+          marginTop: "var(--spacing-3)",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "var(--spacing-2)",
+        }}
+      >
+        {STAGES.map((stage, i) => {
+          const active = phase === i;
+          return (
+            <button
+              key={stage.label}
+              type="button"
+              onClick={() => handleScrub(stage.midpointMs)}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "var(--text-xs)",
+                fontVariantNumeric: "tabular-nums",
+                padding: "4px 10px",
+                borderRadius: "var(--radius-pill)",
+                border: `1px solid ${active ? "var(--color-accent)" : "var(--color-rule-strong)"}`,
+                background: active
+                  ? "var(--color-accent-soft)"
+                  : "transparent",
+                color: active
+                  ? "var(--color-accent-text)"
+                  : "var(--color-text-muted)",
+                cursor: "pointer",
+              }}
+            >
+              {i + 1}. {stage.label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Phase caption */}
       <figcaption
