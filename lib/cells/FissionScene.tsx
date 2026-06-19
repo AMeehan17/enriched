@@ -168,14 +168,28 @@ function NucleonCluster({
   );
 }
 
-// ─── Free-neutron trajectory directions. We pre-define 4 directions
-//     and use the first `pair.freeN` of them.
-const FREE_NEUTRON_TARGETS: ReadonlyArray<[number, number, number]> = [
-  [-0.7, 2.5, 1.1],
-  [1.3, -1.9, 1.6],
-  [2.4, 0.9, -1.9],
-  [-1.6, -1.2, -2.0],
+// ─── Free-neutron trajectories. Each has a small START offset (so the
+//     neutrons emerge from distinct points around the scission, not
+//     stacked at origin) and a TARGET end position. We pre-define 4
+//     slots and use the first `pair.freeN` of them.
+const FREE_NEUTRON_PATHS: ReadonlyArray<{
+  start: [number, number, number];
+  target: [number, number, number];
+}> = [
+  { start: [-0.3, 0.5, 0.2], target: [-0.7, 2.5, 1.1] },
+  { start: [0.4, -0.4, 0.3], target: [1.3, -1.9, 1.6] },
+  { start: [0.5, 0.3, -0.4], target: [2.4, 0.9, -1.9] },
+  { start: [-0.4, -0.3, -0.4], target: [-1.6, -1.2, -2.0] },
 ];
+
+// ─── Fragment starting positions: emerge from where the deformed
+//     nucleus tips were (deformation scale.x ≈ 1.55 × parent radius
+//     1.05 ≈ 1.6). NOT at origin, so the scission reads as the tips
+//     separating, not as fragments spawning at center.
+const FRAGMENT_1_START: [number, number, number] = [-1.6, 0.05, 0.05];
+const FRAGMENT_1_END: [number, number, number] = [-3.6, 0.4, 0.3];
+const FRAGMENT_2_START: [number, number, number] = [1.3, -0.05, -0.05];
+const FRAGMENT_2_END: [number, number, number] = [3.2, -0.3, -0.2];
 
 interface FissionGeometryProps {
   currentTimeMs: number;
@@ -193,7 +207,7 @@ function FissionGeometry({ currentTimeMs, pair }: FissionGeometryProps) {
   // pairs and harmlessly stay invisible.
   const freeRefs = useRef<Array<React.RefObject<Mesh | null>>>([]);
   if (freeRefs.current.length === 0) {
-    for (let i = 0; i < FREE_NEUTRON_TARGETS.length; i++) {
+    for (let i = 0; i < FREE_NEUTRON_PATHS.length; i++) {
       freeRefs.current.push({ current: null });
     }
   }
@@ -248,23 +262,25 @@ function FissionGeometry({ currentTimeMs, pair }: FissionGeometryProps) {
       }
     }
 
-    // Scission flash
+    // Scission flash — toned down so it accents the moment instead of
+    //   obscuring the small geometry that's emerging.
     if (flashRef.current) {
       const mat = flashRef.current.material as { opacity?: number };
-      if (t > T_DEFORM_END && t < T_DEFORM_END + 0.6) {
-        const tp = (t - T_DEFORM_END) / 0.6;
+      if (t > T_DEFORM_END && t < T_DEFORM_END + 0.5) {
+        const tp = (t - T_DEFORM_END) / 0.5;
         flashRef.current.visible = true;
-        const radius = lerp(1, 3.5, tp);
+        const radius = lerp(0.7, 2.2, tp);
         flashRef.current.scale.set(radius, radius, radius);
         if (mat.opacity !== undefined) {
-          mat.opacity = 0.55 * (1 - tp);
+          mat.opacity = 0.32 * (1 - tp);
         }
       } else {
         flashRef.current.visible = false;
       }
     }
 
-    // Fragment 1 (heavy) — flies left
+    // Fragment 1 (heavy) — emerges from the deformed-nucleus tip
+    // (NOT origin) and translates outward.
     if (fragment1Ref.current) {
       if (t < T_DEFORM_END) {
         fragment1Ref.current.visible = false;
@@ -272,14 +288,14 @@ function FissionGeometry({ currentTimeMs, pair }: FissionGeometryProps) {
         fragment1Ref.current.visible = true;
         const tp = smoothstep((t - T_DEFORM_END) / (T_TOTAL - T_DEFORM_END));
         fragment1Ref.current.position.set(
-          lerp(-1.0, -3.4, tp),
-          lerp(0, 0.35, tp),
-          lerp(0, 0.25, tp),
+          lerp(FRAGMENT_1_START[0], FRAGMENT_1_END[0], tp),
+          lerp(FRAGMENT_1_START[1], FRAGMENT_1_END[1], tp),
+          lerp(FRAGMENT_1_START[2], FRAGMENT_1_END[2], tp),
         );
       }
     }
 
-    // Fragment 2 (light) — flies right
+    // Fragment 2 (light) — emerges from the opposite tip.
     if (fragment2Ref.current) {
       if (t < T_DEFORM_END) {
         fragment2Ref.current.visible = false;
@@ -287,29 +303,31 @@ function FissionGeometry({ currentTimeMs, pair }: FissionGeometryProps) {
         fragment2Ref.current.visible = true;
         const tp = smoothstep((t - T_DEFORM_END) / (T_TOTAL - T_DEFORM_END));
         fragment2Ref.current.position.set(
-          lerp(0.8, 3.0, tp),
-          lerp(0, -0.25, tp),
-          lerp(0, -0.15, tp),
+          lerp(FRAGMENT_2_START[0], FRAGMENT_2_END[0], tp),
+          lerp(FRAGMENT_2_START[1], FRAGMENT_2_END[1], tp),
+          lerp(FRAGMENT_2_START[2], FRAGMENT_2_END[2], tp),
         );
       }
     }
 
-    // Free neutrons — show first `freeN` of them
+    // Free neutrons — each emerges from its OWN small offset around
+    // the scission point and flies to its target. No more stacking
+    // at origin.
     const freeCount = freeCountRef.current;
-    for (let i = 0; i < FREE_NEUTRON_TARGETS.length; i++) {
+    for (let i = 0; i < FREE_NEUTRON_PATHS.length; i++) {
       const refObj = freeRefs.current[i];
       const mesh = refObj?.current;
       if (!mesh) continue;
-      const target = FREE_NEUTRON_TARGETS[i]!;
+      const path = FREE_NEUTRON_PATHS[i]!;
       if (t < T_DEFORM_END || i >= freeCount) {
         mesh.visible = false;
       } else {
         mesh.visible = true;
         const tp = smoothstep((t - T_DEFORM_END) / (T_TOTAL - T_DEFORM_END));
         mesh.position.set(
-          lerp(0, target[0], tp),
-          lerp(0, target[1], tp),
-          lerp(0, target[2], tp),
+          lerp(path.start[0], path.target[0], tp),
+          lerp(path.start[1], path.target[1], tp),
+          lerp(path.start[2], path.target[2], tp),
         );
       }
     }
@@ -443,8 +461,10 @@ function FissionGeometry({ currentTimeMs, pair }: FissionGeometryProps) {
         ) : null}
       </group>
 
-      {/* Free prompt neutrons — up to 4 slots, first `pair.freeN` visible */}
-      {FREE_NEUTRON_TARGETS.map((_, i) => (
+      {/* Free prompt neutrons — up to 4 slots, first `pair.freeN` visible.
+          Each emerges from its own small offset around the scission point,
+          not stacked at origin (see FREE_NEUTRON_PATHS). */}
+      {FREE_NEUTRON_PATHS.map((_, i) => (
         <mesh
           key={i}
           ref={freeRefs.current[i]!}
