@@ -83,6 +83,9 @@ export const DEFAULT_YEAR = 2024;
 // uniqueness across the dataset (e.g., lazard2024lcoe_nuclear).
 //
 // The validator catches duplicate keys at build time.
+//
+// Module 3 reference articles reuse this same shape via the optional
+// fields below; one citation library serves both modules.
 export interface Citation {
   /** Unique key for BibTeX export. Pattern: {author}{year}{shortname}_{source-id}. Lowercase, no spaces. */
   bibtex_key: string;
@@ -96,6 +99,12 @@ export interface Citation {
   url: string;
   /** ISO date string (YYYY-MM-DD) when the citation was last verified. */
   accessed: string;
+  /** Optional DOI for peer-reviewed papers. */
+  doi?: string;
+  /** Optional page reference (e.g., "p. 12", "pp. 45–47"). */
+  page?: string;
+  /** Optional editorial note shown in the bibliography under the citation. */
+  note?: string;
 }
 
 // ─── Numeric dimension value ─────────────────────────────────────────

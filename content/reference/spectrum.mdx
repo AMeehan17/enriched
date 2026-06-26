@@ -1,0 +1,73 @@
+export const metadata = {
+  title: "Spectrum: Thermal or Fast",
+  description:
+    "Neutrons are born fast. Whether a reactor keeps them that way is a design choice — and the choice cascades through every other decision: fuel, coolant, safety, fuel cycle. Here's what the choice is.",
+  publishedDate: "2026-06-18",
+  updatedDate: "2026-06-18",
+  author: "Enriched",
+  slug: "spectrum",
+};
+
+# Spectrum: Thermal or Fast
+
+Neutrons are born fast. In the instant a uranium nucleus splits, the two or three neutrons it releases carry roughly a million times the energy they'll have a moment later — if you let them slow down.
+
+Every operating fission reactor sits inside that "if." There are two ways to run a <ArticleLink slug="fission">chain reaction</ArticleLink>: slow the newborn neutrons down to thermal energies (where they're easy to absorb), or use them at the high energies they were born with (where the rules of the game are different). The first family is called **thermal**. The second is called **fast**. Almost every commercial reactor running today is thermal. Almost every reactor in the U.S. Department of Energy's near-term roadmap for advanced designs is something else.
+
+This article is about what that choice is, why it matters, and why neither answer is "right."
+
+## Where neutrons start
+
+A typical fission of uranium-235 releases two or three free neutrons. The distribution of their kinetic energies is well-described by the **Watt fission spectrum**, parameterized for U-235 with a mean around 2 MeV and a peak near 0.7 MeV<Cite id="stacey2007physics_spectrum" />. That's the gray curve in the figure below — sitting on the right edge of the energy axis.
+
+For context: 1 MeV is the energy of a neutron moving at roughly 14,000 km/s, or about 5% the speed of light. At those speeds the neutron interacts with the nuclei around it for vanishingly short windows. It's a sprinter, and a sprinter is hard to catch.
+
+Whether each generation of newborn neutrons sustains the chain (the <ArticleLink slug="fission">condition for criticality</ArticleLink>) depends on a quantity called the **cross-section** — and the cross-section depends violently on the neutron's energy.
+
+## Why anyone would slow them down
+
+The U-235 fission cross-section at thermal energies (around 0.025 eV) is about 585 barns. At 1 MeV — where the neutrons were born — it's about 1.2 barns<Cite id="doe1993handbook_spectrum" />. The chance of fission per encounter is roughly **500 times higher** for a slow neutron than for a fresh one.
+
+<CrossSectionPlot />
+
+The intuitive picture: a fast neutron flies past a U-235 nucleus too quickly to feel the nuclear force long enough to be captured. A slow neutron lingers, gets pulled in, and the nucleus splits. The cross-section is the size of the target as the neutron sees it; at thermal energies, U-235 looks enormous.
+
+This is why slowing neutrons down is attractive. If you can drop the neutron's energy by seven or eight orders of magnitude before it leaks out of the core or gets absorbed by something other than the fuel, the chain reaction becomes easy to sustain with a relatively small amount of fissile material. The whole class of **light-water reactors** that dominates today's commercial fleet — the U.S. PWR and BWR fleet, the French Framatome designs, the Chinese Hualong One — is built around exactly this trick<Cite id="nrc_reactor_concepts_spectrum" />.
+
+## How you slow them down: the moderator
+
+You slow neutrons down by letting them bounce off light nuclei. The lighter the nucleus, the more energy the neutron loses per collision. Hydrogen (in water) is best per collision but absorbs some neutrons in the process. Heavy hydrogen (deuterium, in heavy water) loses energy more slowly per collision but barely absorbs at all. Carbon (in graphite) is in between. The moderator's job is to bring newborn fast neutrons into thermal equilibrium with the surrounding atomic bath, and the equilibrium it produces is the **Maxwell–Boltzmann distribution**.
+
+<MaxwellBoltzmannSlider />
+
+Try moving the slider above. The rust curve is the Maxwell–Boltzmann distribution of neutron energies at the temperature you set. At room temperature (293 K, the textbook default) it peaks near 0.0126 eV, with a mean around 0.025 eV — that's where the conventional "thermal neutron" comes from. The pressurized-water-reactor preset bumps you up to 570 K, the typical operating temperature of a PWR coolant; the high-temperature gas reactor preset takes you to 1200 K.
+
+Notice what doesn't happen as you turn the temperature up: the curve doesn't come anywhere near the gray Watt curve on the right. Even at 2000 K — well past any realistic moderator temperature — the most-probable thermal neutron energy is still under a tenth of an eV. The Watt peak is at 700,000 eV. That's seven orders of magnitude. **No moderator temperature closes the gap.** Thermal vs fast is not a thermostat setting. It's a strategic choice between two distinct physical regimes.
+
+## What changes when you don't slow them down
+
+If you skip the moderator, your reactor runs in the gray region of the figure. Cross-sections are smaller, so you need more fissile material packed more densely to stay critical. You can't use water as your primary coolant — water moderates whether you want it to or not — so you switch to sodium, lead, or a molten salt with heavy-element components. The whole engineering envelope shifts.
+
+In return, you get access to two things thermal reactors can't easily reach.
+
+The first is the ability to **breed**. U-238, which makes up 99.3% of natural uranium and is the bulk of the fuel sitting in every thermal reactor, is fertile — neutron absorption converts it to plutonium-239, which is fissile. The conversion happens in any reactor, but in a fast spectrum the *ratio* of new fissile material created to fissile material burned can exceed one. A fast breeder reactor produces more fissile fuel than it consumes, in principle indefinitely, extracting energy from the otherwise-unused U-238<Cite id="iaea2012fr12_spectrum" />.
+
+<FuelUtilizationChart />
+
+The second is the ability to **burn** long-lived transuranic isotopes — the americium and curium that thermal reactors produce as waste and that dominate spent-fuel toxicity past about a thousand years. Fast neutrons fission these isotopes; thermal neutrons mostly just produce heavier and longer-lived ones. The same physics that makes fast reactors hard to design also makes them, in principle, a tool for closing the fuel cycle.
+
+That's the case for fast. The case against is that nobody has built one cheaply at commercial scale yet. Liquid-metal coolants are corrosive, intermediate heat exchangers add capital cost, and the fuel densities required mean a smaller margin between the operating state and a fast power excursion than light water gives you for free. The DOE's Generation-IV roadmap names six candidate reactor families for next-generation designs; four of the six run in a fast or near-fast spectrum<Cite id="oecdnea2014gen4roadmap_spectrum" />. None of those four has yet shipped a commercial unit in the West.
+
+## Why neither answer is "right"
+
+The thermal-fast choice is not a question of which physics is better. It's a question of which problem you're solving.
+
+If the goal is to put the simplest possible reactor on a grid that already has a uranium-enrichment supply chain, thermal wins by a mile. Light water as both moderator and coolant is the cheapest pressure-vessel-friendly fluid in the universe; PWR thermodynamics is a solved problem; the regulatory pathways are well-trodden. Module 1's comparison data shows light-water nuclear delivering electricity at a levelized cost competitive with, or better than, every fossil baseload alternative — at thermal spectrum, with the moderator built in.
+
+If the goal is sustainable use of the world's uranium stockpile over the next several centuries, or active management of transuranic waste, the picture changes. Thermal reactors extract roughly 0.5% of the energy available in mined natural uranium. A fast breeder cycle, run end-to-end with reprocessing, can extract closer to 60%. The factor of 120 is not a marginal improvement; it is the difference between treating uranium as a finite fossil resource and treating it as one that lasts on geological timescales.
+
+Both answers describe a real reactor someone has built or is building. Most of the design choices downstream — fuel form, coolant chemistry, safety architecture, reprocessing strategy — fall out of which spectrum you picked. That's why the spectrum question comes first in any reactor-design conversation, and why it's the right place to start a reference library about how reactors actually work.
+
+The slider above is a small picture of a large fact. Neutrons are born fast. What you do next is a strategy.
+
+<Bibliography />

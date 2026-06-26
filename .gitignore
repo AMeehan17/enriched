@@ -31,3 +31,6 @@ coverage/
 /NuclearGDriveFolder/
 /reference/
 /Claude Design/
+# Personal source library (transcripts, reports) — public-sourced but copyright-
+# protected; co-located for Claude to read, never committed/shipped. See design doc.
+/EnergyKnowledgeBase/

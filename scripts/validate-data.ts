@@ -21,6 +21,7 @@ import { sources } from "../data-src/sources";
 import { presets } from "../data-src/presets";
 import { reactorTaxonomy } from "../data-src/reactor-taxonomy";
 import { reactors } from "../data-src/reactors";
+import { REFERENCE_ARTICLES } from "../data-src/reference/articles";
 import {
   ALL_DIMENSION_IDS,
   CATEGORICAL_DIMENSION_IDS,
@@ -267,6 +268,65 @@ function validateBibKeyUniqueness(): void {
     for (const [ci, c] of r.citations.entries()) {
       if (c.bibtex_key) {
         check(c.bibtex_key, `reactors[${ri}].citations[${ci}]`);
+      }
+    }
+  }
+
+  // Module 3: reference articles
+  for (const article of REFERENCE_ARTICLES) {
+    for (const [ci, c] of article.citations.entries()) {
+      if (c.bibtex_key) {
+        check(
+          c.bibtex_key,
+          `reference.${article.slug}.citations[${ci}]`,
+        );
+      }
+    }
+  }
+}
+
+// ─── Module 3: Reference article citation validation ────────────────
+
+function validateReferenceArticles(): void {
+  const seenSlugs = new Set<string>();
+  for (const article of REFERENCE_ARTICLES) {
+    if (seenSlugs.has(article.slug)) {
+      err(
+        `reference.${article.slug}`,
+        `duplicate article slug "${article.slug}"`,
+      );
+    }
+    seenSlugs.add(article.slug);
+
+    if (article.citations.length === 0) {
+      err(
+        `reference.${article.slug}.citations`,
+        "must have ≥1 citation",
+      );
+      continue;
+    }
+
+    const localKeys = new Set<string>();
+    for (const [ci, c] of article.citations.entries()) {
+      const path = `reference.${article.slug}.citations[${ci}]`;
+      validateCitation(path, c);
+      // Allowlist host check
+      if (c.url && !isAllowedCitationHost(c.url)) {
+        err(
+          `${path}.url`,
+          `host not in citation allowlist: "${c.url}"`,
+        );
+      }
+      // Within-article uniqueness — <Cite id="x" /> looks up by bibtex_key
+      // and a duplicate inside one article makes the index ambiguous.
+      if (c.bibtex_key) {
+        if (localKeys.has(c.bibtex_key)) {
+          err(
+            `${path}.bibtex_key`,
+            `duplicate bibtex_key "${c.bibtex_key}" within article "${article.slug}"`,
+          );
+        }
+        localKeys.add(c.bibtex_key);
       }
     }
   }
@@ -701,6 +761,9 @@ function main(): void {
   console.log("→ Validating data-src/reactors.ts");
   validateReactors();
 
+  console.log("→ Validating data-src/reference/*.citations.ts");
+  validateReferenceArticles();
+
   if (errors.length > 0) {
     console.error(`\n✗ Validation failed with ${errors.length} error(s):\n`);
     for (const e of errors) console.error(e);
@@ -728,8 +791,12 @@ function main(): void {
     cct.length +
     st.length +
     xt.length;
+  const refCitationCount = REFERENCE_ARTICLES.reduce(
+    (n, a) => n + a.citations.length,
+    0,
+  );
   console.log(
-    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${tagCount} taxonomy tags, ${se.length} step explainers, ${reactors.length} reactor designs, all citations unique and within plausibility bounds.`,
+    `\n✓ Validation passed: ${sources.length} sources, ${presets.length} presets, ${tagCount} taxonomy tags, ${se.length} step explainers, ${reactors.length} reactor designs, ${REFERENCE_ARTICLES.length} reference articles (${refCitationCount} citations), all citations unique and within plausibility bounds.`,
   );
 }
 

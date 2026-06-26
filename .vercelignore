@@ -4,6 +4,7 @@
 # them otherwise.
 Lazard Reports/
 reference/
+EnergyKnowledgeBase/
 
 # Dev-only and build artifacts
 .gstack/
