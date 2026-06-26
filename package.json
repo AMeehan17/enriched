@@ -13,6 +13,9 @@
     "typecheck": "tsc --noEmit",
     "validate-data": "tsx scripts/validate-data.ts",
     "build:data": "tsx scripts/build-data.ts",
+    "ingest:youtube": "tsx scripts/ingest-youtube.ts",
+    "ingest:pdf": "tsx scripts/ingest-pdf.ts",
+    "build:index": "tsx scripts/build-resources-index.ts",
     "test": "vitest",
     "test:e2e": "playwright test"
   },
