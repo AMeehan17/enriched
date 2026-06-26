@@ -23,6 +23,15 @@ const config: NextConfig = {
     root: import.meta.dirname,
   },
 
+  // The dev-only /library tool uploads PDF reports via a Server Action. Next's
+  // default Server Action body limit (1MB) rejects most real reports before the
+  // handler runs; raise it to match the 25MB cap the action enforces itself.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "25mb",
+    },
+  },
+
   // Cache static data files aggressively. Browsers and CDNs hold them for 1h,
   // then revalidate in background. This is the `headers` config method on
   // NextConfig — long-standing API for declaring response headers.

@@ -17,7 +17,11 @@ Welcome<00:00:01.800><c> to</c><00:00:02.040><c> our</c><00:00:02.560><c> event<
 
 00:00:03.630 --> 00:00:05.000 align:start position:0%
 Welcome to our event
-the<00:00:03.800><c> the</c><00:00:04.040><c> IBM</c><00:00:04.500><c> PC</c>
+and<00:00:03.700><c> then</c><00:00:03.900><c> the</c>
+
+00:00:05.000 --> 00:00:06.500 align:start position:0%
+and then the
+the<00:00:05.200><c> IBM</c><00:00:05.600><c> PC</c>
 `;
 
 describe("vttToBody — auto-captions", () => {
@@ -32,7 +36,7 @@ describe("vttToBody — auto-captions", () => {
     expect(body).toContain("Good morning. Welcome to our event");
   });
 
-  it("collapses caption-boundary word doubling ('the the' -> 'the')", () => {
+  it("collapses the caption seam word doubling ('...the' + 'the IBM' -> 'the IBM')", () => {
     expect(body).not.toMatch(/\bthe the\b/);
     expect(body).toContain("the IBM PC");
   });
@@ -62,6 +66,19 @@ And a second cue here
 
   it("uses the cue start time for the marker", () => {
     expect(body).toContain("[00:05] (&t=5s)");
+  });
+});
+
+describe("vttToBody — preserves genuine repeated words", () => {
+  it("keeps real in-utterance doubles verbatim (citation faithfulness)", () => {
+    // Seam dedup must NOT touch doubles inside a line — only the roll boundary.
+    const vtt = `WEBVTT
+
+00:00:10.000 --> 00:00:14.000
+I think that that company had had a point
+`;
+    const body = vttToBody(vtt);
+    expect(body).toContain("that that company had had a point");
   });
 });
 

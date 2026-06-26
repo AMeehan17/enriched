@@ -104,7 +104,7 @@ describe("validateFrontmatter", () => {
   });
 
   it("flags a report with no publisher", () => {
-    const errs = validateFrontmatter({ ...base, type: "report", channel: undefined });
+    const errs = validateFrontmatter({ ...base, type: "report" });
     expect(errs).toContain("report requires a publisher");
   });
 

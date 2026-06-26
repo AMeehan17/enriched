@@ -53,10 +53,17 @@ export async function ingestPdfAction(
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0)
     return { ok: false, message: "Choose a PDF file." };
+  const MAX_BYTES = 25 * 1024 * 1024;
+  if (file.size > MAX_BYTES)
+    return { ok: false, message: `PDF too large (${(file.size / 1048576).toFixed(1)}MB; 25MB max).` };
   const publisher = String(fd.get("publisher") ?? "").trim();
   if (!publisher) return { ok: false, message: "Publisher is required for a report." };
-  const title = String(fd.get("title") ?? "").trim();
   const url = String(fd.get("url") ?? "").trim();
+  // A web upload's temp file is deleted after ingest, so a file:// fallback would
+  // be a dead citation. Require the real public source URL instead.
+  if (!url)
+    return { ok: false, message: "A public source URL is required so the citation points at a verifiable source." };
+  const title = String(fd.get("title") ?? "").trim();
   const date = String(fd.get("date") ?? "").trim();
 
   const tmp = await mkdtemp(join(tmpdir(), "ekb-pdf-"));

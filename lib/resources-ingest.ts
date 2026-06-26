@@ -82,29 +82,34 @@ export function vttToBody(vtt: string, bucketSeconds = 30): string {
   const out: string[] = [];
   let bStart: number | null = null;
   let buf: string[] = [];
+  let lastWord = "";
   const flush = () => {
     if (buf.length && bStart !== null) {
       const mm = String(Math.floor(bStart / 60)).padStart(2, "0");
       const ss = String(bStart % 60).padStart(2, "0");
-      // Collapse caption-rolling artifacts: when a line rolls, YouTube re-emits
-      // the boundary word ("The piece the" + "the IBM PC" -> "...the the...").
-      let text = buf.join(" ");
-      let prev: string;
-      do {
-        prev = text;
-        text = text.replace(/\b(\w+)\s+\1\b/gi, "$1");
-      } while (text !== prev);
-      out.push(`[${mm}:${ss}] (&t=${bStart}s) ${text}`);
+      out.push(`[${mm}:${ss}] (&t=${bStart}s) ${buf.join(" ")}`);
     }
   };
   for (const s of segs) {
+    // Seam dedup: when a caption line rolls, YouTube re-emits the boundary word
+    // as the first word of the next line ("...the" then "the IBM PC"). Drop only
+    // that one seam duplicate. Never collapse doubles *inside* a line, so genuine
+    // speech ("I think that that company", "he had had it") survives verbatim —
+    // faithfulness matters more than cosmetics for a citation tool.
+    let words = s.text.split(/\s+/).filter(Boolean);
+    if (lastWord && words.length && words[0]!.toLowerCase() === lastWord.toLowerCase()) {
+      words = words.slice(1);
+    }
+    if (words.length === 0) continue;
+    const text = words.join(" ");
+    lastWord = words[words.length - 1]!;
     if (bStart === null) bStart = s.start;
     if (s.start - bStart >= bucketSeconds) {
       flush();
-      buf = [s.text];
+      buf = [text];
       bStart = s.start;
     } else {
-      buf.push(s.text);
+      buf.push(text);
     }
   }
   flush();
@@ -121,9 +126,16 @@ export async function ingestYoutubeUrl(
   url: string,
   opts: YoutubeOpts = {},
 ): Promise<IngestResult> {
-  if (!url.trim()) throw new Error("a YouTube URL is required");
+  url = url.trim();
+  if (!url) throw new Error("a YouTube URL is required");
+  // Reject anything that isn't a plain http(s) URL. Without this, a value
+  // starting with "-" is parsed by yt-dlp as an option (--exec, --config-
+  // locations, file://...) → arbitrary command execution / SSRF. The "--"
+  // separators below are belt-and-suspenders for the same class of bug.
+  if (!/^https?:\/\/[^\s]+$/i.test(url))
+    throw new Error("URL must be a plain http(s):// link");
 
-  const firstLine = ytdlp(["-j", "--skip-download", url]).trim().split("\n")[0];
+  const firstLine = ytdlp(["-j", "--skip-download", "--", url]).trim().split("\n")[0];
   if (!firstLine) throw new Error("yt-dlp returned no metadata");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const meta = JSON.parse(firstLine) as any;
@@ -145,6 +157,7 @@ export async function ingestYoutubeUrl(
       "--skip-download",
       "-o",
       join(tmp, "%(id)s.%(ext)s"),
+      "--",
       url,
     ]);
     let vtt: string;

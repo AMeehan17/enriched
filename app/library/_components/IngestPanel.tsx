@@ -149,12 +149,13 @@ export function IngestPanel() {
             </div>
             <div className="sm:col-span-2">
               <label htmlFor="pdf-url" className={labelCls}>
-                Public source URL (recommended)
+                Public source URL (required)
               </label>
               <input
                 id="pdf-url"
                 name="url"
                 type="url"
+                required
                 placeholder="https://www.lazard.com/research-insights/…"
                 className={`${fieldCls} font-[family-name:var(--font-mono)]`}
               />
